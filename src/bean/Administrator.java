@@ -12,6 +12,7 @@ public class Administrator {
   private String name;
   private boolean isActive;
   private OffsetDateTime createdAt;
+  private String adminNo;
 
   public Administrator() {}
 
@@ -35,4 +36,7 @@ public class Administrator {
 
   public OffsetDateTime getCreatedAt() { return createdAt; }
   public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+  public String getAdminNo() { return adminNo; }
+  public void setAdminNo(String adminNo) { this.adminNo = adminNo; }
 }

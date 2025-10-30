@@ -104,6 +104,27 @@ public class IndividualDAO {
     x.setBirthday(rs.getObject("birthday", LocalDate.class));
     x.setNote(rs.getString("note"));
     x.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+ // mapに追加
+    x.setPinCodeHash(rs.getString("pin_code_hash"));
+
     return x;
   }
+
+
+  public boolean updatePinHash(UUID individualId, String bcryptHash) {
+      String sql = "UPDATE individuals SET pin_code_hash = ? WHERE id = ?";
+      try (Connection con = infra.ConnectionFactory.getConnection();
+           PreparedStatement ps = con.prepareStatement(sql)) {
+          if (bcryptHash != null) {
+              ps.setString(1, bcryptHash);
+          } else {
+              ps.setNull(1, java.sql.Types.VARCHAR);
+          }
+          ps.setObject(2, individualId);
+          return ps.executeUpdate() == 1;
+      } catch (SQLException e) {
+          throw new RuntimeException(e);
+      }
+  }
 }
+

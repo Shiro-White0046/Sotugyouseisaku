@@ -13,6 +13,7 @@ public class Individual {
   private LocalDate birthday;
   private String note;
   private OffsetDateTime createdAt;
+  private String pinCodeHash;
 
   public Individual() {}
 
@@ -36,4 +37,8 @@ public class Individual {
 
   public OffsetDateTime getCreatedAt() { return createdAt; }
   public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+  public String getPinCodeHash() { return pinCodeHash; }
+  public void setPinCodeHash(String pinCodeHash) { this.pinCodeHash = pinCodeHash; }
+
 }

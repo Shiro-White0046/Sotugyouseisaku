@@ -15,6 +15,7 @@ public class User {
   private String accountType;
   private boolean isActive;
   private OffsetDateTime createdAt;
+  private String loginId;
 
   public User() {}
 
@@ -44,4 +45,7 @@ public class User {
 
   public OffsetDateTime getCreatedAt() { return createdAt; }
   public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+  public String getLoginId() { return loginId; }
+  public void setLoginId(String loginId) { this.loginId = loginId; }
 }
