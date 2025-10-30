@@ -6,9 +6,7 @@ import java.util.UUID;
 
 public class IndividualAllergy {
   private UUID personId;
-  private short allergenId;  // SMALLINT -> short
-  /** 1:注意 / 2:強 / 3:重篤 */
-  private short severity;
+  private short allergenId;   // SMALLINT -> short
   private String note;
   private LocalDate confirmedAt;
 
@@ -19,9 +17,6 @@ public class IndividualAllergy {
 
   public short getAllergenId() { return allergenId; }
   public void setAllergenId(short allergenId) { this.allergenId = allergenId; }
-
-  public short getSeverity() { return severity; }
-  public void setSeverity(short severity) { this.severity = severity; }
 
   public String getNote() { return note; }
   public void setNote(String note) { this.note = note; }
