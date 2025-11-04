@@ -37,12 +37,13 @@ public class AuthFilter implements Filter {
     String uri = request.getRequestURI();
 
     boolean open =
-         uri.equals(ctx + "/admin")
-      || uri.equals(ctx + "/admin/")
-      || uri.equals(ctx + "/admin/index.jsp")
-      || uri.startsWith(ctx + "/admin/login")
-      || uri.startsWith(ctx + "/css/")
-      || uri.startsWith(ctx + "/images/");
+    	     uri.equals(ctx + "/admin") || uri.equals(ctx + "/admin/")
+    	  || uri.equals(ctx + "/admin/index.jsp")
+    	  || uri.startsWith(ctx + "/admin/login")
+    	  || uri.startsWith(ctx + "/admin/register")
+    	  || uri.startsWith(ctx + "/css/")
+    	  || uri.startsWith(ctx + "/images/");
+
 
     if (!open) {
       HttpSession session = request.getSession(false);
