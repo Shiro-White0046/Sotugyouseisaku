@@ -290,3 +290,14 @@ html.sidebar-open .sidebar { transform: translateX(0); }
   /* html.sidebar-open .content { margin-left: 240px; } */
 }
 
+
+/* =============================
+   エラー入力時の赤枠表示
+   ============================= */
+.input-error {
+  border: 2px solid #dc2626;
+  background-color: #fff5f5;
+}
+
+
+
