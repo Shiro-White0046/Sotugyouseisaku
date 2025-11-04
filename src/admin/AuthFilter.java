@@ -41,6 +41,8 @@ public class AuthFilter implements Filter {
     	  || uri.equals(ctx + "/admin/index.jsp")
     	  || uri.startsWith(ctx + "/admin/login")
     	  || uri.startsWith(ctx + "/admin/register")
+    	  || uri.startsWith(ctx + "/admin/users/register")
+    	  || uri.startsWith(ctx + "/admin/individuals/register")
     	  || uri.startsWith(ctx + "/css/")
     	  || uri.startsWith(ctx + "/images/");
 
