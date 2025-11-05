@@ -16,6 +16,7 @@ public class User {
   private boolean isActive;
   private OffsetDateTime createdAt;
   private String loginId;
+  private boolean mustChangePassword;
 
   public User() {}
 
@@ -48,4 +49,10 @@ public class User {
 
   public String getLoginId() { return loginId; }
   public void setLoginId(String loginId) { this.loginId = loginId; }
+  public boolean isMustChangePassword() {
+	  return mustChangePassword;
+	}
+	public void setMustChangePassword(boolean mustChangePassword) {
+	  this.mustChangePassword = mustChangePassword;
+	}
 }

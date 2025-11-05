@@ -301,3 +301,312 @@ html.sidebar-open .sidebar { transform: translateX(0); }
 
 
 
+/* =============================
+   未スタイルページ用の調整（共通ページ / 完了画面など）
+   ============================= */
+
+/* ページ全体の中央寄せ（汎用用） */
+.center-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  min-height: 80vh;
+  text-align: center;
+  background: #f4f6f8;
+}
+
+/* 見出し（h1〜h3）統一 */
+.center-page h1,
+.center-page h2,
+.center-page h3 {
+  margin: 12px 0;
+  font-weight: 700;
+  color: #333;
+}
+
+/* 完了・エラー・情報メッセージ */
+.message-box {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 24px 32px;
+  max-width: 480px;
+  margin: 16px auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.message-box.success {
+  border-color: #86efac;
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.message-box.error {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.message-box.info {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+/* ボタンコンテナ（中央寄せ） */
+.button-area {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* 単純テーブル（一覧や確認用） */
+.simple-table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 720px;
+  margin: 16px auto;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.simple-table th,
+.simple-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.simple-table th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.simple-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* 戻るボタン・リンク */
+.link-back {
+  display: inline-block;
+  margin-top: 20px;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.link-back:hover {
+  text-decoration: underline;
+}
+
+/* =============================
+   新規登録フォーム共通デザイン（管理者／利用者）
+   ============================= */
+
+/* ページ全体レイアウト */
+.register-page {
+  max-width: 520px;
+  margin: 60px auto 100px;
+  padding: 0 16px;
+}
+
+/* 見出し */
+.register-page h2 {
+  text-align: center;
+  font-size: 24px;
+  color: #222;
+  margin-bottom: 24px;
+}
+
+/* フォーム本体 */
+.register-form {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 24px 28px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* ラベルと入力欄 */
+.register-form label {
+  display: block;
+  font-weight: 600;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  color: #111;
+}
+
+.register-form input[type="text"],
+.register-form input[type="password"],
+.register-form input[type="email"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.register-form input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+  outline: none;
+}
+
+/* ラジオボタンや小さな項目 */
+.register-form .option-group {
+  margin-top: 12px;
+}
+
+.register-form .option-group label {
+  font-weight: normal;
+  margin-right: 16px;
+  cursor: pointer;
+}
+
+/* エラー文 */
+.register-form .alert.error {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 6px;
+}
+
+/* ボタン行 */
+.register-form .actions {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.register-form .actions .button {
+  padding: 12px 32px;
+  font-size: 17px;
+  border-radius: 6px;
+}
+
+/* 補足文（小さな説明） */
+.register-form small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+/* 登録完了画面でのボタン配置 */
+.register-complete {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.register-complete .button {
+  margin: 8px;
+}
+
+/* --- 個人/複数（ラジオ）の横並び＆位置ズレ解消 --- */
+.inline-options{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.inline-options label{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin:0;
+  font-weight:500; /* 太すぎる場合は外してOK */
+}
+.inline-options input[type="radio"]{ margin:0; }
+
+/* --- 最終画面のボタンを横並び＆左右端に配置 --- */
+.page-actions{
+  display:flex;
+  justify-content:space-between;  /* 左右に分割 */
+  align-items:center;
+  gap:12px;
+  margin-top:24px;
+}
+.page-actions .left,
+.page-actions .right{
+  display:flex;
+  align-items:center;
+  gap:8px;           /* ボタン間の隙間 */
+}
+.page-actions .right{ margin-left:auto; } /* 右ブロックを右寄せ */
+
+.page-actions .button{
+  /* 横長に見せるため（縦に伸びない） */
+  width:auto;
+  white-space:nowrap;
+  padding:12px 28px;
+}
+
+/* 画面下に吸着したい場合は（任意）： */
+.page-actions.sticky-bottom{
+  position:sticky;
+  bottom:0;
+  background:#f4f6f8;   /* 背景と同じ色 */
+  padding-top:12px;
+}
+@media (max-width: 520px){
+  /* スマホ時は右側グループを折り返しやすく */
+  .page-actions{ flex-wrap:wrap; }
+  .page-actions .right{ margin-left:0; margin-right:0; }
+}
+
+/* 汎用カード幅 */
+.card-narrow { max-width: 680px; margin: 0 auto 16px; }
+.card-wide   { max-width: 960px; margin: 0 auto; }
+
+/* テーブル（一覧用） */
+.simple-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.simple-table th, .simple-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+.simple-table thead th {
+  background: #f3f4f6;
+  font-weight: 700;
+}
+
+/* ページ内アクション行 */
+.actions { margin-top: 16px; text-align: right; }
+.actions-left  { text-align: left;  margin-top: 12px; }
+.actions-center{ text-align: center; margin-top: 12px; }
+
+/* サイドバーのアクティブ（既存 .nav a.active を補強） */
+.sidebar .nav a.active {
+  background: #e0e7ff;
+  font-weight: 600;
+}
+
+/* 入力フォーム */
+.form-row { display:block; }
+.form-row label { display:block; margin: 12px 0 6px; font-weight: 600; }
+.form-row input[type="text"] { width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:6px; }
+
+
+/* 縦線つきテーブル */
+.simple-table.with-border th,
+.simple-table.with-border td {
+  border-right: 1px solid #e5e7eb;
+}
+.simple-table.with-border th:last-child,
+.simple-table.with-border td:last-child {
+  border-right: none; /* 最右列だけ線なし */
+}
+.simple-table.with-border thead th {
+  background: #f3f4f6;
+  border-bottom: 2px solid #d1d5db;
+}
+

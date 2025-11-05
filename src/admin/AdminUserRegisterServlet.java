@@ -31,24 +31,11 @@ public class AdminUserRegisterServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    req.setCharacterEncoding("UTF-8");
 
+    req.setCharacterEncoding("UTF-8");
     String name = req.getParameter("userName");
     String tmpPw = req.getParameter("tempPassword");
     String type  = req.getParameter("accountType");
-
-    if (name == null || name.trim().isEmpty()) {
-      req.setAttribute("error", "利用者名を入力してください。");
-      doGet(req, resp); return;
-    }
-    if (tmpPw == null || !PW_PATTERN.matcher(tmpPw).matches()) {
-      req.setAttribute("error", "仮パスワードが条件を満たしていません。");
-      doGet(req, resp); return;
-    }
-    if (!("single".equals(type) || "multi".equals(type))) {
-      req.setAttribute("error", "アカウント種別を選択してください。");
-      doGet(req, resp); return;
-    }
 
     HttpSession ses = req.getSession(false);
     Administrator admin = (ses != null) ? (Administrator) ses.getAttribute("admin") : null;
@@ -57,12 +44,36 @@ public class AdminUserRegisterServlet extends HttpServlet {
       return;
     }
 
-    String hash = Password.hash(tmpPw);
-    User created = new UserDAO().create(admin.getOrgId(), name.trim(), hash, type);
+    // --- 入力バリデーション ---
+    if (name == null || name.trim().isEmpty()) {
+      ses.setAttribute("error", "利用者名を入力してください。");
+      resp.sendRedirect(req.getContextPath() + "/admin/users/register");
+      return;
+    }
+    if (tmpPw == null || !PW_PATTERN.matcher(tmpPw).matches()) {
+      ses.setAttribute("error", "仮パスワードが条件を満たしていません。");
+      resp.sendRedirect(req.getContextPath() + "/admin/users/register");
+      return;
+    }
+    if (!("single".equals(type) || "multi".equals(type))) {
+      ses.setAttribute("error", "アカウント種別を選択してください。");
+      resp.sendRedirect(req.getContextPath() + "/admin/users/register");
+      return;
+    }
 
-    ses.setAttribute("createdUser", created);
-    ses.setAttribute("tempPwPlain", tmpPw);
+    // --- 成功処理 ---
+    try {
+      String hash = Password.hash(tmpPw);
+      User created = new UserDAO().create(admin.getOrgId(), name.trim(), hash, type);
 
-    resp.sendRedirect(req.getContextPath() + "/admin/users/register/done");
+      ses.setAttribute("createdUser", created);
+      ses.setAttribute("tempPwPlain", tmpPw);
+
+      resp.sendRedirect(req.getContextPath() + "/admin/users/register/done");
+    } catch (RuntimeException e) {
+      ses.setAttribute("error", "アカウント作成中にエラーが発生しました。");
+      resp.sendRedirect(req.getContextPath() + "/admin/users/register");
+    }
   }
 }
+

@@ -110,4 +110,65 @@ public class IndividualAllergyDAO {
       throw new RuntimeException(e);
     }
   }
+
+	//返却DTO
+	public class AllergyView {
+	 private final java.util.UUID individualId;
+	 private final String displayName;
+	 private final String foods;    // category='FOOD' の名前連結
+	 private final String contacts; // 'CONTACT'
+	 private final String avoids;   // 'AVOID'
+	 public AllergyView(java.util.UUID id, String name, String foods, String contacts, String avoids){
+	   this.individualId=id; this.displayName=name;
+	   this.foods = (foods==null?"":foods);
+	   this.contacts = (contacts==null?"":contacts);
+	   this.avoids = (avoids==null?"":avoids);
+	 }
+	 public java.util.UUID getIndividualId(){ return individualId; }
+	 public String getDisplayName(){ return displayName; }
+	 public String getFoods(){ return foods; }
+	 public String getContacts(){ return contacts; }
+	 public String getAvoids(){ return avoids; }
+	}
+
+	// 追加：カテゴリ別集約一覧（名前検索対応）
+	public List<AllergyView> aggregateByCategory(java.util.UUID orgId, String keyword) {
+	  String sql =
+	    "SELECT i.id, i.display_name, " +
+	    "  string_agg(CASE WHEN a.category='FOOD' THEN a.name_ja END, '・') AS foods, " +
+	    "  string_agg(CASE WHEN a.category='CONTACT' THEN a.name_ja END, '・') AS contacts, " +
+	    "  string_agg(CASE WHEN a.category='AVOID' THEN a.name_ja END, '・') AS avoids " +
+	    "FROM individuals i " +
+	    "LEFT JOIN individual_allergies ia ON ia.person_id = i.id " +
+	    "LEFT JOIN allergens a ON a.id = ia.allergen_id " +
+	    "WHERE i.org_id = ? " +
+	    "  AND (COALESCE(?, '') = '' OR i.display_name ILIKE '%' || ? || '%') " +
+	    "GROUP BY i.id, i.display_name " +
+	    "ORDER BY i.id";
+
+	  List<AllergyView> list = new ArrayList<>();
+	  try (Connection con = ConnectionFactory.getConnection();
+	       PreparedStatement ps = con.prepareStatement(sql)) {
+	    ps.setObject(1, orgId);
+	    String q = (keyword == null) ? "" : keyword.trim();
+	    ps.setString(2, q);
+	    ps.setString(3, q);
+	    try (ResultSet rs = ps.executeQuery()) {
+	      while (rs.next()) {
+	        list.add(new AllergyView(
+	          (java.util.UUID) rs.getObject("id"),
+	          rs.getString("display_name"),
+	          rs.getString("foods"),
+	          rs.getString("contacts"),
+	          rs.getString("avoids")
+	        ));
+	      }
+	    }
+	  } catch (SQLException e) {
+	    throw new RuntimeException("アレルギー集約の取得に失敗しました", e);
+	  }
+	  return list;
+	}
+
+
 }
