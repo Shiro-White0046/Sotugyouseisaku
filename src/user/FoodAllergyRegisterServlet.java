@@ -10,8 +10,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-@WebServlet("/user/allergy/confirm")
-public class FoodAllergyResisterServlet extends HttpServlet {
+@WebServlet("/user/allergy/register")
+public class FoodAllergyRegisterServlet extends HttpServlet {
 //	private final AllergenDAO iaDao = new AllergenDAO();
 
 	  @Override
