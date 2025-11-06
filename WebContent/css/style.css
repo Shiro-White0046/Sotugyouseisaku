@@ -610,3 +610,19 @@ html.sidebar-open .sidebar { transform: translateX(0); }
   border-bottom: 2px solid #d1d5db;
 }
 
+
+
+
+.flash-wrap{display:flex;align-items:center;gap:12px;max-width:720px;
+              margin:16px auto 24px;background:#fff;border:2px solid #333;
+              border-radius:8px;box-shadow:0 2px #999;}
+  .flash-msg{flex:1;padding:14px 16px;}
+  .flash-ok{margin-right:8px;border:2px solid #a9b8d4;background:#dfe9ff;
+            padding:10px 18px;border-radius:10px;cursor:pointer}
+  .photo-box{max-width:640px;margin:24px auto;background:#fff;border:2px solid #333;
+             height:220px;display:flex;align-items:center;justify-content:center}
+
+
+
+
+

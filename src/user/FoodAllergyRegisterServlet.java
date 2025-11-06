@@ -9,6 +9,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
 
 @WebServlet("/user/allergy/register")
 public class FoodAllergyRegisterServlet extends HttpServlet {
@@ -32,14 +34,14 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
 	    String otherFlag = req.getParameter("allergenOtherFlag");
 	    String otherName = req.getParameter("allergenOtherName");
 
-	    // 3) 対象児童IDの決定（単一/複数アカウントでの取得方法はプロジェクト規約に合わせて）
-	    //   ここではセッション等から拾う想定にしています。
-	    Integer individualId = (Integer) req.getSession().getAttribute("targetIndividualId");
-	    if (individualId == null) {
-	      // 必要に応じて、入力画面に戻す or 例外
-	      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "対象児童が特定できません。");
-	      return;
-	    }
+//	    // 3) 対象児童IDの決定（単一/複数アカウントでの取得方法はプロジェクト規約に合わせて）
+//	    //   ここではセッション等から拾う想定にしています。
+//	    Integer individualId = (Integer) req.getSession().getAttribute("targetIndividualId");
+//	    if (individualId == null) {
+//	      // 必要に応じて、入力画面に戻す or 例外
+//	      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "対象児童が特定できません。");
+//	      return;
+//	    }
 
 	    // ログインユーザID（監査用）
 	    Integer userId = (Integer) req.getSession().getAttribute("loginUserId");
@@ -82,6 +84,8 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
 	     // }
 
 	      // 6) 完了（重複送信防止のためリダイレクト）
+	      HttpSession session = req.getSession();
+	      session.setAttribute("flash", "アレルギーを登録しました");
 	      req.getRequestDispatcher("/user/home.jsp").forward(req, resp);
 	    } catch (Exception e) {
 	      e.printStackTrace();
