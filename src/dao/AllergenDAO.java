@@ -66,4 +66,58 @@ public class AllergenDAO {
       throw new RuntimeException(e);
     }
   }
+
+
+  /** 指定ID群を“受け取った順”で返す */
+  public List<Allergen> findByIdsPreserveOrder(List<Short> ids) {
+    if (ids == null || ids.isEmpty()) return java.util.Collections.emptyList();
+
+    String inPlaceholders = ids.stream().map(x -> "?").collect(java.util.stream.Collectors.joining(","));
+    // CASE WHEN id = ? THEN 1 ... の動的生成
+    StringBuilder order = new StringBuilder("CASE id ");
+    for (int i = 0; i < ids.size(); i++) {
+      order.append("WHEN ? THEN ").append(i + 1).append(" ");
+    }
+    order.append("END");
+
+    String sql =
+        "SELECT id, code, name_ja, name_en, is_active, category, subcategory " +
+        "FROM allergens " +
+        "WHERE id IN (" + inPlaceholders + ") " +
+        "ORDER BY " + order;  // ここで受け取った順を適用
+
+    List<Allergen> list = new ArrayList<>();
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+      int idx = 1;
+      // IN 句の ? をセット
+      for (Short id : ids) ps.setShort(idx++, id);
+      // ORDER BY CASE の ? をセット（同じID列をもう一度）
+      for (Short id : ids) ps.setShort(idx++, id);
+
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          Allergen a = new Allergen();
+          a.setId(rs.getShort("id"));
+          a.setCode(rs.getString("code"));
+          a.setNameJa(rs.getString("name_ja"));
+          a.setNameEn(rs.getString("name_en"));
+          a.setActive(rs.getBoolean("is_active"));
+          a.setCategory(rs.getString("category"));
+          a.setSubcategory(rs.getString("subcategory"));
+          list.add(a);
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+    return list;
+  }
+
+
+
+
 }
+
+
