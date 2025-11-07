@@ -3,6 +3,27 @@
 
 <jsp:include page="/header.jsp"/>
 
+
+<%
+  String flash = (String) session.getAttribute("flash");
+  if (flash != null) {
+%>
+  <div class="alert" style="background:#ecfeff;border:1px solid #67e8f9;color:#155e75;border-radius:6px;padding:10px 12px;">
+    <%= flash %>
+  </div>
+<%
+    session.removeAttribute("flash");
+  }
+  String err = (String) session.getAttribute("error");
+  if (err != null) {
+%>
+  <div class="alert error"><%= err %></div>
+<%
+    session.removeAttribute("error");
+  }
+%>
+
+
 <h2>利用者一覧</h2>
 
 <!-- 検索フォーム -->

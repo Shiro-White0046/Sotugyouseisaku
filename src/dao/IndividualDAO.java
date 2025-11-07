@@ -152,19 +152,18 @@ public class IndividualDAO {
   }
 
   /** 1件削除 */
-  public void delete(UUID individualId) {
-    final String sql = "DELETE FROM individuals WHERE id = ?";
+	//src/dao/IndividualDAO.java に追記
+	public void delete(java.util.UUID individualId) {
+	 final String sql = "DELETE FROM individuals WHERE id = ?";
+	 try (java.sql.Connection con = infra.ConnectionFactory.getConnection();
+	      java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+	   ps.setObject(1, individualId);
+	   ps.executeUpdate();
+	 } catch (java.sql.SQLException e) {
+	   throw new RuntimeException("個人レコードの削除に失敗しました", e);
+	 }
+	}
 
-    try (Connection con = ConnectionFactory.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-
-      ps.setObject(1, individualId);
-      ps.executeUpdate();
-
-    } catch (SQLException e) {
-      throw new RuntimeException("個人の削除に失敗しました", e);
-    }
-  }
 
   /** ユーザー配下をまとめて削除（アカウント削除時など） */
   public void deleteByUser(UUID userId) {
