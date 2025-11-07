@@ -45,6 +45,7 @@
     </div>
 
     <div class="actions" style="margin-top:24px; text-align:center;">
+    <a class="button ghost" href="<%= request.getContextPath() %>/admin/home">ホームへ</a>
       <a class="button ghost" href="<%= request.getContextPath() %>/admin/users">一覧へ戻る</a>
       <button class="button new-btn" type="submit">次へ</button>
     </div>

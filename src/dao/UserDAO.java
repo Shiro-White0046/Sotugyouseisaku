@@ -168,4 +168,17 @@ public class UserDAO {
     if (odt != null) u.setCreatedAt(odt);
     return u;
   }
+	//dao/UserDAO.java に追記
+	public void updateNameAndType(java.util.UUID userId, String name, String accountType) {
+	 final String sql = "UPDATE users SET name = ?, account_type = ?::account_type WHERE id = ?";
+	 try (Connection con = ConnectionFactory.getConnection();
+	      PreparedStatement ps = con.prepareStatement(sql)) {
+	   ps.setString(1, name);
+	   ps.setString(2, accountType);
+	   ps.setObject(3, userId);
+	   ps.executeUpdate();
+	 } catch (SQLException e) {
+	   throw new RuntimeException("ユーザーの更新に失敗しました", e);
+	 }
+	}
 }

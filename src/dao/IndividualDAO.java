@@ -70,26 +70,33 @@ public class IndividualDAO {
   }
 
   /** ユーザー配下の個人一覧 */
-  public List<Individual> listByUser(UUID userId) {
-    final String sql =
-        "SELECT id, org_id, user_id, display_name, birthday, note, pin_code_hash, created_at " +
-        "FROM individuals WHERE user_id = ? ORDER BY created_at ASC";
+	//dao/IndividualDAO.java に追記
+	public java.util.List<bean.Individual> listByUser(java.util.UUID userId) {
+	 final String sql = "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash " +
+	                    "FROM individuals WHERE user_id = ? ORDER BY created_at ASC";
+	 java.util.List<bean.Individual> list = new java.util.ArrayList<>();
+	 try (Connection con = ConnectionFactory.getConnection();
+	      PreparedStatement ps = con.prepareStatement(sql)) {
+	   ps.setObject(1, userId);
+	   try (ResultSet rs = ps.executeQuery()) {
+	     while (rs.next()) {
+	       bean.Individual i = new bean.Individual();
+	       i.setId((java.util.UUID) rs.getObject("id"));
+	       i.setOrgId((java.util.UUID) rs.getObject("org_id"));
+	       i.setUserId((java.util.UUID) rs.getObject("user_id"));
+	       i.setDisplayName(rs.getString("display_name"));
+	       java.sql.Date d = rs.getDate("birthday");
+	       if (d != null) i.setBirthday(d.toLocalDate());
+	       i.setNote(rs.getString("note"));
+	       list.add(i);
+	     }
+	   }
+	 } catch (SQLException e) {
+	   throw new RuntimeException("個人一覧の取得に失敗しました", e);
+	 }
+	 return list;
+	}
 
-    try (Connection con = ConnectionFactory.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-
-      ps.setObject(1, userId);
-
-      List<Individual> list = new ArrayList<>();
-      try (ResultSet rs = ps.executeQuery()) {
-        while (rs.next()) list.add(mapIndividual(rs));
-      }
-      return list;
-
-    } catch (SQLException e) {
-      throw new RuntimeException("individuals の取得に失敗しました", e);
-    }
-  }
 
   /** 件数（任意） */
   public int countByUser(UUID userId) {
@@ -298,7 +305,5 @@ public class IndividualDAO {
 	    throw new RuntimeException("individualの削除に失敗しました", e);
 	  }
 	}
-
-
 }
 
