@@ -14,7 +14,7 @@ import bean.Allergen;
 import bean.User;
 import dao.AllergenDAO;
 
-@WebServlet("/user/allergy/food")
+@WebServlet("/user/allergy/Prohibite")
 public class ProhibitedInputServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
