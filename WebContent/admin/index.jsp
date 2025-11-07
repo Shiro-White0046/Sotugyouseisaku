@@ -18,3 +18,4 @@
     <a href="<%= request.getContextPath() %>/admin/register" class="button new-btn">新規登録</a>
 </body>
 </html>
+

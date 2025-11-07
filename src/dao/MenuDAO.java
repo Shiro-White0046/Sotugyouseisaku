@@ -6,7 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -88,4 +90,39 @@ public class MenuDAO {
     a.setSubcategory(rs.getString("subcategory"));
     return a;
   }
+//追加：当月の日付→主要アレルゲン名（複数）のマップ
+public Map<LocalDate, List<String>> findAllergenLabelsForMonth(UUID orgId, java.time.YearMonth ym, boolean onlyPublished) {
+ String sql =
+   "SELECT m.menu_date, string_agg(a.name_ja, ',' ORDER BY a.name_ja) AS labels " +
+   "FROM menus m " +
+   "JOIN menu_allergens ma ON ma.menu_id = m.id " +
+   "JOIN allergens a ON a.id = ma.allergen_id " +
+   "WHERE m.org_id = ? AND m.menu_date >= ? AND m.menu_date < ? " +
+   (onlyPublished ? "AND m.published = TRUE " : "") +
+   "GROUP BY m.menu_date";
+
+ Map<LocalDate, List<String>> map = new HashMap<>();
+ try (Connection con = ConnectionFactory.getConnection();
+      PreparedStatement ps = con.prepareStatement(sql)) {
+   java.time.LocalDate start = ym.atDay(1);
+   java.time.LocalDate end   = ym.plusMonths(1).atDay(1);
+   ps.setObject(1, orgId);
+   ps.setObject(2, start);
+   ps.setObject(3, end);
+   try (ResultSet rs = ps.executeQuery()) {
+     while (rs.next()) {
+       LocalDate d = rs.getDate("menu_date").toLocalDate();
+       String csv = rs.getString("labels");
+       List<String> list = new ArrayList<>();
+       if (csv != null && !csv.isEmpty()) {
+         for (String s : csv.split(",")) list.add(s);
+       }
+       map.put(d, list);
+     }
+   }
+ } catch (SQLException e) {
+   throw new RuntimeException(e);
+ }
+ return map;
+}
 }
