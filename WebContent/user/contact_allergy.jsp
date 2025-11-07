@@ -78,7 +78,7 @@ main.content{padding:24px 28px 48px;}
   </form>
 
   <!-- 入力+右プレビュー／保存先は直接ContactAllergyServlet -->
-  <form id="contactForm" method="post" action="<%= ctx %>/user/allergy/contact">
+  <form id="contactForm" method="post" action="<%= ctx %>/user/allergy/contact/confirm">
     <input type="hidden" name="person_id" value="<%= personId %>">
 
     <div class="ca-layout">
@@ -118,8 +118,10 @@ main.content{padding:24px 28px 48px;}
 
     <div class="form-actions">
       <a href="<%= ctx %>/user/home" class="btn left">戻る</a>
+      <!-- ✅ action先を /confirm に -->
       <button id="submitBtn" type="submit" class="btn right">次へ</button>
-    </div>
+	</div>
+
   </form>
 
   <% if (request.getAttribute("flash") != null) { %>
