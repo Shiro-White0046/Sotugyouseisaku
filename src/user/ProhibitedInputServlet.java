@@ -1,7 +1,6 @@
 package user;
 
 import java.io.IOException;
-import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -10,11 +9,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import bean.Allergen;
 import bean.User;
-import dao.AllergenDAO;
 
-@WebServlet("/user/allergy/Prohibite")
+@WebServlet("/user/avoid")
 public class ProhibitedInputServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -33,10 +30,8 @@ public class ProhibitedInputServlet extends HttpServlet {
       return;
     }
 
-    // 食物アレルギーを取得
-    AllergenDAO allergenDao=new AllergenDAO();
-    List<Allergen>  list=allergenDao.listByCategory("FOOD");
-    req.setAttribute("allergenlist", list);
+    // 禁止食材を取得
+    //subtitle
 
 
 

@@ -66,6 +66,11 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
 	      return;
 	    }
 
+        //すでにアレルギー情報が登録されている場合は更新処理なければ登録処理
+
+
+
+
 	    // 5) 登録処理
 	    try {
 	       //既知アレルゲン（マスタIDあり）は upsert。重症度は当面1（必要なら確認画面で持たせてください）
@@ -86,7 +91,8 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
 	      // 6) 完了（重複送信防止のためリダイレクト）
 	      HttpSession session = req.getSession();
 	      session.setAttribute("flash", "アレルギーを登録しました");
-	      req.getRequestDispatcher("/user/home.jsp").forward(req, resp);
+	      resp.sendRedirect(req.getContextPath() + "/user/home");
+//	      req.getRequestDispatcher("/user/home.jsp").forward(req, resp);
 	    } catch (Exception e) {
 	      e.printStackTrace();
 	      req.setAttribute("error", "登録時にエラーが発生しました。もう一度お試しください。");
