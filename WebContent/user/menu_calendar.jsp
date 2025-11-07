@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
 <!DOCTYPE html><html lang="ja"><head>
 <meta charset="UTF-8"><title>献立</title><meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -29,9 +30,9 @@
 
   <table class="cal" aria-label="${year}年${month}月の献立カレンダー">
     <thead>
-    <tr>
-      <th class="dow-sun">日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th class="dow-sat">土</th>
-    </tr>
+      <tr>
+        <th class="dow-sun">日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th class="dow-sat">土</th>
+      </tr>
     </thead>
     <tbody>
     <%
@@ -42,6 +43,7 @@
       java.util.Map<String, java.util.List<String>> labels =
         (java.util.Map<String, java.util.List<String>>)request.getAttribute("labelsByDate");
       String ctx = request.getContextPath();
+
       int day=1;
       for(int week=0; week<6 && day<=days; week++){
         out.write("<tr>");
@@ -55,11 +57,11 @@
           out.write("<td"+tdClass+">");
           out.write("<a class='cell-link' href='"+ctx+"/user/menus/detail?date="+key+"'>");
           out.write("<span class='daynum'>"+day+"</span>");
-          if (has) {
-        	  for (String s : labs) {
-        	    out.write("<div class='menu-badge'>" + s + "</div>");
-        	  }
-        	}
+          if(has){
+            for(String s: labs){
+              out.write("<div class='menu-badge'>" + s + "</div>");  // ← commons 未使用
+            }
+          }
           out.write("</a></td>");
           day++;
         }
