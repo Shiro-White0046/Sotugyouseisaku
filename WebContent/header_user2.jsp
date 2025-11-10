@@ -55,7 +55,10 @@
   <!-- ヘッダー -->
   <header class="app-header">
     <button class="hamburger" aria-label="menu" onclick="toggleSidebar()">≡</button>
-    <h1>アレルギー対策アプリ</h1>
+    <h1><%= request.getAttribute("headerTitle") != null
+        ? request.getAttribute("headerTitle")
+        : "アレルギー対策アプリ" %></h1>
+
     <nav class="header-actions">
       <% if (userObj != null) { %>
         <a class="btn-logout" href="<%= ctx %>/user/logout">ログアウト</a>

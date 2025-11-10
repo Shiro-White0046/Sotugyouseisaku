@@ -1,41 +1,126 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<!-- 必要ならユーザ用ヘッダーを読み込み（存在する方に合わせて切替） -->
-<%-- <jsp:include page="/header_user.jsp" /> --%>
-<%-- <jsp:include page="/header_user2.jsp" /> --%>
+
+
+<%
+      // <title>タグ用
+  request.setAttribute("headerTitle", "献立表示"); // ヘッダー表示用
+%>
+<jsp:include page="/header_user2.jsp" />
+
 
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>献立</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body{background:#f7e1ca;margin:0;font-family:sans-serif}
-    header{background:#f6e7be;padding:16px 20px;text-align:center}
-    .wrap{max-width:980px;margin:20px auto;padding:0 16px}
-    .nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .cal{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;margin-top:12px}
-    .cal th,.cal td{border:1px solid #bbb;vertical-align:top}
-    .cal th{height:36px;background:#f2f2f2}
-    .cal td{height:96px;position:relative;padding:4px}
-    .dow-sun{background:#ffe7e7}.dow-sat{background:#e3f7ff}
-    .daynum{position:absolute;top:4px;right:6px;font-size:12px;color:#333}
-    .menu-badge{display:inline-block;margin-top:8px;background:#e53935;color:#fff;
-                padding:4px 8px;border-radius:4px;min-width:36px;text-align:center}
-    .cell-link{display:block;width:100%;height:100%;text-decoration:none;color:inherit}
-    .cell-disabled{display:block;width:100%;height:100%;color:#999;cursor:default}
-  </style>
+  body {
+    background: #f7e1ca;
+    margin: 0;
+    font-family: sans-serif;
+  }
+
+  header {
+    background: #f6e7be;
+    padding: 16px 20px;
+    text-align: center;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 20px auto;
+    padding: 0 16px;
+  }
+
+  /* ← クラス名を calendar-nav に変更して衝突回避 */
+  .calendar-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .cal {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    background: #fff;
+    margin-top: 12px;
+  }
+
+  .cal th,
+  .cal td {
+    border: 1px solid #bbb;
+    vertical-align: top;
+  }
+
+  .cal th {
+    height: 36px;
+    background: #f2f2f2;
+  }
+
+  .cal td {
+    height: 96px;
+    position: relative;
+    padding: 4px;
+  }
+
+  .dow-sun {
+    background: #ffe7e7;
+  }
+
+  .dow-sat {
+    background: #e3f7ff;
+  }
+
+  .daynum {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 12px;
+    color: #333;
+  }
+
+  .menu-badge {
+    display: inline-block;
+    margin-top: 8px;
+    background: #e53935;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  .cell-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .cell-disabled {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: #999;
+    cursor: default;
+  }
+</style>
+
 </head>
 <body>
-<header><h2 style="margin:0">献立</h2></header>
+
 
 <div class="wrap">
-  <div class="nav">
-    <a href="${pageContext.request.contextPath}/user/menuscalendar?ym=${prevYm}">◀ 前の月</a>
-    <strong style="font-size:24px">${year}年${month}月</strong>
-    <a href="${pageContext.request.contextPath}/user/menuscalendar?ym=${nextYm}">次の月 ▶</a>
-  </div>
+ <div class="calendar-nav">
+  <a href="${pageContext.request.contextPath}/user/menuscalendar?ym=${prevYm}">◀ 前の月</a>
+  <strong style="font-size:24px">${year}年${month}月</strong>
+  <a href="${pageContext.request.contextPath}/user/menuscalendar?ym=${nextYm}">次の月 ▶</a>
+</div>
+
 
   <table class="cal" aria-label="${year}年${month}月の献立カレンダー">
     <thead>
@@ -47,14 +132,12 @@
     <%
       Integer y = (Integer)request.getAttribute("year");
       Integer m = (Integer)request.getAttribute("month");
-      Integer firstDow = (Integer)request.getAttribute("firstDow");   // 0=日, …, 6=土
+      Integer firstDow = (Integer)request.getAttribute("firstDow");
       Integer daysInMonth = (Integer)request.getAttribute("daysInMonth");
 
-      // 新Servlet（MenusCalendar）の出力：hasMenuMap（日付文字列→true）
       java.util.Map<String, Boolean> hasMenuMap =
         (java.util.Map<String, Boolean>)request.getAttribute("hasMenuMap");
 
-      // 旧仕様（labelsByDate：日付→ラベル一覧）もあれば利用（両対応）
       java.util.Map<String, java.util.List<String>> labelsByDate =
         (java.util.Map<String, java.util.List<String>>)request.getAttribute("labelsByDate");
 
