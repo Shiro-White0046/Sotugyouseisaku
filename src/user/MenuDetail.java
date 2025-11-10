@@ -2,9 +2,6 @@ package user;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,33 +12,23 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import bean.Allergen;
-import bean.MenuDay;
-import bean.MenuItem;
-import bean.MenuMeal;
-import bean.User;
-import dao.MenuDayDAO;
-import dao.MenuItemAllergenDAO;
-import dao.MenuItemDAO;
-import dao.MenuMealDAO;
+import bean.MenuDay;          // ← menu_days 用のビーン（id, orgId, menuDate, imagePath, published, createdAt など）
+import bean.User;            // ← ログインユーザー（orgId 取得で使用）
+import dao.MenuDayDAO;       // ← ★ 旧 MenuDAO ではなく MenuDayDAO を使用
 
-/**
- * 利用者向け：献立の詳細（指定日の「朝・昼・夜」と各品目・アレルゲンをまとめて表示）
- * URL例: /user/menus/detail?date=2025-11-10
- */
 @WebServlet("/user/menus/detail")
 public class MenuDetail extends HttpServlet {
 
-  private final MenuDayDAO dayDao = new MenuDayDAO();
-  private final MenuMealDAO mealDao = new MenuMealDAO();
-  private final MenuItemDAO itemDao = new MenuItemDAO();
-  private final MenuItemAllergenDAO itemAllergenDao = new MenuItemAllergenDAO();
+  private static final long serialVersionUID = 1L;
+
+  // ★ 旧: private final MenuDAO menuDao = new MenuDAO();
+  private final MenuDayDAO menuDao = new MenuDayDAO();
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
 
-    // 認証チェック（利用者は session 属性 "user" を使用）
+    // --- 認可チェック（未ログインならログインへ） ---
     HttpSession session = req.getSession(false);
     if (session == null || session.getAttribute("user") == null) {
       resp.sendRedirect(req.getContextPath() + "/user/login");
@@ -50,60 +37,44 @@ public class MenuDetail extends HttpServlet {
     User loginUser = (User) session.getAttribute("user");
     UUID orgId = loginUser.getOrgId();
 
-    // 必須パラメータ：date=YYYY-MM-DD
+    // --- パラメータ date=yyyy-MM-dd を取得/検証 ---
     String dateStr = req.getParameter("date");
-    if (dateStr == null) {
+    if (dateStr == null || dateStr.trim().isEmpty()) {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "date パラメータが必要です");
       return;
     }
 
-    final LocalDate date;
+    LocalDate date;
     try {
-      date = LocalDate.parse(dateStr);
+      date = LocalDate.parse(dateStr.trim());
     } catch (Exception e) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "date の形式が不正です");
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "日付形式が不正です (yyyy-MM-dd)");
       return;
     }
 
-    // 日単位の献立を取得（存在しなければ「未登録画面」へ）
-    Optional<MenuDay> dayOpt = dayDao.find(orgId, date);
-    if (!dayOpt.isPresent()) {
+    // --- 指定日の menu_days を取得（公開/非公開の判定は必要に応じてJSP側またはここで実施） ---
+    Optional<MenuDay> opt = menuDao.findByDate(orgId, date);
+
+    if (!opt.isPresent()) {
+      // レコードが無い場合：空画面へ
       req.setAttribute("date", date);
-      // プロジェクトの配置方針に合わせてパスは /user/ 配下に
-      req.getRequestDispatcher("/user/menu_detail_empty.jsp").forward(req, resp);
+      // 既存の JSP 構成に合わせてパスを維持（必要なら /user/... に変更）
+      req.getRequestDispatcher("/WEB-INF/views/user/menu_detail_empty.jsp").forward(req, resp);
       return;
     }
 
-    MenuDay day = dayOpt.get();
+    // レコードがある場合：詳細へ
+    MenuDay day = opt.get();
+    req.setAttribute("menuDay", day);
 
-    // 指定日の朝・昼・夜を取得
-    List<MenuMeal> meals = mealDao.listByDay(day.getId());
+    // ※ 旧スキーマ互換のために "menu" という属性名に同じオブジェクトを載せておくと
+    //    既存JSPが ${menu.*} を参照していても移行が少し楽です（必要ならアンコメント）
+    // req.setAttribute("menu", day);
 
-    // 各 meal ごとの品目一覧をまとめる（mealId → items）
-    Map<UUID, List<MenuItem>> itemsMap = new HashMap<UUID, List<MenuItem>>();
+    // 旧コードではアレルゲン一覧を menuDao.listAllergens(menu.getId()) で渡していたが、
+    // 新スキーマ（menu_meals / menu_items / menu_item_allergens）では取得方法が変わる。
+    // 必要になったら MenuMealDAO / MenuItemDAO で品目ごとのアレルゲンを組み立てて渡す。
 
-    // 各 item ごとのアレルゲン一覧をまとめる（itemId → allergens）
-    Map<UUID, List<Allergen>> allergensMap = new HashMap<UUID, List<Allergen>>();
-
-    for (MenuMeal meal : meals) {
-      List<MenuItem> items = itemDao.listByMeal(meal.getId());
-      itemsMap.put(meal.getId(), items);
-
-      // 品目ごとのアレルゲン
-      for (MenuItem it : items) {
-        List<Allergen> als = itemAllergenDao.listByItem(it.getId());
-        allergensMap.put(it.getId(), als);
-      }
-    }
-
-    // 画面に渡す
-    req.setAttribute("date", date);
-    req.setAttribute("day", day);
-    req.setAttribute("meals", meals);
-    req.setAttribute("itemsMap", itemsMap);
-    req.setAttribute("allergensMap", allergensMap);
-
-    // 表示 JSP（/WebContent/user/menu_detail.jsp を想定）
-    req.getRequestDispatcher("/user/menu_detail.jsp").forward(req, resp);
+    req.getRequestDispatcher("/WEB-INF/views/user/menu_detail.jsp").forward(req, resp);
   }
 }
