@@ -18,8 +18,8 @@ import javax.servlet.http.HttpSession;
 import bean.User;     // プロジェクトの User ビーン（orgId取得で使用）
 import dao.MenuDAO;
 
-@WebServlet("/user/menus")
-public class Menus extends HttpServlet {
+@WebServlet("/user/menuscalendar")
+public class MenusCalendar extends HttpServlet {
   private static final long serialVersionUID = 1L;
 
   // ★あなたのプロジェクトに合わせて必要なら変える（存在するURLに！）

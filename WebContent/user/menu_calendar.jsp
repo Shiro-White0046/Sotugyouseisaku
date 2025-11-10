@@ -1,5 +1,9 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!--<jsp:include page="/header_user.jsp"/>-->
+
+{% extends 'header_user2.jsp %}
+{% block title
 
 <!DOCTYPE html><html lang="ja"><head>
 <meta charset="UTF-8"><title>献立</title><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,8 +20,7 @@
   .menu-badge{display:inline-block;margin-top:8px;background:#e53935;color:#fff;
               padding:4px 8px;border-radius:4px;min-width:36px;text-align:center}
   .cell-link{display:block;width:100%;height:100%;text-decoration:none;color:inherit}
-  .nav{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:8px}
-  .nav a{padding:6px 10px;border:1px solid #bbb;border-radius:6px;background:#fff;text-decoration:none}
+  .cell-disabled{display:block;width:100%;height:100%;color:#999;cursor:default}
 </style>
 </head><body>
 <header><h2 style="margin:0">献立</h2></header>
@@ -55,14 +58,21 @@
           boolean has = labs!=null && !labs.isEmpty();
           String tdClass = (dow==0?" class='dow-sun'":(dow==6?" class='dow-sat'":""));
           out.write("<td"+tdClass+">");
-          out.write("<a class='cell-link' href='"+ctx+"/user/menus/detail?date="+key+"'>");
-          out.write("<span class='daynum'>"+day+"</span>");
+
           if(has){
-            for(String s: labs){
-              out.write("<div class='menu-badge'>" + s + "</div>");  // ← commons 未使用
-            }
+            // ★ アレルギー表示がある日だけクリック可（詳細へ）
+            out.write("<a class='cell-link' href='"+ctx+"/user/menus/detail?date="+key+"'>");
+            out.write("<span class='daynum'>"+day+"</span>");
+            for(String s: labs){ out.write("<div class='menu-badge'>" + s + "</div>"); }
+            out.write("</a>");
+          }else{
+            // ★ 表示が無い日はリンクを張らない（何も起きない）
+            out.write("<div class='cell-disabled'>");
+            out.write("<span class='daynum'>"+day+"</span>");
+            out.write("</div>");
           }
-          out.write("</a></td>");
+
+          out.write("</td>");
           day++;
         }
         out.write("</tr>");
