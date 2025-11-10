@@ -72,7 +72,7 @@
         <li><a href="<%= ctx %>/user/allergy/food">食物性アレルギー入力</a></li>
         <li><a href="<%= ctx %>/user/allergy/contact">接触性アレルギー入力</a></li>
         <li><a href="<%= ctx %>/user/avoid">食べられない食材入力</a></li>
-        <li><a href="<%= ctx %>/user/menus">献立表示</a></li>
+        <li><a href="<%= ctx %>/user/menuscalendar">献立表示</a></li>
         <li><a href="<%= ctx %>/user/emergency">緊急連絡先設定</a></li>
         <li><a href="<%= ctx %>/user/pin">認証パスワード設定</a></li>
         <li><a href="<%= ctx %>/user/withdraw">退会</a></li>
