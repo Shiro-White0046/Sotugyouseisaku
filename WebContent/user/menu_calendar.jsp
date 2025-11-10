@@ -1,34 +1,40 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<!--<jsp:include page="/header_user.jsp"/>-->
+<!-- 必要ならユーザ用ヘッダーを読み込み（存在する方に合わせて切替） -->
+<%-- <jsp:include page="/header_user.jsp" /> --%>
+<%-- <jsp:include page="/header_user2.jsp" /> --%>
 
-{% extends 'header_user2.jsp %}
-{% block title
-
-<!DOCTYPE html><html lang="ja"><head>
-<meta charset="UTF-8"><title>献立</title><meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  body{background:#f7e1ca;margin:0;font-family:sans-serif}
-  header{background:#f6e7be;padding:16px 20px;text-align:center}
-  .wrap{max-width:980px;margin:20px auto;padding:0 16px}
-  .cal{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;margin-top:12px}
-  .cal th,.cal td{border:1px solid #bbb;vertical-align:top}
-  .cal th{height:36px;background:#f2f2f2}
-  .cal td{height:96px;position:relative;padding:4px}
-  .dow-sun{background:#ffe7e7}.dow-sat{background:#e3f7ff}
-  .daynum{position:absolute;top:4px;right:6px;font-size:12px;color:#333}
-  .menu-badge{display:inline-block;margin-top:8px;background:#e53935;color:#fff;
-              padding:4px 8px;border-radius:4px;min-width:36px;text-align:center}
-  .cell-link{display:block;width:100%;height:100%;text-decoration:none;color:inherit}
-  .cell-disabled{display:block;width:100%;height:100%;color:#999;cursor:default}
-</style>
-</head><body>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>献立</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{background:#f7e1ca;margin:0;font-family:sans-serif}
+    header{background:#f6e7be;padding:16px 20px;text-align:center}
+    .wrap{max-width:980px;margin:20px auto;padding:0 16px}
+    .nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .cal{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;margin-top:12px}
+    .cal th,.cal td{border:1px solid #bbb;vertical-align:top}
+    .cal th{height:36px;background:#f2f2f2}
+    .cal td{height:96px;position:relative;padding:4px}
+    .dow-sun{background:#ffe7e7}.dow-sat{background:#e3f7ff}
+    .daynum{position:absolute;top:4px;right:6px;font-size:12px;color:#333}
+    .menu-badge{display:inline-block;margin-top:8px;background:#e53935;color:#fff;
+                padding:4px 8px;border-radius:4px;min-width:36px;text-align:center}
+    .cell-link{display:block;width:100%;height:100%;text-decoration:none;color:inherit}
+    .cell-disabled{display:block;width:100%;height:100%;color:#999;cursor:default}
+  </style>
+</head>
+<body>
 <header><h2 style="margin:0">献立</h2></header>
+
 <div class="wrap">
   <div class="nav">
-    <a href="${pageContext.request.contextPath}/user/menus?ym=${prevYm}">◀ 前の月</a>
+    <a href="${pageContext.request.contextPath}/user/menuscalendar?ym=${prevYm}">◀ 前の月</a>
     <strong style="font-size:24px">${year}年${month}月</strong>
-    <a href="${pageContext.request.contextPath}/user/menus?ym=${nextYm}">次の月 ▶</a>
+    <a href="${pageContext.request.contextPath}/user/menuscalendar?ym=${nextYm}">次の月 ▶</a>
   </div>
 
   <table class="cal" aria-label="${year}年${month}月の献立カレンダー">
@@ -41,34 +47,54 @@
     <%
       Integer y = (Integer)request.getAttribute("year");
       Integer m = (Integer)request.getAttribute("month");
-      Integer firstDow = (Integer)request.getAttribute("firstDow");
-      Integer days = (Integer)request.getAttribute("daysInMonth");
-      java.util.Map<String, java.util.List<String>> labels =
+      Integer firstDow = (Integer)request.getAttribute("firstDow");   // 0=日, …, 6=土
+      Integer daysInMonth = (Integer)request.getAttribute("daysInMonth");
+
+      // 新Servlet（MenusCalendar）の出力：hasMenuMap（日付文字列→true）
+      java.util.Map<String, Boolean> hasMenuMap =
+        (java.util.Map<String, Boolean>)request.getAttribute("hasMenuMap");
+
+      // 旧仕様（labelsByDate：日付→ラベル一覧）もあれば利用（両対応）
+      java.util.Map<String, java.util.List<String>> labelsByDate =
         (java.util.Map<String, java.util.List<String>>)request.getAttribute("labelsByDate");
+
       String ctx = request.getContextPath();
 
-      int day=1;
-      for(int week=0; week<6 && day<=days; week++){
+      int day = 1;
+      for (int week = 0; week < 6 && day <= daysInMonth; week++) {
         out.write("<tr>");
-        for(int dow=0; dow<7; dow++){
-          if((week==0 && dow<firstDow) || day>days){ out.write("<td></td>"); continue; }
+        for (int dow = 0; dow < 7; dow++) {
+          if ((week == 0 && dow < firstDow) || day > daysInMonth) { out.write("<td></td>"); continue; }
+
           java.time.LocalDate d = java.time.LocalDate.of(y, m, day);
           String key = d.toString();
-          java.util.List<String> labs = (labels==null)?null:labels.get(key);
-          boolean has = labs!=null && !labs.isEmpty();
-          String tdClass = (dow==0?" class='dow-sun'":(dow==6?" class='dow-sat'":""));
-          out.write("<td"+tdClass+">");
 
-          if(has){
-            // ★ アレルギー表示がある日だけクリック可（詳細へ）
-            out.write("<a class='cell-link' href='"+ctx+"/user/menus/detail?date="+key+"'>");
-            out.write("<span class='daynum'>"+day+"</span>");
-            for(String s: labs){ out.write("<div class='menu-badge'>" + s + "</div>"); }
+          boolean has = false;
+          java.util.List<String> labs = null;
+
+          if (labelsByDate != null) {
+            labs = labelsByDate.get(key);
+            has = (labs != null && !labs.isEmpty());
+          } else if (hasMenuMap != null) {
+            Boolean b = hasMenuMap.get(key);
+            has = (b != null && b.booleanValue());
+          }
+
+          String tdClass = (dow == 0 ? " class='dow-sun'" : (dow == 6 ? " class='dow-sat'" : ""));
+          out.write("<td" + tdClass + ">");
+
+          if (has) {
+            out.write("<a class='cell-link' href='" + ctx + "/user/menus/detail?date=" + key + "'>");
+            out.write("<span class='daynum'>" + day + "</span>");
+            if (labs != null && !labs.isEmpty()) {
+              for (String s : labs) out.write("<div class='menu-badge'>" + s + "</div>");
+            } else {
+              out.write("<div class='menu-badge'>献立あり</div>");
+            }
             out.write("</a>");
-          }else{
-            // ★ 表示が無い日はリンクを張らない（何も起きない）
+          } else {
             out.write("<div class='cell-disabled'>");
-            out.write("<span class='daynum'>"+day+"</span>");
+            out.write("<span class='daynum'>" + day + "</span>");
             out.write("</div>");
           }
 
@@ -81,4 +107,5 @@
     </tbody>
   </table>
 </div>
-</body></html>
+</body>
+</html>

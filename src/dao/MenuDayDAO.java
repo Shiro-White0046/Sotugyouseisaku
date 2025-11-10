@@ -147,4 +147,20 @@ public class MenuDayDAO {
     m.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
     return m;
   }
+	//MenuDayDAO.java
+	public Optional<MenuDay> findByDate(UUID orgId, LocalDate date) {
+	 final String sql = "SELECT * FROM menu_days WHERE org_id = ? AND menu_date = ? LIMIT 1";
+	 try (Connection con = ConnectionFactory.getConnection();
+	      PreparedStatement ps = con.prepareStatement(sql)) {
+	   ps.setObject(1, orgId);
+	   ps.setObject(2, date);
+	   try (ResultSet rs = ps.executeQuery()) {
+	     if (rs.next()) return Optional.of(map(rs));
+	     else return Optional.empty();
+	   }
+	 } catch (SQLException e) {
+	   throw new RuntimeException("menu_days 取得に失敗しました", e);
+	 }
+	}
+
 }

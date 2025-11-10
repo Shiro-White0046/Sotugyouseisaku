@@ -8,16 +8,16 @@
 <h2>今日の献立</h2>
 <div class="menu-card">
 
-<%-- <% bean.Menu today = (bean.Menu)request.getAttribute("todayMenu"); %>
-  <% if (today != null) { %>
-    <div class="menu-name"><%= today.getName() %></div>
-    <div class="menu-desc"><%= today.getDescription() != null ? today.getDescription() : "" %></div>
-    <% if (today.getImagePath() != null && !today.getImagePath().isEmpty()) { %>
-      <img class="menu-image" src="<%= request.getContextPath() + today.getImagePath() %>" alt="menu image">
-    <% } %>
-  <% } else { %>
-    <div class="menu-empty">本日の献立は未登録です。</div>
-  <% } %>
-</div>
- --%>
+<c:if test="${not empty todayMenu}">
+  <div class="card">
+    <h3>${todayMenu.menuDate} の献立</h3>
+    <c:if test="${not empty todayMenu.imagePath}">
+      <img src="${pageContext.request.contextPath}${todayMenu.imagePath}" alt="今日の献立画像" style="max-width:100%">
+    </c:if>
+  </div>
+</c:if>
+<c:if test="${empty todayMenu}">
+  <p>本日の献立は登録されていません。</p>
+</c:if>
+
 <jsp:include page="/footer.jsp" />
