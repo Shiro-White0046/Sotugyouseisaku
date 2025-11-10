@@ -3,6 +3,7 @@ package user;
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -10,6 +11,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import bean.User;
+import dao.AllergenDAO;
 
 
 @WebServlet("/user/allergy/register")
@@ -47,6 +51,17 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
 	    Integer userId = (Integer) req.getSession().getAttribute("loginUserId");
 	    if (userId == null) userId = 0; // 監査不要なら0でも可
 
+	    HttpSession session = req.getSession();
+	    User user = (User) session.getAttribute("user");
+	    UUID user_Id = user.getId();
+
+	    System.out.println("--------------------");
+	    System.out.println(user_Id);
+	    System.out.println("--------------------");
+
+
+
+
 	    // 4) ID配列の正規化（null/重複/変換エラー除去）
 	    Set<Short> uniqueIds = new LinkedHashSet<>();
 	    if (ids != null) {
@@ -73,6 +88,11 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
 
 	    // 5) 登録処理
 	    try {
+
+	    	AllergenDAO allerDao =new AllergenDAO();
+
+
+
 	       //既知アレルゲン（マスタIDあり）は upsert。重症度は当面1（必要なら確認画面で持たせてください）
 	      for (Short allergenId : uniqueIds) {
 	    	  System.out.println(allergenId);
@@ -89,7 +109,7 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
 	     // }
 
 	      // 6) 完了（重複送信防止のためリダイレクト）
-	      HttpSession session = req.getSession();
+
 	      session.setAttribute("flash", "アレルギーを登録しました");
 	      resp.sendRedirect(req.getContextPath() + "/user/home");
 //	      req.getRequestDispatcher("/user/home.jsp").forward(req, resp);
