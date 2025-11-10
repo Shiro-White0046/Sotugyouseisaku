@@ -12,27 +12,21 @@ html, body {
 /* =============================
    共通デザイン設定
    ============================= */
-
 body {
   font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   text-align: center;
   background: #f4f6f8;
   color: #333;
 }
-
 h1 {
   font-size: 28px;
   margin-bottom: 12px;
 }
-
-p {
-  color: #555;
-}
+p { color: #555; }
 
 /* =============================
    ボタン
    ============================= */
-
 .button {
   display: inline-block;
   margin: 12px;
@@ -46,21 +40,9 @@ p {
   background-color: #007bff;
   transition: 0.2s;
 }
-
-.button:hover {
-  background-color: #0056b3;
-}
-
-/* 新規登録ボタン */
-.button.new-btn {
-  background-color: #28a745;
-}
-
-.button.new-btn:hover {
-  background-color: #1c7c31;
-}
-
-/* ゴーストボタン */
+.button:hover { background-color: #0056b3; }
+.button.new-btn { background-color: #28a745; }
+.button.new-btn:hover { background-color: #1c7c31; }
 .button.ghost {
   background: #fff;
   color: #111;
@@ -70,41 +52,31 @@ p {
 /* =============================
    フォーム・コンテナ類
    ============================= */
-
 .container {
   max-width: 480px;
   margin: 80px auto;
   padding: 0 16px;
   text-align: left;
 }
-
 .card {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 16px;
 }
-
 label {
   display: block;
   margin: 12px 0 6px;
   font-weight: 600;
 }
-
-input[type="text"],
-input[type="password"] {
+input[type="text"], input[type="password"] {
   width: 100%;
   box-sizing: border-box;
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
 }
-
-.actions {
-  margin-top: 16px;
-  text-align: right;
-}
-
+.actions { margin-top: 16px; text-align: right; }
 .alert.error {
   margin: 12px 0;
   padding: 10px 12px;
@@ -117,8 +89,6 @@ input[type="password"] {
 /* =============================
    レイアウト構成（ヘッダー / サイドバー / コンテンツ）
    ============================= */
-
-/* ヘッダー */
 .app-header {
   background: #fbf3c2;
   border-bottom: 1px solid #e6e3c4;
@@ -131,14 +101,12 @@ input[type="password"] {
   top: 0;
   z-index: 100;
 }
-
 .app-header h1 {
   margin: 0;
   font-size: 18px;
   text-align: center;
   flex: 1;
 }
-
 .hamburger {
   background: #fff;
   border: 1px solid #d1d5db;
@@ -147,127 +115,11 @@ input[type="password"] {
   height: 32px;
   cursor: pointer;
 }
-
-/* メインレイアウト */
 .layout {
   display: flex;
   min-height: calc(100vh - 56px);
   background: #fde8d0;
 }
-
-/* サイドバー（収納対応） */
-.sidebar {
-  width: 240px;
-  background: #f7f7f7;
-  border-right: 1px solid #e5e7eb;
-  padding: 8px 0;
-  transform: translateX(-100%);
-  transition: transform .2s ease;
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
-  height: calc(100vh - 56px);
-  overflow: auto;
-}
-
-html.sidebar-open .sidebar {
-  transform: translateX(0);
-}
-
-.sidebar-user {
-  background: #b7ea98;
-  padding: 10px 12px;
-  font-weight: 700;
-  margin: 0 8px 6px;
-  border-radius: 6px;
-}
-
-.nav {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.nav li a {
-  display: block;
-  padding: 10px 14px;
-  color: #111;
-  text-decoration: none;
-  border-radius: 6px;
-  margin: 4px 8px;
-}
-
-.nav li a:hover {
-  background: #eef2ff;
-}
-
-.nav li a.active {
-  background: #e0e7ff;
-  font-weight: 600;
-}
-
-/* コンテンツ */
-.content {
-  flex: 1;
-  padding: 24px;
-  min-width: 0;
-}
-
-.content h2 {
-  text-align: center;
-  margin: 12px 0 16px;
-}
-
-/* フッター */
-.app-footer {
-  background: #f7f7f7;
-  border-top: 1px solid #e5e7eb;
-  text-align: center;
-  padding: 8px;
-  font-size: 14px;
-  color: #666;
-}
-
-/* =============================
-   メニューカード
-   ============================= */
-
-.menu-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  max-width: 560px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.menu-name {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.menu-desc {
-  color: #555;
-  margin-bottom: 12px;
-}
-
-.menu-image {
-  max-width: 100%;
-  height: auto;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-}
-
-.menu-empty {
-  color: #666;
-}
-
-/* =============================
-   レスポンシブ
-   ============================= */
-/* サイドバー（共通） */
 .sidebar {
   width: 240px;
   background: #f7f7f7;
@@ -282,88 +134,99 @@ html.sidebar-open .sidebar {
   overflow: auto;
 }
 html.sidebar-open .sidebar { transform: translateX(0); }
-
-/* （任意）デスクトップ時の見た目調整だけ。開閉ロジックは維持 */
-@media (min-width: 960px){
-  .sidebar { /* ここでは transform をいじらない */ }
-  /* 必要なら、開いている時だけコンテンツに余白をつける */
-  /* html.sidebar-open .content { margin-left: 240px; } */
-}
-
-
-/* =============================
-   エラー入力時の赤枠表示
-   ============================= */
-.input-error {
-  border: 2px solid #dc2626;
-  background-color: #fff5f5;
-}
-
-
-
-/* =============================
-   未スタイルページ用の調整（共通ページ / 完了画面など）
-   ============================= */
-
-/* ページ全体の中央寄せ（汎用用） */
-.center-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  min-height: 80vh;
-  text-align: center;
-  background: #f4f6f8;
-}
-
-/* 見出し（h1〜h3）統一 */
-.center-page h1,
-.center-page h2,
-.center-page h3 {
-  margin: 12px 0;
+.sidebar-user {
+  background: #b7ea98;
+  padding: 10px 12px;
   font-weight: 700;
-  color: #333;
+  margin: 0 8px 6px;
+  border-radius: 6px;
+}
+.nav { list-style: none; padding: 0; margin: 0; }
+.nav li a {
+  display: block;
+  padding: 10px 14px;
+  color: #111;
+  text-decoration: none;
+  border-radius: 6px;
+  margin: 4px 8px;
+}
+.nav li a:hover { background: #eef2ff; }
+.nav li a.active { background: #e0e7ff; font-weight: 600; }
+.content { flex: 1; padding: 24px; min-width: 0; }
+.content h2 { text-align: center; margin: 12px 0 16px; }
+.app-footer {
+  background: #f7f7f7;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  padding: 8px;
+  font-size: 14px;
+  color: #666;
 }
 
-/* 完了・エラー・情報メッセージ */
-.message-box {
-  background: #ffffff;
+/* =============================
+   メニューカード（利用者・管理者共通）
+   ============================= */
+.menu-card {
+  background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 24px 32px;
-  max-width: 480px;
-  margin: 16px auto;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 16px;
+  max-width: 560px;
+  margin: 0 auto;
+  text-align: center;
 }
-
-.message-box.success {
-  border-color: #86efac;
-  background: #ecfdf5;
-  color: #166534;
+.menu-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
-
-.message-box.error {
-  border-color: #fca5a5;
-  background: #fef2f2;
-  color: #991b1b;
+.menu-desc { color: #555; margin-bottom: 12px; }
+.menu-image {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
 }
+.menu-empty { color: #666; }
 
-.message-box.info {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1e3a8a;
+/* --- 献立詳細や利用者ホームでも使える補助 --- */
+.menu-slot {
+  font-weight: 600;
+  color: #333;
+  margin: 8px 0;
 }
-
-/* ボタンコンテナ（中央寄せ） */
-.button-area {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 20px;
+.meal-item-list {
+  list-style: disc;
+  text-align: left;
+  max-width: 420px;
+  margin: 0 auto;
+  padding-left: 20px;
 }
+.meal-item-list li { margin: 6px 0; color: #333; }
 
-/* 単純テーブル（一覧や確認用） */
+/* =============================
+   未スタイルページ / 完了画面など（共通）
+   ============================= */
+.center-page {
+  display: flex; justify-content: center; align-items: center;
+  flex-direction: column; min-height: 80vh; text-align: center;
+  background: #f4f6f8;
+}
+.center-page h1, .center-page h2, .center-page h3 {
+  margin: 12px 0; font-weight: 700; color: #333;
+}
+.message-box {
+  background: #fff; border: 1px solid #e5e7eb;
+  border-radius: 8px; padding: 24px 32px; max-width: 480px;
+  margin: 16px auto; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.message-box.success { border-color: #86efac; background: #ecfdf5; color: #166534; }
+.message-box.error { border-color: #fca5a5; background: #fef2f2; color: #991b1b; }
+.message-box.info { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; }
+
+/* =============================
+   一覧テーブル
+   ============================= */
 .simple-table {
   border-collapse: collapse;
   width: 100%;
@@ -374,255 +237,72 @@ html.sidebar-open .sidebar { transform: translateX(0); }
   overflow: hidden;
   border: 1px solid #e5e7eb;
 }
-
-.simple-table th,
-.simple-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-}
-
-.simple-table th {
-  background: #f9fafb;
-  font-weight: 600;
-}
-
-.simple-table tr:last-child td {
-  border-bottom: none;
-}
-
-/* 戻るボタン・リンク */
-.link-back {
-  display: inline-block;
-  margin-top: 20px;
-  color: #2563eb;
-  text-decoration: none;
-}
-
-.link-back:hover {
-  text-decoration: underline;
-}
-
-/* =============================
-   新規登録フォーム共通デザイン（管理者／利用者）
-   ============================= */
-
-/* ページ全体レイアウト */
-.register-page {
-  max-width: 520px;
-  margin: 60px auto 100px;
-  padding: 0 16px;
-}
-
-/* 見出し */
-.register-page h2 {
-  text-align: center;
-  font-size: 24px;
-  color: #222;
-  margin-bottom: 24px;
-}
-
-/* フォーム本体 */
-.register-form {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 24px 28px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-/* ラベルと入力欄 */
-.register-form label {
-  display: block;
-  font-weight: 600;
-  margin-top: 16px;
-  margin-bottom: 6px;
-  color: #111;
-}
-
-.register-form input[type="text"],
-.register-form input[type="password"],
-.register-form input[type="email"] {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.register-form input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
-  outline: none;
-}
-
-/* ラジオボタンや小さな項目 */
-.register-form .option-group {
-  margin-top: 12px;
-}
-
-.register-form .option-group label {
-  font-weight: normal;
-  margin-right: 16px;
-  cursor: pointer;
-}
-
-/* エラー文 */
-.register-form .alert.error {
-  margin-top: 8px;
-  padding: 10px 12px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
-  border-radius: 6px;
-}
-
-/* ボタン行 */
-.register-form .actions {
-  margin-top: 24px;
-  text-align: center;
-}
-
-.register-form .actions .button {
-  padding: 12px 32px;
-  font-size: 17px;
-  border-radius: 6px;
-}
-
-/* 補足文（小さな説明） */
-.register-form small {
-  display: block;
-  margin-top: 4px;
-  font-size: 13px;
-  color: #666;
-}
-
-/* 登録完了画面でのボタン配置 */
-.register-complete {
-  text-align: center;
-  margin-top: 40px;
-}
-
-.register-complete .button {
-  margin: 8px;
-}
-
-/* --- 個人/複数（ラジオ）の横並び＆位置ズレ解消 --- */
-.inline-options{
-  display:flex;
-  align-items:center;
-  gap:16px;
-  flex-wrap:wrap;
-}
-.inline-options label{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  margin:0;
-  font-weight:500; /* 太すぎる場合は外してOK */
-}
-.inline-options input[type="radio"]{ margin:0; }
-
-/* --- 最終画面のボタンを横並び＆左右端に配置 --- */
-.page-actions{
-  display:flex;
-  justify-content:space-between;  /* 左右に分割 */
-  align-items:center;
-  gap:12px;
-  margin-top:24px;
-}
-.page-actions .left,
-.page-actions .right{
-  display:flex;
-  align-items:center;
-  gap:8px;           /* ボタン間の隙間 */
-}
-.page-actions .right{ margin-left:auto; } /* 右ブロックを右寄せ */
-
-.page-actions .button{
-  /* 横長に見せるため（縦に伸びない） */
-  width:auto;
-  white-space:nowrap;
-  padding:12px 28px;
-}
-
-/* 画面下に吸着したい場合は（任意）： */
-.page-actions.sticky-bottom{
-  position:sticky;
-  bottom:0;
-  background:#f4f6f8;   /* 背景と同じ色 */
-  padding-top:12px;
-}
-@media (max-width: 520px){
-  /* スマホ時は右側グループを折り返しやすく */
-  .page-actions{ flex-wrap:wrap; }
-  .page-actions .right{ margin-left:0; margin-right:0; }
-}
-
-/* 汎用カード幅 */
-.card-narrow { max-width: 680px; margin: 0 auto 16px; }
-.card-wide   { max-width: 960px; margin: 0 auto; }
-
-/* テーブル（一覧用） */
-.simple-table {
-  width: 100%;
-  border-collapse: collapse;
-}
 .simple-table th, .simple-table td {
   padding: 10px 12px;
   border-bottom: 1px solid #e5e7eb;
   text-align: left;
 }
-.simple-table thead th {
-  background: #f3f4f6;
-  font-weight: 700;
-}
-
-/* ページ内アクション行 */
-.actions { margin-top: 16px; text-align: right; }
-.actions-left  { text-align: left;  margin-top: 12px; }
-.actions-center{ text-align: center; margin-top: 12px; }
-
-/* サイドバーのアクティブ（既存 .nav a.active を補強） */
-.sidebar .nav a.active {
-  background: #e0e7ff;
+.simple-table th {
+  background: #f9fafb;
   font-weight: 600;
 }
+.simple-table tr:last-child td { border-bottom: none; }
 
-/* 入力フォーム */
-.form-row { display:block; }
-.form-row label { display:block; margin: 12px 0 6px; font-weight: 600; }
-.form-row input[type="text"] { width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:6px; }
-
-
-/* 縦線つきテーブル */
-.simple-table.with-border th,
-.simple-table.with-border td {
-  border-right: 1px solid #e5e7eb;
+/* =============================
+   利用者ホーム専用ボタン補助
+   ============================= */
+.footer-btns {
+  margin-top: 24px;
+  text-align: center;
 }
-.simple-table.with-border th:last-child,
-.simple-table.with-border td:last-child {
-  border-right: none; /* 最右列だけ線なし */
+.footer-btns a {
+  margin: 0 8px;
+  display: inline-block;
+  background: #007bff;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  transition: 0.2s;
 }
-.simple-table.with-border thead th {
-  background: #f3f4f6;
-  border-bottom: 2px solid #d1d5db;
+.footer-btns a:hover { background: #0056b3; }
+
+/* =============================
+   レスポンシブ
+   ============================= */
+@media (min-width: 960px) {
+  .sidebar { /* transform保持 */ }
 }
 
+/* ---- 献立画像の縦長対策 ---- */
+.menu-image {
+  display: block;
+  width: 100%;
+  height: auto;              /* 通常はこれでOK */
+  max-height: 360px;         /* ここで上限を設定（好みで 320～480px） */
+  margin: 0 auto 12px;
+  image-orientation: from-image; /* EXIF回転の尊重（Safari対策） */
+}
 
+/* もし portrait（極端に縦長）画像でも縦に伸びすぎる場合の保険：
+   高さを固定して内側に収める版（上の .menu-image とどちらか片方でOK）
+*/
+.menu-image.tamed {
+  height: 360px;             /* 固定高さ */
+  width: 100%;
+  object-fit: contain;       /* 収まり重視。トリミングしない */
+}
 
+/* ユーザーHOMEの縦長白枠をやめる：外側を透明化して内側カードだけ表示 */
+.menu-card {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
 
-.flash-wrap{display:flex;align-items:center;gap:12px;max-width:720px;
-              margin:16px auto 24px;background:#fff;border:2px solid #333;
-              border-radius:8px;box-shadow:0 2px #999;}
-  .flash-msg{flex:1;padding:14px 16px;}
-  .flash-ok{margin-right:8px;border:2px solid #a9b8d4;background:#dfe9ff;
-            padding:10px 18px;border-radius:10px;cursor:pointer}
-  .photo-box{max-width:640px;margin:24px auto;background:#fff;border:2px solid #333;
-             height:220px;display:flex;align-items:center;justify-content:center}
-
-
-
-
-
+/* 中の card を中央に。高さは中身ぶんだけになる */
+.menu-card > .card {
+  margin: 0 auto;
+  max-width: 560px;
+}
