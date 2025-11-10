@@ -1,5 +1,5 @@
 -- 起動時シード用：JDBC側でトランザクション管理するので BEGIN/COMMIT は不要
-TRUNCATE TABLE individual_allergies, menu_allergens, allergens
+TRUNCATE TABLE individual_allergies, allergens
   RESTART IDENTITY CASCADE;
 
 -- ===== FOOD（27品目＋α）=====

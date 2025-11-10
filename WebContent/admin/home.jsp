@@ -7,7 +7,8 @@
 
 <h2>今日の献立</h2>
 <div class="menu-card">
-  <% bean.Menu today = (bean.Menu)request.getAttribute("todayMenu"); %>
+
+<%-- <% bean.Menu today = (bean.Menu)request.getAttribute("todayMenu"); %>
   <% if (today != null) { %>
     <div class="menu-name"><%= today.getName() %></div>
     <div class="menu-desc"><%= today.getDescription() != null ? today.getDescription() : "" %></div>
@@ -18,5 +19,5 @@
     <div class="menu-empty">本日の献立は未登録です。</div>
   <% } %>
 </div>
-
+ --%>
 <jsp:include page="/footer.jsp" />
