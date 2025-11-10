@@ -12,6 +12,10 @@
   if (userObj instanceof User) {
     userName = ((User) userObj).getName();
   }
+
+  // このページが /user/home のときだけ body に page-user-home を付与
+  String uri = request.getRequestURI();
+  boolean isUserHome = (uri != null) && (uri.endsWith("/user/home") || uri.endsWith("/user/home.jsp"));
 %>
 <!DOCTYPE html>
 <html lang="ja">
@@ -21,37 +25,75 @@
   <link rel="stylesheet" href="<%= ctx %>/css/style.css">
   <script>
     // サイドバー開閉
-    function toggleSidebar(){ document.documentElement.classList.toggle('sidebar-open'); saveSidebarState(); }
+    function toggleSidebar(){
+      document.documentElement.classList.toggle('sidebar-open');
+      saveSidebarState();
+    }
+
     function applyInitialSidebarState(){
-      try{
+      try {
         var saved = localStorage.getItem('sidebar-open');
-        if (saved === 'true') document.documentElement.classList.add('sidebar-open');
-        else if (saved === 'false') document.documentElement.classList.remove('sidebar-open');
-        else (window.innerWidth >= 960)
-          ? document.documentElement.classList.add('sidebar-open')
-          : document.documentElement.classList.remove('sidebar-open');
-      }catch(e){
-        (window.innerWidth >= 960)
-          ? document.documentElement.classList.add('sidebar-open')
-          : document.documentElement.classList.remove('sidebar-open');
+        if (saved === 'true') {
+          document.documentElement.classList.add('sidebar-open');
+        } else if (saved === 'false') {
+          document.documentElement.classList.remove('sidebar-open');
+        } else {
+          if (window.innerWidth >= 960) {
+            document.documentElement.classList.add('sidebar-open');
+          } else {
+            document.documentElement.classList.remove('sidebar-open');
+          }
+        }
+      } catch (e) {
+        if (window.innerWidth >= 960) {
+          document.documentElement.classList.add('sidebar-open');
+        } else {
+          document.documentElement.classList.remove('sidebar-open');
+        }
       }
     }
+
     function saveSidebarState(){
-      try{ localStorage.setItem('sidebar-open', document.documentElement.classList.contains('sidebar-open')); }catch(e){}
+      try {
+        localStorage.setItem('sidebar-open',
+          document.documentElement.classList.contains('sidebar-open')
+        );
+      } catch(e) {}
     }
+
     function highlightActiveNav(){
       var here = location.pathname;
       var links = document.querySelectorAll('.sidebar .nav a');
-      for (var i=0;i<links.length;i++){
-        if (here.indexOf(links[i].pathname) === 0){ links[i].classList.add('active'); }
+      for (var i=0; i<links.length; i++){
+        var a = links[i];
+        // startsWith 相当（サブパスでも当たるよう indexOf===0）
+        if (here.indexOf(a.pathname) === 0) {
+          a.classList.add('active');
+          a.setAttribute('aria-current', 'page');
+        }
       }
     }
+
     window.addEventListener('DOMContentLoaded', function(){
-      applyInitialSidebarState(); highlightActiveNav();
+      applyInitialSidebarState();
+      highlightActiveNav();
+    });
+
+    // 画面幅変更時、未保存状態ならデフォルト判定を再適用（任意）
+    window.addEventListener('resize', function(){
+      var saved = null;
+      try { saved = localStorage.getItem('sidebar-open'); } catch(e){}
+      if (saved === null) { // ユーザー操作未保存時のみ自動追従
+        if (window.innerWidth >= 960) {
+          document.documentElement.classList.add('sidebar-open');
+        } else {
+          document.documentElement.classList.remove('sidebar-open');
+        }
+      }
     });
   </script>
 </head>
-<body>
+<body class="<%= isUserHome ? "page-user-home" : "" %>">
   <!-- ヘッダー -->
   <header class="app-header">
     <button class="hamburger" aria-label="menu" onclick="toggleSidebar()">≡</button>
