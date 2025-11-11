@@ -93,7 +93,7 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
       // }
 
       // 8) 完了
-      session.setAttribute("flash", "アレルギーを登録しました");
+      session.setAttribute("flashMessage", "アレルギーを登録しました");
       resp.sendRedirect(req.getContextPath() + "/user/home");
 
     } catch (Exception e) {
