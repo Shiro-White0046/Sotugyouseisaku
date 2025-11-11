@@ -41,8 +41,9 @@
              aria-invalid="<%= hasError ? "true" : "false" %>"
              required>
       <div class="actions">
-        <button type="submit" class="button">次へ</button>
         <a href="<%= request.getContextPath() %>/admin/index.jsp" class="button ghost">戻る</a>
+        <button type="submit" class="button">次へ</button>
+
 
       </div>
     </form>
