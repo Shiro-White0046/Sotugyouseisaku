@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import bean.Allergen;
 import infra.ConnectionFactory;
@@ -135,7 +136,18 @@ public class AllergenDAO {
     return list;
   }
 
-
+  public boolean exists(UUID individualId) {
+	    final String sql = "SELECT 1 FROM allergies WHERE person_id=?";
+	    try (Connection con = ConnectionFactory.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+	      ps.setObject(1, individualId);
+	      try (ResultSet rs = ps.executeQuery()) {
+	        return rs.next();
+	      }
+	    } catch (SQLException e) {
+	      throw new RuntimeException("exists 失敗", e);
+	    }
+	  }
 
 
 }

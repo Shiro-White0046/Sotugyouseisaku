@@ -128,14 +128,12 @@ public class IndividualAllergyDAO {
 
 
 
-  public boolean delete(java.util.UUID personId, short allergenId) {
-    String sql = "DELETE FROM individual_allergies WHERE person_id = ? AND allergen_id = ?";
+  public void delete(java.util.UUID personId) {
+    String sql = "DELETE FROM individual_allergies WHERE person_id = ?";
 
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
       ps.setObject(1, personId);
-      ps.setShort(2, allergenId);
-      return ps.executeUpdate() == 1;
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
@@ -150,6 +148,25 @@ public class IndividualAllergyDAO {
 	      throw new RuntimeException("individual_allergies の削除に失敗しました。", e);
 	    }
 	  }
+
+
+
+  public boolean exists(UUID individualId) {
+	    final String sql = "SELECT 1 FROM individual_allergies WHERE person_id=?";
+	    try (Connection con = ConnectionFactory.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+	      ps.setObject(1, individualId);
+	      try (ResultSet rs = ps.executeQuery()) {
+	        return rs.next();
+	      }
+	    } catch (SQLException e) {
+	      throw new RuntimeException("exists 失敗", e);
+	    }
+	  }
+
+
+
+
 
 
 	//返却DTO
@@ -171,6 +188,10 @@ public class IndividualAllergyDAO {
 	 public String getContacts(){ return contacts; }
 	 public String getAvoids(){ return avoids; }
 	}
+
+
+
+
 
 	// 追加：カテゴリ別集約一覧（名前検索対応）
 	public List<AllergyView> aggregateByCategory(java.util.UUID orgId, String keyword) {
