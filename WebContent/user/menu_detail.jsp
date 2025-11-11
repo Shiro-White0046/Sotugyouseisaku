@@ -40,7 +40,7 @@
 
 <%
   // ヘッダー（指定の include を使用）
-  request.setAttribute("headerTitle", "献立詳細"); // 表示名は必要に応じて変えてOK
+  request.setAttribute("headerTitle", "献立"); // 表示名は必要に応じて変えてOK
 %>
 <jsp:include page="/header_user2.jsp" />
 
