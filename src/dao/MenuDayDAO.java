@@ -182,4 +182,18 @@ public class MenuDayDAO {
     if (odt != null) d.setCreatedAt(odt);
     return d;
   }
+	//MenuDayDAO に追加
+	public void updateImagePath(java.util.UUID dayId, String path) {
+	 final String sql = "UPDATE menu_days SET image_path=? WHERE id=?";
+	 try (java.sql.Connection con = infra.ConnectionFactory.getConnection();
+	      java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+	   ps.setString(1, path);
+	   ps.setObject(2, dayId);
+	   ps.executeUpdate();
+	 } catch (java.sql.SQLException e) {
+	   throw new RuntimeException("menu_days の画像更新に失敗しました(updateImagePath)", e);
+	 }
+	}
+
+
 }

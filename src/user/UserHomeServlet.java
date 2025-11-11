@@ -63,7 +63,7 @@ public class UserHomeServlet extends HttpServlet {
       Optional<MenuMeal> fallback = mealDao.findAnyByDay(day.getId());
       if (fallback.isPresent()) {
         mealOpt = fallback;
-        slot = fallback.get().getMealSlot(); // 表示用に更新
+        slot = fallback.get().getSlot(); // 表示用に更新
       }
     }
 

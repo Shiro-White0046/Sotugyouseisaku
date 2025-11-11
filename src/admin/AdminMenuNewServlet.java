@@ -15,8 +15,8 @@ import bean.Administrator;
 import bean.Organization;
 import dao.MenuDayDAO;
 
-@WebServlet("/admin/menus")
-public class AdminMenuDayListServlet extends HttpServlet {
+@WebServlet("/admin/menus_new")
+public class AdminMenuNewServlet extends HttpServlet {
   private final MenuDayDAO dayDao = new MenuDayDAO();
 
   @Override
@@ -26,12 +26,14 @@ public class AdminMenuDayListServlet extends HttpServlet {
     HttpSession ses = req.getSession(false);
     Administrator admin = (ses != null) ? (Administrator) ses.getAttribute("admin") : null;
     Organization org    = (ses != null) ? (Organization)  ses.getAttribute("org")   : null;
+
+    // ログインチェック
     if (admin == null || org == null) {
       resp.sendRedirect(req.getContextPath() + "/admin/login");
       return;
     }
 
-    // ym=YYYY-MM（未指定は今月）
+    // ym=YYYY-MM（未指定なら今月）
     YearMonth ym;
     try {
       String p = req.getParameter("ym");
@@ -40,8 +42,8 @@ public class AdminMenuDayListServlet extends HttpServlet {
       ym = YearMonth.now();
     }
 
-    // 当月の「その日が登録済みかどうか」を一覧で取得
-    // 返り値イメージ：Map<LocalDate, Boolean registered>
+    // 当月の「登録済み日付」を取得
+    // Map<LocalDate, Boolean> registeredMap = その日が登録済みか
     Map<java.time.LocalDate, Boolean> registeredMap =
         dayDao.existsByMonth(org.getId(), ym);
 
@@ -51,6 +53,7 @@ public class AdminMenuDayListServlet extends HttpServlet {
     req.setAttribute("nextYm", ym.plusMonths(1).toString());
     req.setAttribute("registeredMap", registeredMap);
 
-    req.getRequestDispatcher("/admin/menu_days.jsp").forward(req, resp);
+    // JSP へフォワード
+    req.getRequestDispatcher("/admin/menus_new.jsp").forward(req, resp);
   }
 }
