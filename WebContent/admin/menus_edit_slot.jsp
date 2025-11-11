@@ -68,7 +68,7 @@
         </c:forEach>
       </div>
 
-      <!-- rows をJSで維持（空配列時は空文字） -->
+      <!-- rows をJSで維持 -->
       <input id="rowsField" type="hidden" name="${selectedSlot}_rows"
              value="<c:forEach var='x' items='${selectedItems}' varStatus='s'>${s.index}<c:if test='${!s.last}'>,</c:if></c:forEach>" />
 
@@ -89,7 +89,14 @@
   .row{display:flex;align-items:center;gap:16px;margin:10px 0;}
   .dish{flex:1;min-width:260px;}
   .link{color:#1772d0;text-decoration:underline;}
-  .button.outline{background:#fff;border:1px solid #999;}
+  .button.outline{
+    background:#fff;
+    border:1px solid #999;
+    color:#333;
+  }
+  .button.outline:hover{
+    background:#f5f5f5;
+  }
   .button.sm{padding:4px 8px;font-size:12px;}
   .alg-box{display:none;border:1px solid #ddd;border-radius:10px;padding:10px;margin:8px 0 14px 0;background:#fff;}
   .alg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
@@ -97,7 +104,7 @@
   .chip{border:1px solid #ddd;padding:6px 10px;border-radius:10px;display:inline-flex;gap:6px;align-items:center;}
 </style>
 
-<!-- 追加テンプレート（アレルギー領域は非表示で生成） -->
+<!-- 追加テンプレート -->
 <template id="tpl">
   <div class="row" data-idx="__IDX__">
     <input type="hidden" name="itemId_${selectedSlot}___IDX__" value=""/>
@@ -122,7 +129,6 @@
 
 <script>
 (function(){
-  // 既存の最大index + 1
   var nextIdx = (function(){
     var nodes = document.querySelectorAll('#itemsContainer .row[data-idx]');
     var max=-1; for(var i=0;i<nodes.length;i++){var n=parseInt(nodes[i].getAttribute('data-idx'),10); if(!isNaN(n)&&n>max)max=n;}
@@ -147,7 +153,8 @@
     document.getElementById('itemsContainer').appendChild(frag);
     nextIdx++;
     updateRows();
-    var hint=document.getElementById('addedHint'); if(hint) {hint.style.display='block'; setTimeout(()=>hint.style.display='none',2000);}
+    var hint=document.getElementById('addedHint');
+    if(hint) {hint.style.display='block'; setTimeout(()=>hint.style.display='none',2000);}
   };
 
   window.toggleAlg = function(idx){
@@ -156,7 +163,6 @@
     el.style.display = (el.style.display==='none' || el.style.display==='') ? 'block' : 'none';
   };
 
-  // form送信前に rows を最終更新
   document.getElementById('slotForm').addEventListener('submit', updateRows);
 })();
 </script>

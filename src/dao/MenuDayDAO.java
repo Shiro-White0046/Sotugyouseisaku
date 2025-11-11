@@ -9,7 +9,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -84,36 +83,44 @@ public class MenuDayDAO {
   }
 
   /** 指定月の「その日が登録済みかどうか」マップを返す（カレンダー用） */
-  public Map<LocalDate, Boolean> existsByMonth(UUID orgId, YearMonth ym) {
-    Map<LocalDate, Boolean> result = new LinkedHashMap<>();
-    LocalDate start = ym.atDay(1);
-    LocalDate end = ym.atEndOfMonth();
+  /** 指定月の「その日に meal が1件以上あるか」マップを返す（カレンダー用） */
+  public Map<java.time.LocalDate, Boolean> existsByMonth(java.util.UUID orgId, java.time.YearMonth ym) {
+    Map<java.time.LocalDate, Boolean> result = new java.util.LinkedHashMap<>();
+    java.time.LocalDate start = ym.atDay(1);
+    java.time.LocalDate end   = ym.atEndOfMonth();
 
-    // まず全日 false
+    // 全日 false で初期化
     for (int d = 1; d <= ym.lengthOfMonth(); d++) {
       result.put(ym.atDay(d), false);
     }
 
+    // ✅ meal が1件でも存在する日だけ true にする
+    // menu_days に行があるだけの日（ensureDay 済みだが meal 0件）は false のまま
     final String sql =
-        "SELECT menu_date FROM menu_days WHERE org_id=? AND menu_date BETWEEN ? AND ?";
-    try (Connection con = ConnectionFactory.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
+        "SELECT md.menu_date " +
+        "FROM menu_days md " +
+        "WHERE md.org_id=? AND md.menu_date BETWEEN ? AND ? " +
+        "AND EXISTS (SELECT 1 FROM menu_meals mm WHERE mm.day_id = md.id)";
+
+    try (java.sql.Connection con = infra.ConnectionFactory.getConnection();
+         java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
 
       ps.setObject(1, orgId);
-      ps.setDate(2, Date.valueOf(start));
-      ps.setDate(3, Date.valueOf(end));
+      ps.setDate(2, java.sql.Date.valueOf(start));
+      ps.setDate(3, java.sql.Date.valueOf(end));
 
-      try (ResultSet rs = ps.executeQuery()) {
+      try (java.sql.ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
-          LocalDate date = rs.getDate("menu_date").toLocalDate();
+          java.time.LocalDate date = rs.getDate("menu_date").toLocalDate();
           result.put(date, true);
         }
       }
-    } catch (SQLException e) {
+    } catch (java.sql.SQLException e) {
       throw new RuntimeException("menu_days の存在マップ取得に失敗しました(existsByMonth)", e);
     }
     return result;
   }
+
 
   /** 指定日を確保（存在すればその id、なければ作成して id） */
   public UUID ensureDay(UUID orgId, LocalDate date) {

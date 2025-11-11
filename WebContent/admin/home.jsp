@@ -21,14 +21,14 @@
 
   <!-- 3カラムカード：朝／昼／夜 -->
   <div class="meal-grid">
-    <!-- 朝食 -->
+    <!-- ===== 朝食 ===== -->
     <div class="meal-card">
       <div class="meal-header">
         <span class="badge">朝食</span>
         <a class="small-link" href="<%=ctx%>/admin/menus_new/edit?dayId=${menuDay.id}&slot=BREAKFAST">編集</a>
       </div>
 
-      <!-- 画像（day単位の画像パスを表示。無ければプレースホルダ） -->
+      <!-- 画像（日単位。将来スロット画像にするならここを差し替え） -->
       <div class="meal-photo">
         <c:choose>
           <c:when test="${not empty menuDay.imagePath}">
@@ -40,7 +40,7 @@
         </c:choose>
       </div>
 
-      <!-- 献立名 or 未登録 -->
+      <!-- メニュー名 -->
       <div class="meal-name">
         <c:choose>
           <c:when test="${meals['BREAKFAST'] != null && not empty meals['BREAKFAST'].name}">
@@ -49,9 +49,23 @@
           <c:otherwise>登録されていません</c:otherwise>
         </c:choose>
       </div>
+
+      <!-- 品目一覧 -->
+      <div class="items">
+        <c:choose>
+          <c:when test="${not empty itemsBySlot['BREAKFAST']}">
+            <ul class="item-list">
+              <c:forEach var="it" items="${itemsBySlot['BREAKFAST']}">
+                <li>${it.name}</li>
+              </c:forEach>
+            </ul>
+          </c:when>
+          <c:otherwise><div class="item-empty">品目未登録</div></c:otherwise>
+        </c:choose>
+      </div>
     </div>
 
-    <!-- 昼食 -->
+    <!-- ===== 昼食 ===== -->
     <div class="meal-card">
       <div class="meal-header">
         <span class="badge">昼食</span>
@@ -77,9 +91,22 @@
           <c:otherwise>登録されていません</c:otherwise>
         </c:choose>
       </div>
+
+      <div class="items">
+        <c:choose>
+          <c:when test="${not empty itemsBySlot['LUNCH']}">
+            <ul class="item-list">
+              <c:forEach var="it" items="${itemsBySlot['LUNCH']}">
+                <li>${it.name}</li>
+              </c:forEach>
+            </ul>
+          </c:when>
+          <c:otherwise><div class="item-empty">品目未登録</div></c:otherwise>
+        </c:choose>
+      </div>
     </div>
 
-    <!-- 夕食 -->
+    <!-- ===== 夕食 ===== -->
     <div class="meal-card">
       <div class="meal-header">
         <span class="badge">夕食</span>
@@ -103,6 +130,19 @@
             ${meals['DINNER'].name}
           </c:when>
           <c:otherwise>登録されていません</c:otherwise>
+        </c:choose>
+      </div>
+
+      <div class="items">
+        <c:choose>
+          <c:when test="${not empty itemsBySlot['DINNER']}">
+            <ul class="item-list">
+              <c:forEach var="it" items="${itemsBySlot['DINNER']}">
+                <li>${it.name}</li>
+              </c:forEach>
+            </ul>
+          </c:when>
+          <c:otherwise><div class="item-empty">品目未登録</div></c:otherwise>
         </c:choose>
       </div>
     </div>
@@ -142,6 +182,10 @@
   .meal-photo img{width:100%;height:100%;object-fit:cover;display:block;}
   .photo-ph{color:#999;font-size:13px;}
   .meal-name{
-    font-size:16px;font-weight:600;color:#333;min-height:1.8em;
+    font-size:16px;font-weight:600;color:#333;min-height:1.8em;margin-bottom:6px;
   }
+  .items{min-height:1.8em;}
+  .item-list{margin:0;padding-left:18px;}
+  .item-list li{margin:2px 0;}
+  .item-empty{color:#888;font-size:13px;}
 </style>

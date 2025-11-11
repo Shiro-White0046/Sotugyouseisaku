@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,15 +25,9 @@ import dao.MenuItemDAO;
 import dao.MenuMealDAO;
 
 /**
- * 献立の追加/編集（時間帯ごと：朝食/昼食/夕食）
- * GET  : 指定日の指定スロット画面表示
- * POST : 指定スロットの保存
- *
- * 画面⇔サーバ間のパラメータ命名規約：
- *   - mealName_{SLOT}, mealDesc_{SLOT}
- *   - itemId_{SLOT}_{i}, itemName_{SLOT}_{i}
- *   - allergens_{SLOT}_{i}   (checkbox, multiple)
- *   - {SLOT}_rows            (例 "0,1,2")
+ * 献立：時間帯ごとの追加／編集ページ
+ * GET  : 表示
+ * POST : 保存（※選択された時間帯のみ）
  */
 @WebServlet("/admin/menus_new/edit")
 public class AdminMenuEditServlet extends HttpServlet {
@@ -45,87 +38,55 @@ public class AdminMenuEditServlet extends HttpServlet {
   private final MenuItemDAO itemDao = new MenuItemDAO();
   private final AllergenDAO algDao  = new AllergenDAO();
 
-  // 表示・保存対象となる時間帯
-  private static final String[] SLOTS = { "BREAKFAST", "LUNCH", "DINNER" };
-
-  /* ======================= helpers ======================= */
-  private static String trim(String s) { if (s == null) return null; String t = s.trim(); return t.isEmpty()? null : t; }
-  private static String nvl(String s)  { return (s == null) ? "" : s.trim(); }
-  private static boolean isValidSlot(String s) {
-    if (s == null) return false;
-    for (String x : SLOTS) if (x.equals(s)) return true;
-    return false;
-  }
-
-  /* ========================= GET ========================= */
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
 
     HttpSession ses = req.getSession(false);
     Administrator admin = (ses != null) ? (Administrator) ses.getAttribute("admin") : null;
-    Organization  org   = (ses != null) ? (Organization)  ses.getAttribute("org")   : null;
+    Organization org    = (ses != null) ? (Organization)  ses.getAttribute("org")   : null;
     if (admin == null || org == null) {
       resp.sendRedirect(req.getContextPath() + "/admin/login");
       return;
     }
 
-    String dayIdStr = trim(req.getParameter("dayId"));
-    String dateStr  = trim(req.getParameter("date"));
-    String slot     = trim(req.getParameter("slot"));
+    String dayIdStr = req.getParameter("dayId");
+    String slot = req.getParameter("slot"); // BREAKFAST/LUNCH/DINNER（画面は1スロット単位）
 
-    // slot 未指定で来た場合は時間帯選択に誘導（旧リンク対策）
-    if (slot == null) {
-      String qs = (dayIdStr != null) ? ("dayId=" + dayIdStr)
-                 : (dateStr  != null) ? ("date="  + dateStr) : null;
-      if (qs == null) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId または date は必須です"); return; }
-      resp.sendRedirect(req.getContextPath() + "/admin/menus_new/select?" + qs);
-      return;
+    if (dayIdStr == null || dayIdStr.trim().isEmpty()) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId は必須です"); return;
+    }
+    if (slot == null || slot.trim().isEmpty()) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "slot は必須です"); return;
     }
 
     UUID dayId;
-    try {
-      if (dayIdStr != null) {
-        dayId = UUID.fromString(dayIdStr);
-      } else { // date 指定なら存在しなければ確保
-        java.time.LocalDate date = java.time.LocalDate.parse(dateStr);
-        dayId = dayDao.ensureDay(org.getId(), date);
-      }
-    } catch (Exception e) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId/date の形式が不正です");
-      return;
-    }
+    try { dayId = UUID.fromString(dayIdStr.trim()); }
+    catch (Exception e) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId が不正です"); return; }
 
     Optional<MenuDay> dayOpt = dayDao.find(dayId);
     if (!dayOpt.isPresent()) {
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND, "指定日の献立が見つかりません");
-      return;
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND, "指定日の献立が見つかりません"); return;
     }
     MenuDay day = dayOpt.get();
 
-    // 全スロットの Meal を取得
-    Map<String, MenuMeal> mealBySlot = mealDao.findByDayAsMap(day.getId());
-
-    // 選択スロットの品目一覧（アレルゲン付き）
+    // 対象スロットの meal と items をだけ取得
+    Optional<MenuMeal> mealOpt = mealDao.findByDayAndSlot(day.getId(), slot);
     List<MenuItem> selectedItems = Collections.emptyList();
-    MenuMeal current = mealBySlot.get(slot);
-    if (current != null) {
-      selectedItems = itemDao.listWithAllergens(current.getId());
+    if (mealOpt.isPresent()) {
+      selectedItems = itemDao.listWithAllergens(mealOpt.get().getId());
     }
 
     // 画面用データ
     req.setAttribute("menuDay", day);
-    req.setAttribute("meals", mealBySlot);
     req.setAttribute("selectedSlot", slot);
+    req.setAttribute("meals", mealDao.findByDayAsMap(day.getId())); // ヘッダ等で使う用（任意）
     req.setAttribute("selectedItems", selectedItems);
-
-    // ✅ アレルゲンは FOOD のみを表示
-    req.setAttribute("allergens", algDao.listByCategory("FOOD"));
+    req.setAttribute("allergens", algDao.listByCategory("FOOD"));   // 要件：FOODのみ表示
 
     req.getRequestDispatcher("/admin/menus_edit_slot.jsp").forward(req, resp);
   }
 
-  /* ======================== POST ========================= */
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
@@ -134,48 +95,48 @@ public class AdminMenuEditServlet extends HttpServlet {
 
     HttpSession ses = req.getSession(false);
     Administrator admin = (ses != null) ? (Administrator) ses.getAttribute("admin") : null;
-    Organization  org   = (ses != null) ? (Organization)  ses.getAttribute("org")   : null;
+    Organization org    = (ses != null) ? (Organization)  ses.getAttribute("org")   : null;
     if (admin == null || org == null) {
       resp.sendRedirect(req.getContextPath() + "/admin/login");
       return;
     }
 
-    String dayIdStr = trim(req.getParameter("dayId"));
-    String slot     = trim(req.getParameter("slot"));
-    if (dayIdStr == null || !isValidSlot(slot)) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId/slot は必須です");
-      return;
+    String dayIdStr = req.getParameter("dayId");
+    String slot     = req.getParameter("slot"); // ← この画面は1スロットだけ保存する
+    if (dayIdStr == null || dayIdStr.trim().isEmpty()) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId は必須です"); return;
+    }
+    if (slot == null || slot.trim().isEmpty()) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "slot は必須です"); return;
     }
 
-    UUID dayId;
-    try {
-      dayId = UUID.fromString(dayIdStr);
-    } catch (Exception e) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId が不正です");
-      return;
-    }
+    final UUID dayId;
+    try { dayId = UUID.fromString(dayIdStr.trim()); }
+    catch (Exception e) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId が不正です"); return; }
+
+    // 画面の命名規則： mealName_{slot}, mealDesc_{slot}, {slot}_rows, itemId_{slot}_{i}, itemName_{slot}_{i}, allergens_{slot}_{i}[]
+    String mealName = nvl(req.getParameter("mealName_" + slot));
+    String mealDesc = nvl(req.getParameter("mealDesc_" + slot));
 
     try {
-      // メニュー（スロット単位）
-      String mealName = nvl(req.getParameter("mealName_" + slot));
-      String mealDesc = nvl(req.getParameter("mealDesc_" + slot));
-
       UUID mealId = null;
+
       if (!mealName.isEmpty()) {
-        // 既存があれば更新、無ければ作成
+        // upsert（DAO 側で meal_slot を DB 小文字に合わせて保存する実装）
         mealId = mealDao.upsertMeal(dayId, slot, mealName, mealDesc);
       } else {
-        // 名前が空ならそのスロットを未登録扱いにするため削除
+        // 名前が空 → そのスロット自体を削除
         mealDao.deleteByDayAndSlot(dayId, slot);
       }
 
-      // 品目の保存（meal がある場合のみ）
+      // 品目保存（meal がある時だけ）
       if (mealId != null) {
-        String rowsCsv = req.getParameter(slot + "_rows"); // 例 "0,1,2"
+        String rowsCsv = req.getParameter(slot + "_rows"); // 例: "0,1,3"
         if (rowsCsv != null && !rowsCsv.trim().isEmpty()) {
+          String[] rows = rowsCsv.split(",");
           List<MenuItemDAO.ItemForm> forms = new ArrayList<>();
           int order = 1;
-          for (String r : rowsCsv.split(",")) {
+          for (String r : rows) {
             String idx = r.trim();
             if (idx.isEmpty()) continue;
 
@@ -199,22 +160,41 @@ public class AdminMenuEditServlet extends HttpServlet {
               forms.add(new MenuItemDAO.ItemForm(itemId, order++, nameParam.trim(), allergenIds));
             }
           }
-          itemDao.saveMealItems(mealId, forms); // 差分を反映（既存置換）
+          itemDao.saveMealItems(mealId, forms); // 既存差分を丸ごと反映
         } else {
-          // 行指定なし → 既存があれば0件に更新
-          itemDao.saveMealItems(mealId, Collections.<MenuItemDAO.ItemForm>emptyList());
+          // 品目0件
+          itemDao.saveMealItems(mealId, Collections.emptyList());
         }
       }
 
       ses.setAttribute("flash", "保存しました。");
+      // 保存後は同じスロット編集に戻す
       resp.sendRedirect(req.getContextPath() + "/admin/menus_new/edit?dayId=" + dayId + "&slot=" + slot);
+      return;
 
     } catch (RuntimeException e) {
-      // 画面にエラーメッセージを出して再表示
+      // ★ 例外の中身を画面に出して原因を可視化（暫定）
       req.setAttribute("error", "保存中にエラーが発生しました。");
-      // GET と同じ準備をして返す
-      // （selectedItems 等は doGet 内で用意しているので、そのまま委譲）
-      doGet(req, resp);
+      req.setAttribute("errorDetail", e.toString() + (e.getCause() != null ? " / cause: " + e.getCause() : ""));
+      // そのまま再描画（選択スロットのみ再ロード）
+      try {
+        Optional<MenuMeal> mealOpt = mealDao.findByDayAndSlot(dayId, slot);
+        List<MenuItem> selectedItems = mealOpt.isPresent()
+            ? itemDao.listWithAllergens(mealOpt.get().getId())
+            : Collections.emptyList();
+
+        MenuDay day = dayDao.find(dayId).orElse(null);
+        req.setAttribute("menuDay", day);
+        req.setAttribute("selectedSlot", slot);
+        req.setAttribute("meals", mealDao.findByDayAsMap(dayId));
+        req.setAttribute("selectedItems", selectedItems);
+        req.setAttribute("allergens", algDao.listByCategory("FOOD"));
+
+      } catch (Exception ignore) { /* 再描画用の追加エラーは握りつぶす */ }
+
+      req.getRequestDispatcher("/admin/menus_edit_slot.jsp").forward(req, resp);
     }
   }
+
+  private static String nvl(String s){ return (s == null) ? "" : s.trim(); }
 }

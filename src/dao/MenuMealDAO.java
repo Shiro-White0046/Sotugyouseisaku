@@ -14,8 +14,8 @@ import infra.ConnectionFactory;
 
 /**
  * menu_meals 用 DAO
- * DBの meal_slot は小文字('breakfast','lunch','dinner')想定。
- * Java側では大文字('BREAKFAST','LUNCH','DINNER')で扱う。
+ * DBの meal_slot は小文字('breakfast','lunch','dinner')の ENUM 型を想定。
+ * Java側では大文字('BREAKFAST','LUNCH','DINNER')で扱い、DB I/O時に変換する。
  */
 public class MenuMealDAO {
 
@@ -35,7 +35,7 @@ public class MenuMealDAO {
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
           MenuMeal m = map(rs);
-          // DB値は小文字→Beanは大文字で扱う
+          // DB値は小文字 → Bean は大文字
           m.setSlot(m.getSlot().toUpperCase());
           result.put(m.getSlot(), m);
         }
@@ -50,11 +50,12 @@ public class MenuMealDAO {
   public Optional<MenuMeal> findByDayAndSlot(UUID dayId, String slot) {
     final String sql =
         "SELECT id, day_id, meal_slot, name, description " +
-        "FROM menu_meals WHERE day_id=? AND meal_slot=? LIMIT 1";
+        "FROM menu_meals WHERE day_id=? AND meal_slot=?::meal_slot LIMIT 1"; // ★ENUMにキャスト
+
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
       ps.setObject(1, dayId);
-      ps.setString(2, slot.toLowerCase()); // ← DBは小文字
+      ps.setString(2, slot.toLowerCase()); // DBは小文字ENUM
       try (ResultSet rs = ps.executeQuery()) {
         if (!rs.next()) return Optional.empty();
         MenuMeal m = map(rs);
@@ -76,6 +77,7 @@ public class MenuMealDAO {
         "ORDER BY CASE meal_slot " +
         "  WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 9 END, id " +
         "LIMIT 1";
+
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
       ps.setObject(1, dayId);
@@ -92,15 +94,17 @@ public class MenuMealDAO {
 
   /** 指定 dayId/slot の Meal を upsert して id を返す。 */
   public UUID upsertMeal(UUID dayId, String slot, String name, String description) {
-    // DBは小文字固定
-    String dbSlot = slot.toLowerCase();
+    // DBは小文字ENUM
+    final String dbSlot = slot.toLowerCase();
 
     final String update =
         "UPDATE menu_meals SET name=?, description=? " +
-        "WHERE day_id=? AND meal_slot=?";
+        "WHERE day_id=? AND meal_slot=?::meal_slot"; // ★ENUMにキャスト
+
     final String insert =
+        // 挿入は列型が meal_slot ENUM なので、JDBCの setString でそのまま渡してOK
         "INSERT INTO menu_meals (id, day_id, meal_slot, name, description) " +
-        "VALUES (?, ?, ?, ?, ?)";
+        "VALUES (?, ?, ?::meal_slot, ?, ?)"; // ★安全のためここもキャスト
 
     try (Connection con = ConnectionFactory.getConnection()) {
       con.setAutoCommit(false);
@@ -145,7 +149,9 @@ public class MenuMealDAO {
 
   /** 指定 dayId/slot の Meal を削除 */
   public void deleteByDayAndSlot(UUID dayId, String slot) {
-    final String sql = "DELETE FROM menu_meals WHERE day_id=? AND meal_slot=?";
+    final String sql =
+        "DELETE FROM menu_meals WHERE day_id=? AND meal_slot=?::meal_slot"; // ★ENUMにキャスト
+
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
       ps.setObject(1, dayId);
@@ -161,6 +167,7 @@ public class MenuMealDAO {
     MenuMeal m = new MenuMeal();
     m.setId((UUID) rs.getObject("id"));
     m.setDayId((UUID) rs.getObject("day_id"));
+    // ここでは DBの小文字値をそのまま一旦受ける
     m.setSlot(rs.getString("meal_slot"));
     m.setName(rs.getString("name"));
     m.setDescription(rs.getString("description"));
