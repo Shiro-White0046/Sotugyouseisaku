@@ -1,14 +1,12 @@
 package admin;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Optional;
+import java.util.Arrays;
 import java.util.UUID;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
@@ -19,34 +17,56 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
 import bean.Administrator;
-import bean.MenuDay;
+import bean.MenuMeal;
 import bean.Organization;
-import dao.MenuDayDAO;
+import dao.MenuMealDAO;
 
+/**
+ * 画像を「時間帯（slot）ごと」に登録
+ * GET : 画像追加画面（該当slotの画像を表示）
+ * POST: アップロード＆ menu_meals.image_path を更新
+ */
 @WebServlet("/admin/menus_new/image")
-@MultipartConfig(maxFileSize = 10_000_000) // 10MB
+@MultipartConfig(maxFileSize = 10 * 1024 * 1024)
 public class AdminMenuImageServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
-  private final MenuDayDAO dayDao = new MenuDayDAO();
+  private final MenuMealDAO mealDao = new MenuMealDAO();
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
 
     HttpSession ses = req.getSession(false);
-    Administrator admin = ses==null? null: (Administrator) ses.getAttribute("admin");
-    Organization  org   = ses==null? null: (Organization)  ses.getAttribute("org");
-    if (admin==null || org==null) { resp.sendRedirect(req.getContextPath()+"/admin/login"); return; }
+    Administrator admin = (ses != null) ? (Administrator) ses.getAttribute("admin") : null;
+    Organization org = (ses != null) ? (Organization) ses.getAttribute("org") : null;
+    if (admin == null || org == null) {
+      resp.sendRedirect(req.getContextPath() + "/admin/login");
+      return;
+    }
 
     String dayIdStr = req.getParameter("dayId");
-    if (dayIdStr == null) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId は必須です"); return; }
+    String slot = req.getParameter("slot");
 
-    UUID dayId = UUID.fromString(dayIdStr);
-    Optional<MenuDay> dayOpt = dayDao.find(dayId);
-    if (!dayOpt.isPresent()) { resp.sendError(HttpServletResponse.SC_NOT_FOUND, "指定日の献立が見つかりません"); return; }
+    if (dayIdStr == null || dayIdStr.isEmpty() || slot == null || slot.isEmpty()) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId と slot は必須です");
+      return;
+    }
 
-    req.setAttribute("menuDay", dayOpt.get());
-    req.getRequestDispatcher("/admin/menus_image_attach.jsp").forward(req, resp);
+    UUID dayId;
+    try {
+      dayId = UUID.fromString(dayIdStr);
+    } catch (Exception e) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId が不正です");
+      return;
+    }
+
+    // 該当スロットの献立を取得（存在しない場合は新規扱い）
+    MenuMeal meal = mealDao.findByDayAndSlot(dayId, slot).orElse(null);
+    req.setAttribute("dayId", dayId);
+    req.setAttribute("slot", slot);
+    req.setAttribute("meal", meal);
+
+    req.getRequestDispatcher("/admin/menus_image_slot.jsp").forward(req, resp);
   }
 
   @Override
@@ -55,33 +75,63 @@ public class AdminMenuImageServlet extends HttpServlet {
 
     req.setCharacterEncoding("UTF-8");
 
+    HttpSession ses = req.getSession(false);
+    Administrator admin = (ses != null) ? (Administrator) ses.getAttribute("admin") : null;
+    Organization org = (ses != null) ? (Organization) ses.getAttribute("org") : null;
+    if (admin == null || org == null) {
+      resp.sendRedirect(req.getContextPath() + "/admin/login");
+      return;
+    }
+
     String dayIdStr = req.getParameter("dayId");
-    if (dayIdStr == null) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId は必須です"); return; }
-    UUID dayId = UUID.fromString(dayIdStr);
+    String slot = req.getParameter("slot");
+
+    if (dayIdStr == null || slot == null || dayIdStr.isEmpty() || slot.isEmpty()) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId と slot は必須です");
+      return;
+    }
+
+    UUID dayId;
+    try {
+      dayId = UUID.fromString(dayIdStr);
+    } catch (Exception e) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId が不正です");
+      return;
+    }
 
     Part part = req.getPart("imageFile");
     if (part == null || part.getSize() == 0) {
-      req.setAttribute("error", "ファイルを選択してください。");
+      req.setAttribute("error", "画像ファイルを選択してください。");
       doGet(req, resp);
       return;
     }
 
-    ServletContext context = getServletContext();
-    String uploadDir = context.getRealPath("/uploads/menu_images");
-    Files.createDirectories(Paths.get(uploadDir));
+    // 保存先: /uploads/menus/{dayId}/{slot}.ext
+    final String baseRel = "/uploads/menus/" + dayId;
+    final String baseAbs = req.getServletContext().getRealPath(baseRel);
+    File dir = new File(baseAbs);
+    if (!dir.exists()) dir.mkdirs();
 
-    String fileName = java.util.UUID.randomUUID().toString() + "_" +
-                      Paths.get(part.getSubmittedFileName()).getFileName().toString();
-    Path filePath = Paths.get(uploadDir, fileName);
+    String submitted = part.getSubmittedFileName();
+    String ext = (submitted != null && submitted.contains(".")) ?
+        submitted.substring(submitted.lastIndexOf('.') + 1).toLowerCase() : "jpg";
+    if (!Arrays.asList("jpg", "jpeg", "png", "gif").contains(ext)) ext = "jpg";
 
-    try {
-      Files.copy(part.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-      dayDao.updateImagePath(dayId, "uploads/menu_images/" + fileName);
-      req.setAttribute("success", "画像を追加しました。");
-    } catch (IOException e) {
-      req.setAttribute("error", "画像の保存に失敗しました。");
+    for (String e : new String[] {"jpg", "jpeg", "png", "gif"}) {
+      File old = new File(dir, slot + "." + e);
+      if (old.exists()) old.delete();
     }
 
-    doGet(req, resp);
+    File dest = new File(dir, slot + "." + ext);
+    try (InputStream in = part.getInputStream()) {
+      Files.copy(in, dest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    // DB に保存
+    String relPath = (baseRel + "/" + slot + "." + ext).substring(1); // 先頭スラ除去
+    mealDao.updateImagePath(dayId, slot, relPath);
+
+    ses.setAttribute("flash", "画像を保存しました。");
+    resp.sendRedirect(req.getContextPath() + "/admin/menus_new/edit?dayId=" + dayId + "&slot=" + slot);
   }
 }

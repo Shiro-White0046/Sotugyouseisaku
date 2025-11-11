@@ -22,7 +22,7 @@
     <input type="hidden" name="slot"  value="${selectedSlot}" />
 
     <div class="card" style="padding:16px;max-width:880px;margin:0 auto;">
-      <!-- 上段：献立名と画像リンク -->
+      <!-- 上段：献立名と画像リンク（← 画像は日単位に戻した） -->
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
         <div style="width:92px;">献立名入力</div>
         <input type="text" name="mealName_${selectedSlot}" value="${meals[selectedSlot].name}"
@@ -47,7 +47,7 @@
             <button type="button" class="button outline" onclick="toggleAlg(${idx})">アレルギー項目追加</button>
           </div>
 
-          <!-- ✅ 初期は非表示。ボタンで開閉 -->
+          <!-- 初期は非表示。ボタンで開閉 -->
           <div class="alg-box" id="alg_${idx}">
             <div class="alg-header">
               <strong>アレルギー（FOOD）</strong>
@@ -89,14 +89,7 @@
   .row{display:flex;align-items:center;gap:16px;margin:10px 0;}
   .dish{flex:1;min-width:260px;}
   .link{color:#1772d0;text-decoration:underline;}
-  .button.outline{
-    background:#fff;
-    border:1px solid #999;
-    color:#333;
-  }
-  .button.outline:hover{
-    background:#f5f5f5;
-  }
+  .button.outline{background:#fff;border:1px solid #999;}
   .button.sm{padding:4px 8px;font-size:12px;}
   .alg-box{display:none;border:1px solid #ddd;border-radius:10px;padding:10px;margin:8px 0 14px 0;background:#fff;}
   .alg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
@@ -104,7 +97,6 @@
   .chip{border:1px solid #ddd;padding:6px 10px;border-radius:10px;display:inline-flex;gap:6px;align-items:center;}
 </style>
 
-<!-- 追加テンプレート -->
 <template id="tpl">
   <div class="row" data-idx="__IDX__">
     <input type="hidden" name="itemId_${selectedSlot}___IDX__" value=""/>
@@ -145,16 +137,15 @@
 
   window.addItem = function(){
     var h = document.getElementById('tpl').innerHTML
-      .replaceAll('__IDX__', String(nextIdx))
-      .replaceAll('___IDX__', String(nextIdx));
+      .replace(/__IDX__/g, String(nextIdx))
+      .replace(/___IDX__/g, String(nextIdx));
     var box = document.createElement('div'); box.innerHTML = h;
     var frag = document.createDocumentFragment();
     while(box.firstChild){ frag.appendChild(box.firstChild); }
     document.getElementById('itemsContainer').appendChild(frag);
     nextIdx++;
     updateRows();
-    var hint=document.getElementById('addedHint');
-    if(hint) {hint.style.display='block'; setTimeout(()=>hint.style.display='none',2000);}
+    var hint=document.getElementById('addedHint'); if(hint) {hint.style.display='block'; setTimeout(function(){hint.style.display='none';},2000);}
   };
 
   window.toggleAlg = function(idx){

@@ -27,7 +27,7 @@ import dao.MenuMealDAO;
 /**
  * 献立：時間帯ごとの追加／編集ページ
  * GET  : 表示
- * POST : 保存（※選択された時間帯のみ）
+ * POST : 保存（選択された時間帯のみ）
  */
 @WebServlet("/admin/menus_new/edit")
 public class AdminMenuEditServlet extends HttpServlet {
@@ -51,8 +51,7 @@ public class AdminMenuEditServlet extends HttpServlet {
     }
 
     String dayIdStr = req.getParameter("dayId");
-    String slot = req.getParameter("slot"); // BREAKFAST/LUNCH/DINNER（画面は1スロット単位）
-
+    String slot     = req.getParameter("slot"); // BREAKFAST/LUNCH/DINNER 必須
     if (dayIdStr == null || dayIdStr.trim().isEmpty()) {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId は必須です"); return;
     }
@@ -60,17 +59,16 @@ public class AdminMenuEditServlet extends HttpServlet {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "slot は必須です"); return;
     }
 
-    UUID dayId;
+    final UUID dayId;
     try { dayId = UUID.fromString(dayIdStr.trim()); }
     catch (Exception e) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId が不正です"); return; }
 
-    Optional<MenuDay> dayOpt = dayDao.find(dayId);
-    if (!dayOpt.isPresent()) {
+    MenuDay day = dayDao.find(dayId).orElse(null);
+    if (day == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND, "指定日の献立が見つかりません"); return;
     }
-    MenuDay day = dayOpt.get();
 
-    // 対象スロットの meal と items をだけ取得
+    // 対象スロットの meal と items
     Optional<MenuMeal> mealOpt = mealDao.findByDayAndSlot(day.getId(), slot);
     List<MenuItem> selectedItems = Collections.emptyList();
     if (mealOpt.isPresent()) {
@@ -80,9 +78,9 @@ public class AdminMenuEditServlet extends HttpServlet {
     // 画面用データ
     req.setAttribute("menuDay", day);
     req.setAttribute("selectedSlot", slot);
-    req.setAttribute("meals", mealDao.findByDayAsMap(day.getId())); // ヘッダ等で使う用（任意）
+    req.setAttribute("meals", mealDao.findByDayAsMap(day.getId()));
     req.setAttribute("selectedItems", selectedItems);
-    req.setAttribute("allergens", algDao.listByCategory("FOOD"));   // 要件：FOODのみ表示
+    req.setAttribute("allergens", algDao.listByCategory("FOOD"));   // FOODのみ表示
 
     req.getRequestDispatcher("/admin/menus_edit_slot.jsp").forward(req, resp);
   }
@@ -102,7 +100,7 @@ public class AdminMenuEditServlet extends HttpServlet {
     }
 
     String dayIdStr = req.getParameter("dayId");
-    String slot     = req.getParameter("slot"); // ← この画面は1スロットだけ保存する
+    String slot     = req.getParameter("slot"); // この画面は1スロットのみ保存
     if (dayIdStr == null || dayIdStr.trim().isEmpty()) {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId は必須です"); return;
     }
@@ -114,7 +112,6 @@ public class AdminMenuEditServlet extends HttpServlet {
     try { dayId = UUID.fromString(dayIdStr.trim()); }
     catch (Exception e) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "dayId が不正です"); return; }
 
-    // 画面の命名規則： mealName_{slot}, mealDesc_{slot}, {slot}_rows, itemId_{slot}_{i}, itemName_{slot}_{i}, allergens_{slot}_{i}[]
     String mealName = nvl(req.getParameter("mealName_" + slot));
     String mealDesc = nvl(req.getParameter("mealDesc_" + slot));
 
@@ -122,19 +119,22 @@ public class AdminMenuEditServlet extends HttpServlet {
       UUID mealId = null;
 
       if (!mealName.isEmpty()) {
-        // upsert（DAO 側で meal_slot を DB 小文字に合わせて保存する実装）
-        mealId = mealDao.upsertMeal(dayId, slot, mealName, mealDesc);
+        // 既存の画像パスは保持して upsert（画像は別画面で更新）
+        Optional<MenuMeal> ex = mealDao.findByDayAndSlot(dayId, slot);
+        String keepImage = ex.isPresent() ? ex.get().getImagePath() : null;
+
+        mealId = mealDao.upsertMeal(dayId, slot, mealName, mealDesc, keepImage);
       } else {
-        // 名前が空 → そのスロット自体を削除
+        // 名前が空 → そのスロットを未登録に戻す（meal自体を削除）
         mealDao.deleteByDayAndSlot(dayId, slot);
       }
 
-      // 品目保存（meal がある時だけ）
+      // 品目保存（meal がある時のみ）
       if (mealId != null) {
-        String rowsCsv = req.getParameter(slot + "_rows"); // 例: "0,1,3"
+        String rowsCsv = req.getParameter(slot + "_rows"); // "0,1,2" など
         if (rowsCsv != null && !rowsCsv.trim().isEmpty()) {
           String[] rows = rowsCsv.split(",");
-          List<MenuItemDAO.ItemForm> forms = new ArrayList<>();
+          List<MenuItemDAO.ItemForm> forms = new ArrayList<MenuItemDAO.ItemForm>();
           int order = 1;
           for (String r : rows) {
             String idx = r.trim();
@@ -149,7 +149,7 @@ public class AdminMenuEditServlet extends HttpServlet {
               try { itemId = UUID.fromString(idParam.trim()); } catch (Exception ignore) {}
             }
 
-            List<Short> allergenIds = new ArrayList<>();
+            List<Short> allergenIds = new ArrayList<Short>();
             if (algIds != null) {
               for (String s : algIds) {
                 try { allergenIds.add(Short.parseShort(s)); } catch (Exception ignore) {}
@@ -160,28 +160,26 @@ public class AdminMenuEditServlet extends HttpServlet {
               forms.add(new MenuItemDAO.ItemForm(itemId, order++, nameParam.trim(), allergenIds));
             }
           }
-          itemDao.saveMealItems(mealId, forms); // 既存差分を丸ごと反映
+          itemDao.saveMealItems(mealId, forms);
         } else {
           // 品目0件
-          itemDao.saveMealItems(mealId, Collections.emptyList());
+          itemDao.saveMealItems(mealId, Collections.<MenuItemDAO.ItemForm>emptyList());
         }
       }
 
       ses.setAttribute("flash", "保存しました。");
-      // 保存後は同じスロット編集に戻す
       resp.sendRedirect(req.getContextPath() + "/admin/menus_new/edit?dayId=" + dayId + "&slot=" + slot);
       return;
 
     } catch (RuntimeException e) {
-      // ★ 例外の中身を画面に出して原因を可視化（暫定）
       req.setAttribute("error", "保存中にエラーが発生しました。");
-      req.setAttribute("errorDetail", e.toString() + (e.getCause() != null ? " / cause: " + e.getCause() : ""));
-      // そのまま再描画（選択スロットのみ再ロード）
+
+      // 再描画用の最低限データを再ロード
       try {
         Optional<MenuMeal> mealOpt = mealDao.findByDayAndSlot(dayId, slot);
         List<MenuItem> selectedItems = mealOpt.isPresent()
             ? itemDao.listWithAllergens(mealOpt.get().getId())
-            : Collections.emptyList();
+            : Collections.<MenuItem>emptyList();
 
         MenuDay day = dayDao.find(dayId).orElse(null);
         req.setAttribute("menuDay", day);
@@ -189,8 +187,7 @@ public class AdminMenuEditServlet extends HttpServlet {
         req.setAttribute("meals", mealDao.findByDayAsMap(dayId));
         req.setAttribute("selectedItems", selectedItems);
         req.setAttribute("allergens", algDao.listByCategory("FOOD"));
-
-      } catch (Exception ignore) { /* 再描画用の追加エラーは握りつぶす */ }
+      } catch (Exception ignore) {}
 
       req.getRequestDispatcher("/admin/menus_edit_slot.jsp").forward(req, resp);
     }

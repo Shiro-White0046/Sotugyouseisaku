@@ -9,12 +9,13 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import bean.MenuDay;               // ← MenuDay ビーン: id, orgId, menuDate, imagePath, published, createdAt
+import bean.MenuDay;
 import infra.ConnectionFactory;
 
 public class MenuDayDAO {
@@ -65,7 +66,7 @@ public class MenuDayDAO {
     LocalDate start = ym.atDay(1);
     LocalDate end = ym.atEndOfMonth();
 
-    List<MenuDay> list = new ArrayList<>();
+    List<MenuDay> list = new ArrayList<MenuDay>();
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -83,44 +84,35 @@ public class MenuDayDAO {
   }
 
   /** 指定月の「その日が登録済みかどうか」マップを返す（カレンダー用） */
-  /** 指定月の「その日に meal が1件以上あるか」マップを返す（カレンダー用） */
-  public Map<java.time.LocalDate, Boolean> existsByMonth(java.util.UUID orgId, java.time.YearMonth ym) {
-    Map<java.time.LocalDate, Boolean> result = new java.util.LinkedHashMap<>();
-    java.time.LocalDate start = ym.atDay(1);
-    java.time.LocalDate end   = ym.atEndOfMonth();
+  public Map<LocalDate, Boolean> existsByMonth(UUID orgId, YearMonth ym) {
+    Map<LocalDate, Boolean> result = new LinkedHashMap<LocalDate, Boolean>();
+    LocalDate start = ym.atDay(1);
+    LocalDate end = ym.atEndOfMonth();
 
-    // 全日 false で初期化
     for (int d = 1; d <= ym.lengthOfMonth(); d++) {
       result.put(ym.atDay(d), false);
     }
 
-    // ✅ meal が1件でも存在する日だけ true にする
-    // menu_days に行があるだけの日（ensureDay 済みだが meal 0件）は false のまま
     final String sql =
-        "SELECT md.menu_date " +
-        "FROM menu_days md " +
-        "WHERE md.org_id=? AND md.menu_date BETWEEN ? AND ? " +
-        "AND EXISTS (SELECT 1 FROM menu_meals mm WHERE mm.day_id = md.id)";
-
-    try (java.sql.Connection con = infra.ConnectionFactory.getConnection();
-         java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+        "SELECT menu_date FROM menu_days WHERE org_id=? AND menu_date BETWEEN ? AND ?";
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
 
       ps.setObject(1, orgId);
-      ps.setDate(2, java.sql.Date.valueOf(start));
-      ps.setDate(3, java.sql.Date.valueOf(end));
+      ps.setDate(2, Date.valueOf(start));
+      ps.setDate(3, Date.valueOf(end));
 
-      try (java.sql.ResultSet rs = ps.executeQuery()) {
+      try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
-          java.time.LocalDate date = rs.getDate("menu_date").toLocalDate();
+          LocalDate date = rs.getDate("menu_date").toLocalDate();
           result.put(date, true);
         }
       }
-    } catch (java.sql.SQLException e) {
+    } catch (SQLException e) {
       throw new RuntimeException("menu_days の存在マップ取得に失敗しました(existsByMonth)", e);
     }
     return result;
   }
-
 
   /** 指定日を確保（存在すればその id、なければ作成して id） */
   public UUID ensureDay(UUID orgId, LocalDate date) {
@@ -175,6 +167,19 @@ public class MenuDayDAO {
     }
   }
 
+  /** 画像パス更新（slot なし・日単位） */
+  public void updateImagePath(UUID dayId, String imagePath) {
+    final String sql = "UPDATE menu_days SET image_path=? WHERE id=?";
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+      ps.setString(1, imagePath);
+      ps.setObject(2, dayId);
+      ps.executeUpdate();
+    } catch (SQLException e) {
+      throw new RuntimeException("menu_days.image_path の更新に失敗しました(updateImagePath)", e);
+    }
+  }
+
   // ---- 共通マッピング ----
   private static MenuDay map(ResultSet rs) throws SQLException {
     MenuDay d = new MenuDay();
@@ -184,23 +189,9 @@ public class MenuDayDAO {
     d.setImagePath(rs.getString("image_path"));
     d.setPublished(rs.getBoolean("published"));
 
-    // created_at は OffsetDateTime で受ける想定（Bean側の型に合わせてください）
-    OffsetDateTime odt = rs.getObject("created_at", OffsetDateTime.class);
+    OffsetDateTime odt = null;
+    try { odt = rs.getObject("created_at", OffsetDateTime.class); } catch (Throwable ignore) {}
     if (odt != null) d.setCreatedAt(odt);
     return d;
   }
-	//MenuDayDAO に追加
-	public void updateImagePath(java.util.UUID dayId, String path) {
-	 final String sql = "UPDATE menu_days SET image_path=? WHERE id=?";
-	 try (java.sql.Connection con = infra.ConnectionFactory.getConnection();
-	      java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
-	   ps.setString(1, path);
-	   ps.setObject(2, dayId);
-	   ps.executeUpdate();
-	 } catch (java.sql.SQLException e) {
-	   throw new RuntimeException("menu_days の画像更新に失敗しました(updateImagePath)", e);
-	 }
-	}
-
-
 }

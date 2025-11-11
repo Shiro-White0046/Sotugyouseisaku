@@ -10,6 +10,7 @@ public class MenuMeal {
   private String slot;   // BREAKFAST / LUNCH / DINNER
   private String name;
   private String description;
+  private String imagePath;   // ←追加
   private OffsetDateTime createdAt;
   private OffsetDateTime updatedAt;
 
@@ -28,6 +29,9 @@ public class MenuMeal {
 
   public String getDescription() { return description; }
   public void setDescription(String description) { this.description = description; }
+
+  public String getImagePath() { return imagePath; }
+  public void setImagePath(String imagePath) { this.imagePath = imagePath; }
 
   public OffsetDateTime getCreatedAt() { return createdAt; }
   public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
