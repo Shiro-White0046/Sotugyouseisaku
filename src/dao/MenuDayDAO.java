@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import bean.MenuDay;
+import bean.MenuDay;               // id, orgId, menuDate, imagePath, published, createdAt
 import infra.ConnectionFactory;
 
 public class MenuDayDAO {
@@ -66,7 +66,7 @@ public class MenuDayDAO {
     LocalDate start = ym.atDay(1);
     LocalDate end = ym.atEndOfMonth();
 
-    List<MenuDay> list = new ArrayList<MenuDay>();
+    List<MenuDay> list = new ArrayList<>();
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -83,18 +83,28 @@ public class MenuDayDAO {
     return list;
   }
 
-  /** 指定月の「その日が登録済みかどうか」マップを返す（カレンダー用） */
+  /**
+   * 指定月の「その日に朝/昼/夜いずれかの meal が1件でもあるか」を返す。
+   * ＝ menu_meals の存在で true。menu_days だけある日は false。
+   */
   public Map<LocalDate, Boolean> existsByMonth(UUID orgId, YearMonth ym) {
-    Map<LocalDate, Boolean> result = new LinkedHashMap<LocalDate, Boolean>();
+    Map<LocalDate, Boolean> result = new LinkedHashMap<>();
     LocalDate start = ym.atDay(1);
     LocalDate end = ym.atEndOfMonth();
 
+    // 全日 false で初期化
     for (int d = 1; d <= ym.lengthOfMonth(); d++) {
       result.put(ym.atDay(d), false);
     }
 
+    // menu_days と menu_meals を結合し、meal が1件でもある日だけ true にする
     final String sql =
-        "SELECT menu_date FROM menu_days WHERE org_id=? AND menu_date BETWEEN ? AND ?";
+        "SELECT md.menu_date, COUNT(mm.id) AS cnt " +
+        "FROM menu_days md " +
+        "LEFT JOIN menu_meals mm ON mm.day_id = md.id " +
+        "WHERE md.org_id=? AND md.menu_date BETWEEN ? AND ? " +
+        "GROUP BY md.menu_date";
+
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -105,11 +115,17 @@ public class MenuDayDAO {
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
           LocalDate date = rs.getDate("menu_date").toLocalDate();
-          result.put(date, true);
+          long cnt = rs.getLong("cnt");
+          // meal が1件でもあれば登録済み
+          if (cnt > 0) {
+            result.put(date, true);
+          } else {
+            result.put(date, false);
+          }
         }
       }
     } catch (SQLException e) {
-      throw new RuntimeException("menu_days の存在マップ取得に失敗しました(existsByMonth)", e);
+      throw new RuntimeException("menu_meals 存在判定の取得に失敗しました(existsByMonth)", e);
     }
     return result;
   }
@@ -152,7 +168,7 @@ public class MenuDayDAO {
     }
   }
 
-  /** 指定日の存在チェック */
+  /** 指定日の存在チェック（menu_days の行の有無）※必要なら使用 */
   public boolean exists(UUID orgId, LocalDate date) {
     final String sql = "SELECT 1 FROM menu_days WHERE org_id=? AND menu_date=?";
     try (Connection con = ConnectionFactory.getConnection();
@@ -167,16 +183,16 @@ public class MenuDayDAO {
     }
   }
 
-  /** 画像パス更新（slot なし・日単位） */
-  public void updateImagePath(UUID dayId, String imagePath) {
+  /** menu_days.image_path を更新（1日単位の画像を使う場合に使用） */
+  public void updateImagePath(UUID dayId, String relPath) {
     final String sql = "UPDATE menu_days SET image_path=? WHERE id=?";
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
-      ps.setString(1, imagePath);
+      ps.setString(1, relPath);
       ps.setObject(2, dayId);
       ps.executeUpdate();
     } catch (SQLException e) {
-      throw new RuntimeException("menu_days.image_path の更新に失敗しました(updateImagePath)", e);
+      throw new RuntimeException("menu_days の画像パス更新に失敗しました(updateImagePath)", e);
     }
   }
 
@@ -188,9 +204,12 @@ public class MenuDayDAO {
     d.setMenuDate(rs.getDate("menu_date").toLocalDate());
     d.setImagePath(rs.getString("image_path"));
     d.setPublished(rs.getBoolean("published"));
-
-    OffsetDateTime odt = null;
-    try { odt = rs.getObject("created_at", OffsetDateTime.class); } catch (Throwable ignore) {}
+    OffsetDateTime odt;
+    try {
+      odt = rs.getObject("created_at", OffsetDateTime.class);
+    } catch (Throwable t) {
+      odt = null;
+    }
     if (odt != null) d.setCreatedAt(odt);
     return d;
   }

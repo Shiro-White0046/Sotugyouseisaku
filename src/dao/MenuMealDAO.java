@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,32 +15,41 @@ import infra.ConnectionFactory;
 
 /**
  * menu_meals 用 DAO
- * - 列: id UUID, day_id UUID, meal_slot meal_slot(enum), name text, description text, image_path text
- * - ENUM 値は DB では小文字('breakfast','lunch','dinner')を想定。
- *   Java(Bean)では大文字('BREAKFAST','LUNCH','DINNER')で扱い、I/Oで相互変換する。
+ *
+ * 想定スキーマ:
+ *   - id UUID PK
+ *   - day_id UUID (FK -> menu_days.id)
+ *   - meal_slot meal_slot  (enum: 'breakfast' / 'lunch' / 'dinner') ← 小文字！
+ *   - name TEXT
+ *   - description TEXT
+ *   - image_path TEXT
+ *
+ * 重要:
+ *   受け取る slot は大文字/小文字どちらでも来るため、SQLに渡す前に必ず小文字へ正規化する。
+ *   ORDER BY も meal_slot::text を小文字リテラルで比較する。
  */
 public class MenuMealDAO {
 
-  /* ===========================
-   *  取得系
-   * =========================== */
-
-  /** 指定日の全スロットを Map(slot -> MenuMeal) で返す。存在しないスロットは入らない。 */
+  /** 指定日の全スロットを Map(slot -> MenuMeal) で返す。存在しないスロットは Map に入らない。 */
   public Map<String, MenuMeal> findByDayAsMap(UUID dayId) {
     final String sql =
         "SELECT id, day_id, meal_slot, name, description, image_path " +
         "FROM menu_meals WHERE day_id=? " +
-        "ORDER BY CASE meal_slot " +
-        "  WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 9 END, id";
+        "ORDER BY CASE meal_slot::text " +
+        "  WHEN 'breakfast' THEN 1 " +
+        "  WHEN 'lunch' THEN 2 " +
+        "  WHEN 'dinner' THEN 3 " +
+        "  ELSE 9 END";
 
-    Map<String, MenuMeal> result = new HashMap<String, MenuMeal>();
+    Map<String, MenuMeal> result = new HashMap<>();
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
 
       ps.setObject(1, dayId);
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
-          MenuMeal m = map(rs);                 // Bean側は大文字スロットにして返す
+          MenuMeal m = map(rs);
+          // Map のキーは既存コードに合わせて大文字（BREAKFAST/LUNCH/DINNER）
           result.put(m.getSlot(), m);
         }
       }
@@ -49,16 +59,16 @@ public class MenuMealDAO {
     return result;
   }
 
-  /** 指定日の指定スロット（BREAKFAST/LUNCH/DINNER）を返す。無ければ empty。 */
+  /** 指定日の指定スロット（BREAKFAST/LUNCH/DINNER など）を返す。無ければ empty。 */
   public Optional<MenuMeal> findByDayAndSlot(UUID dayId, String slot) {
     final String sql =
         "SELECT id, day_id, meal_slot, name, description, image_path " +
-        "FROM menu_meals WHERE day_id=? AND meal_slot = CAST(? AS meal_slot) " +
-        "LIMIT 1";
+        "FROM menu_meals WHERE day_id=? AND meal_slot = ?::meal_slot LIMIT 1";
+    final String slotLower = normalizeSlot(slot);
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
       ps.setObject(1, dayId);
-      ps.setString(2, toDbSlot(slot)); // 小文字に変換してバインド
+      ps.setString(2, slotLower);
       try (ResultSet rs = ps.executeQuery()) {
         if (!rs.next()) return Optional.empty();
         return Optional.of(map(rs));
@@ -68,13 +78,141 @@ public class MenuMealDAO {
     }
   }
 
-  /** 指定日に1件でも meal があれば 1件返す（優先順：BREAKFAST→LUNCH→DINNER）。無ければ empty。 */
+  /**
+   * 指定 dayId/slot の Meal を upsert して id を返す。
+   * name/description をセットし、既存なら更新・無ければ作成する。
+   */
+  public UUID upsertMeal(UUID dayId, String slot, String name, String description) {
+    final String sel =
+        "SELECT id FROM menu_meals WHERE day_id=? AND meal_slot = ?::meal_slot";
+    final String upd =
+        "UPDATE menu_meals SET name=?, description=? WHERE day_id=? AND meal_slot = ?::meal_slot";
+    final String ins =
+        "INSERT INTO menu_meals (id, day_id, meal_slot, name, description) " +
+        "VALUES (?, ?, ?::meal_slot, ?, ?)";
+
+    final String slotLower = normalizeSlot(slot);
+
+    try (Connection con = ConnectionFactory.getConnection()) {
+      con.setAutoCommit(false);
+      try {
+        UUID id = null;
+
+        try (PreparedStatement ps = con.prepareStatement(sel)) {
+          ps.setObject(1, dayId);
+          ps.setString(2, slotLower);
+          try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) id = (UUID) rs.getObject("id");
+          }
+        }
+
+        if (id != null) {
+          try (PreparedStatement ps = con.prepareStatement(upd)) {
+            ps.setString(1, name);
+            ps.setString(2, description);
+            ps.setObject(3, dayId);
+            ps.setString(4, slotLower);
+            ps.executeUpdate();
+          }
+        } else {
+          id = UUID.randomUUID();
+          try (PreparedStatement ps = con.prepareStatement(ins)) {
+            ps.setObject(1, id);
+            ps.setObject(2, dayId);
+            ps.setString(3, slotLower);
+            ps.setString(4, name);
+            ps.setString(5, description);
+            ps.executeUpdate();
+          }
+        }
+
+        con.commit();
+        return id;
+
+      } catch (SQLException e) {
+        try { con.rollback(); } catch (SQLException ignore) {}
+        throw new RuntimeException("menu_meals の upsert に失敗しました(upsertMeal)", e);
+      } finally {
+        try { con.setAutoCommit(true); } catch (SQLException ignore) {}
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("menu_meals の upsert に失敗しました(upsertMeal)", e);
+    }
+  }
+
+  /** 指定 dayId/slot の Meal を物理削除（存在しなくてもOK）。 */
+  public void deleteByDayAndSlot(UUID dayId, String slot) {
+    final String sql = "DELETE FROM menu_meals WHERE day_id=? AND meal_slot = ?::meal_slot";
+    final String slotLower = normalizeSlot(slot);
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+      ps.setObject(1, dayId);
+      ps.setString(2, slotLower);
+      ps.executeUpdate();
+    } catch (SQLException e) {
+      throw new RuntimeException("menu_meals の削除に失敗しました(deleteByDayAndSlot)", e);
+    }
+  }
+
+  /** slot ごとの画像パスを更新（image_path）。 */
+  public void updateImagePath(UUID dayId, String slot, String imagePath) {
+    final String sql = "UPDATE menu_meals SET image_path=? WHERE day_id=? AND meal_slot = ?::meal_slot";
+    final String slotLower = normalizeSlot(slot);
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+      ps.setString(1, imagePath);
+      ps.setObject(2, dayId);
+      ps.setString(3, slotLower);
+      int updated = ps.executeUpdate();
+      if (updated == 0) {
+        // レコードが無ければ作成してから再更新（保険）
+        upsertMeal(dayId, slotLower, "", "");
+        try (PreparedStatement ps2 = con.prepareStatement(sql)) {
+          ps2.setString(1, imagePath);
+          ps2.setObject(2, dayId);
+          ps2.setString(3, slotLower);
+          ps2.executeUpdate();
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("menu_meals の画像パス更新に失敗しました(updateImagePath)", e);
+    }
+  }
+
+  // -------------------------------------------------------
+  // 共通マッピング
+  // -------------------------------------------------------
+  private static MenuMeal map(ResultSet rs) throws SQLException {
+    MenuMeal m = new MenuMeal();
+    m.setId((UUID) rs.getObject("id"));
+    m.setDayId((UUID) rs.getObject("day_id"));
+    // UI 側のキー互換性のため、返却は大文字（BREAKFAST/LUNCH/DINNER）
+    String slotLower = rs.getString("meal_slot");
+    m.setSlot(slotLower == null ? null : slotLower.toUpperCase(Locale.ROOT));
+    m.setName(rs.getString("name"));
+    m.setDescription(rs.getString("description"));
+    m.setImagePath(rs.getString("image_path"));
+    return m;
+  }
+
+  /** null/空でなければ小文字化。 */
+  private static String normalizeSlot(String slot) {
+    if (slot == null) return null;
+    String s = slot.trim();
+    if (s.isEmpty()) return s;
+    return s.toLowerCase(Locale.ROOT);
+  }
+  /** 指定日に meal が1件でもあれば 1件返す（優先順：breakfast→lunch→dinner）。無ければ empty。 */
   public Optional<MenuMeal> findAnyByDay(UUID dayId) {
     final String sql =
         "SELECT id, day_id, meal_slot, name, description, image_path " +
-        "FROM menu_meals WHERE day_id=? " +
-        "ORDER BY CASE meal_slot " +
-        "  WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 9 END, id " +
+        "FROM menu_meals " +
+        "WHERE day_id=? " +
+        "ORDER BY CASE meal_slot::text " +
+        "  WHEN 'breakfast' THEN 1 " +
+        "  WHEN 'lunch' THEN 2 " +
+        "  WHEN 'dinner' THEN 3 " +
+        "  ELSE 9 END " +
         "LIMIT 1";
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
@@ -85,117 +223,6 @@ public class MenuMealDAO {
       }
     } catch (SQLException e) {
       throw new RuntimeException("menu_meals の取得に失敗しました(findAnyByDay)", e);
-    }
-  }
-
-  /* ===========================
-   *  更新系
-   * =========================== */
-
-  /**
-   * 指定 dayId/slot の Meal を upsert して id を返す。
-   * - name/description/imagePath をセット（null はそのままDBに入る想定）
-   * - 既存があれば UPDATE、無ければ INSERT
-   */
-  public UUID upsertMeal(UUID dayId, String slot, String name, String description, String imagePath) {
-    final String update =
-        "UPDATE menu_meals SET name=?, description=?, image_path=? " +
-        "WHERE day_id=? AND meal_slot = CAST(? AS meal_slot)";
-    final String insert =
-        "INSERT INTO menu_meals (id, day_id, meal_slot, name, description, image_path) " +
-        "VALUES (?, ?, ?::meal_slot, ?, ?, ?)";
-
-    try (Connection con = ConnectionFactory.getConnection()) {
-      con.setAutoCommit(false);
-      try {
-        UUID id;
-        Optional<MenuMeal> exists = findByDayAndSlot(dayId, slot);
-        if (exists.isPresent()) {
-          id = exists.get().getId();
-          try (PreparedStatement ps = con.prepareStatement(update)) {
-            ps.setString(1, name);
-            ps.setString(2, description);
-            ps.setString(3, imagePath);
-            ps.setObject(4, dayId);
-            ps.setString(5, toDbSlot(slot));
-            ps.executeUpdate();
-          }
-        } else {
-          id = UUID.randomUUID();
-          try (PreparedStatement ps = con.prepareStatement(insert)) {
-            ps.setObject(1, id);
-            ps.setObject(2, dayId);
-            ps.setString(3, toDbSlot(slot));
-            ps.setString(4, name);
-            ps.setString(5, description);
-            ps.setString(6, imagePath);
-            ps.executeUpdate();
-          }
-        }
-        con.commit();
-        return id;
-      } catch (SQLException e) {
-        try { con.rollback(); } catch (SQLException ignore) {}
-        throw e;
-      } finally {
-        try { con.setAutoCommit(true); } catch (SQLException ignore) {}
-      }
-    } catch (SQLException e) {
-      throw new RuntimeException("menu_meals の upsert に失敗しました(upsertMeal)", e);
-    }
-  }
-
-  /** 指定 dayId / slot の meal を削除（存在しなくてもOK）。 */
-  public void deleteByDayAndSlot(UUID dayId, String slot) {
-    final String sql = "DELETE FROM menu_meals WHERE day_id = ? AND meal_slot = CAST(? AS meal_slot)";
-    try (Connection con = ConnectionFactory.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-      ps.setObject(1, dayId);
-      ps.setString(2, toDbSlot(slot));
-      ps.executeUpdate();
-    } catch (SQLException e) {
-      throw new RuntimeException("menu_meals の削除に失敗しました(deleteByDayAndSlot)", e);
-    }
-  }
-
-  /* ===========================
-   *  ヘルパ
-   * =========================== */
-
-  /** DB → Bean 変換（meal_slot: 小文字） */
-  private static MenuMeal map(ResultSet rs) throws SQLException {
-    MenuMeal m = new MenuMeal();
-    m.setId((UUID) rs.getObject("id"));
-    m.setDayId((UUID) rs.getObject("day_id"));
-    m.setSlot(fromDbSlot(rs.getString("meal_slot"))); // Bean側は大文字
-    m.setName(rs.getString("name"));
-    m.setDescription(rs.getString("description"));
-    m.setImagePath(rs.getString("image_path"));
-    return m;
-  }
-
-  /** Bean側（BREAKFAST/LUNCH/DINNER）→ DB側（lowercase） */
-  private static String toDbSlot(String slot) {
-    if (slot == null) return null;
-    return slot.trim().toLowerCase(); // "BREAKFAST" → "breakfast"
-  }
-
-  /** DB側（lowercase）→ Bean側（UPPERCASE） */
-  private static String fromDbSlot(String dbSlot) {
-    if (dbSlot == null) return null;
-    return dbSlot.trim().toUpperCase(); // "breakfast" → "BREAKFAST"
-  }
-  /** slotごとの画像パスを更新 */
-  public void updateImagePath(UUID dayId, String slot, String imagePath) {
-    final String sql = "UPDATE menu_meals SET image_path=? WHERE day_id=? AND slot=?";
-    try (Connection con = ConnectionFactory.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-      ps.setString(1, imagePath);
-      ps.setObject(2, dayId);
-      ps.setString(3, slot);
-      ps.executeUpdate();
-    } catch (SQLException e) {
-      throw new RuntimeException("menu_meals の画像パス更新に失敗しました(updateImagePath)", e);
     }
   }
 

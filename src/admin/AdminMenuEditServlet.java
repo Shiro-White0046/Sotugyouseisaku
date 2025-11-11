@@ -123,7 +123,8 @@ public class AdminMenuEditServlet extends HttpServlet {
         Optional<MenuMeal> ex = mealDao.findByDayAndSlot(dayId, slot);
         String keepImage = ex.isPresent() ? ex.get().getImagePath() : null;
 
-        mealId = mealDao.upsertMeal(dayId, slot, mealName, mealDesc, keepImage);
+        mealId = mealDao.upsertMeal(dayId, slot, mealName, mealDesc);
+
       } else {
         // 名前が空 → そのスロットを未登録に戻す（meal自体を削除）
         mealDao.deleteByDayAndSlot(dayId, slot);

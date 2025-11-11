@@ -22,22 +22,22 @@
     <input type="hidden" name="slot"  value="${selectedSlot}" />
 
     <div class="card" style="padding:16px;max-width:880px;margin:0 auto;">
-      <!-- 上段：献立名と画像リンク（← 画像は日単位に戻した） -->
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
         <div style="width:92px;">献立名入力</div>
         <input type="text" name="mealName_${selectedSlot}" value="${meals[selectedSlot].name}"
                style="flex:1;min-width:260px;" placeholder="例：シーフードカレー" />
-        <a class="link" href="<%=ctx%>/admin/menus_new/image?dayId=${menuDay.id}">献立の画像を追加</a>
-        <span style="color:#666;">${menuDay.imagePath}</span>
+        <!-- ★ 画像追加は slot 付きで遷移 -->
+        <a class="link" href="<%=ctx%>/admin/menus_new/image?dayId=${menuDay.id}&slot=${selectedSlot}">献立の画像を追加</a>
+        <span style="color:#666;">
+          <c:if test="${meals[selectedSlot] != null}">${meals[selectedSlot].imagePath}</c:if>
+        </span>
       </div>
 
-      <!-- 右上：枠追加 -->
       <div style="text-align:right;margin-bottom:8px;">
         <button type="button" class="button" onclick="addItem()">献立枠追加</button>
         <div id="addedHint" style="color:#c44;font-size:12px;display:none;">※枠を追加しました</div>
       </div>
 
-      <!-- 既存アイテム -->
       <div id="itemsContainer">
         <c:forEach var="it" items="${selectedItems}" varStatus="st">
           <c:set var="idx" value="${st.index}" />
@@ -47,7 +47,6 @@
             <button type="button" class="button outline" onclick="toggleAlg(${idx})">アレルギー項目追加</button>
           </div>
 
-          <!-- 初期は非表示。ボタンで開閉 -->
           <div class="alg-box" id="alg_${idx}">
             <div class="alg-header">
               <strong>アレルギー（FOOD）</strong>
@@ -68,7 +67,6 @@
         </c:forEach>
       </div>
 
-      <!-- rows をJSで維持 -->
       <input id="rowsField" type="hidden" name="${selectedSlot}_rows"
              value="<c:forEach var='x' items='${selectedItems}' varStatus='s'>${s.index}<c:if test='${!s.last}'>,</c:if></c:forEach>" />
 
