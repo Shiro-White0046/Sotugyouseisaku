@@ -9,7 +9,9 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import bean.Allergen;
@@ -76,6 +78,24 @@ public class IndividualAllergyDAO {
     }
   }
 
+  /** person に紐づく現在の allergen_id セットを取得 */
+  public Set<Short> findAllergenIds(UUID personId) {
+    final String sql = "SELECT allergen_id FROM individual_allergies WHERE person_id=? ORDER BY allergen_id";
+    Set<Short> set = new LinkedHashSet<>();
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+      ps.setObject(1, personId);
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) set.add(rs.getShort(1));
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("findAllergenIds 失敗", e);
+    }
+    return set;
+  }
+
+
+
   /** 追加/更新（severityなし版） */
   public boolean upsert(IndividualAllergy ia) {
     String sql =
@@ -134,6 +154,7 @@ public class IndividualAllergyDAO {
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
       ps.setObject(1, personId);
+      ps.executeUpdate();
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }

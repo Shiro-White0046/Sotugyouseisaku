@@ -81,6 +81,13 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
 
 
       // 6) 登録処理（追加/更新）
+
+
+      System.out.println("------------------------------");
+      System.out.println(userId);
+      System.out.println(org_id);
+      System.out.println(personId);
+      System.out.println("------------------------------");
       IndividualAllergyDAO iaDao = new IndividualAllergyDAO();
       if (iaDao.exists(personId)){
     	  iaDao.delete(personId);//中身削除
