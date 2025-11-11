@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -15,27 +14,18 @@ import infra.ConnectionFactory;
 
 /**
  * menu_meals 用 DAO
- *
- * 期待スキーマ:
- *   - id UUID PK
- *   - day_id UUID (FK -> menu_days.id)
- *   - slot TEXT  (BREAKFAST / LUNCH / DINNER)
- *   - name TEXT
- *   - description TEXT
- *   - created_at TIMESTAMPTZ (nullable 可)
- *   - updated_at TIMESTAMPTZ (nullable 可)
- *
- * 想定ユニーク制約:
- *   - UNIQUE (day_id, slot)  … upsert前提（無い場合は update→insert の2段構えで処理）
+ * DBの meal_slot は小文字('breakfast','lunch','dinner')想定。
+ * Java側では大文字('BREAKFAST','LUNCH','DINNER')で扱う。
  */
 public class MenuMealDAO {
 
   /** 指定日の全スロットを Map(slot -> MenuMeal) で返す。存在しないスロットは Map に入らない。 */
   public Map<String, MenuMeal> findByDayAsMap(UUID dayId) {
     final String sql =
-        "SELECT id, day_id, slot, name, description, created_at, updated_at " +
+        "SELECT id, day_id, meal_slot, name, description " +
         "FROM menu_meals WHERE day_id=? " +
-        "ORDER BY CASE slot WHEN 'BREAKFAST' THEN 1 WHEN 'LUNCH' THEN 2 WHEN 'DINNER' THEN 3 ELSE 9 END, created_at";
+        "ORDER BY CASE meal_slot " +
+        "  WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 9 END, id";
 
     Map<String, MenuMeal> result = new HashMap<>();
     try (Connection con = ConnectionFactory.getConnection();
@@ -45,6 +35,8 @@ public class MenuMealDAO {
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
           MenuMeal m = map(rs);
+          // DB値は小文字→Beanは大文字で扱う
+          m.setSlot(m.getSlot().toUpperCase());
           result.put(m.getSlot(), m);
         }
       }
@@ -57,15 +49,17 @@ public class MenuMealDAO {
   /** 指定日の指定スロット（BREAKFAST/LUNCH/DINNER）を返す。無ければ empty。 */
   public Optional<MenuMeal> findByDayAndSlot(UUID dayId, String slot) {
     final String sql =
-        "SELECT id, day_id, slot, name, description, created_at, updated_at " +
-        "FROM menu_meals WHERE day_id=? AND slot=? LIMIT 1";
+        "SELECT id, day_id, meal_slot, name, description " +
+        "FROM menu_meals WHERE day_id=? AND meal_slot=? LIMIT 1";
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
       ps.setObject(1, dayId);
-      ps.setString(2, slot);
+      ps.setString(2, slot.toLowerCase()); // ← DBは小文字
       try (ResultSet rs = ps.executeQuery()) {
         if (!rs.next()) return Optional.empty();
-        return Optional.of(map(rs));
+        MenuMeal m = map(rs);
+        m.setSlot(m.getSlot().toUpperCase());
+        return Optional.of(m);
       }
     } catch (SQLException e) {
       throw new RuntimeException("menu_meals の取得に失敗しました(findByDayAndSlot)", e);
@@ -74,62 +68,61 @@ public class MenuMealDAO {
 
   /**
    * 指定日に1件でも meal があれば 1件返す（優先順：BREAKFAST→LUNCH→DINNER）。無ければ empty。
-   * 時間帯未指定アクセス時のフォールバックに使用。
    */
   public Optional<MenuMeal> findAnyByDay(UUID dayId) {
     final String sql =
-        "SELECT id, day_id, slot, name, description, created_at, updated_at " +
+        "SELECT id, day_id, meal_slot, name, description " +
         "FROM menu_meals WHERE day_id=? " +
-        "ORDER BY CASE slot WHEN 'BREAKFAST' THEN 1 WHEN 'LUNCH' THEN 2 WHEN 'DINNER' THEN 3 ELSE 9 END, created_at " +
+        "ORDER BY CASE meal_slot " +
+        "  WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 9 END, id " +
         "LIMIT 1";
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
       ps.setObject(1, dayId);
       try (ResultSet rs = ps.executeQuery()) {
         if (!rs.next()) return Optional.empty();
-        return Optional.of(map(rs));
+        MenuMeal m = map(rs);
+        m.setSlot(m.getSlot().toUpperCase());
+        return Optional.of(m);
       }
     } catch (SQLException e) {
       throw new RuntimeException("menu_meals の取得に失敗しました(findAnyByDay)", e);
     }
   }
 
-  /**
-   * 指定 dayId/slot の Meal を upsert して id を返す。
-   * name/description をセットし、既存なら更新・無ければ作成する。
-   */
+  /** 指定 dayId/slot の Meal を upsert して id を返す。 */
   public UUID upsertMeal(UUID dayId, String slot, String name, String description) {
-    // まず UPDATE を試みて、更新件数 0 の場合に INSERT する（UNIQUE(day_id,slot) が無くても安全）
+    // DBは小文字固定
+    String dbSlot = slot.toLowerCase();
+
     final String update =
-        "UPDATE menu_meals SET name=?, description=?, updated_at=NOW() WHERE day_id=? AND slot=?";
+        "UPDATE menu_meals SET name=?, description=? " +
+        "WHERE day_id=? AND meal_slot=?";
     final String insert =
-        "INSERT INTO menu_meals (id, day_id, slot, name, description, created_at, updated_at) " +
-        "VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+        "INSERT INTO menu_meals (id, day_id, meal_slot, name, description) " +
+        "VALUES (?, ?, ?, ?, ?)";
 
     try (Connection con = ConnectionFactory.getConnection()) {
       con.setAutoCommit(false);
       try {
         UUID id;
 
-        // 既存IDの有無を確認
         Optional<MenuMeal> exists = findByDayAndSlot(dayId, slot);
         if (exists.isPresent()) {
-          // UPDATE
           try (PreparedStatement ps = con.prepareStatement(update)) {
             ps.setString(1, name);
             ps.setString(2, description);
             ps.setObject(3, dayId);
-            ps.setString(4, slot);
+            ps.setString(4, dbSlot);
             ps.executeUpdate();
           }
           id = exists.get().getId();
         } else {
-          // INSERT
           id = UUID.randomUUID();
           try (PreparedStatement ps = con.prepareStatement(insert)) {
             ps.setObject(1, id);
             ps.setObject(2, dayId);
-            ps.setString(3, slot);
+            ps.setString(3, dbSlot);
             ps.setString(4, name);
             ps.setString(5, description);
             ps.executeUpdate();
@@ -150,37 +143,27 @@ public class MenuMealDAO {
     }
   }
 
-  /** 指定 dayId/slot の Meal を物理削除（存在しなくてもOK）。 */
+  /** 指定 dayId/slot の Meal を削除 */
   public void deleteByDayAndSlot(UUID dayId, String slot) {
-    final String sql = "DELETE FROM menu_meals WHERE day_id=? AND slot=?";
+    final String sql = "DELETE FROM menu_meals WHERE day_id=? AND meal_slot=?";
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
       ps.setObject(1, dayId);
-      ps.setString(2, slot);
+      ps.setString(2, slot.toLowerCase());
       ps.executeUpdate();
     } catch (SQLException e) {
       throw new RuntimeException("menu_meals の削除に失敗しました(deleteByDayAndSlot)", e);
     }
   }
 
-  // -------------------------------------------------------
   // 共通マッピング
-  // -------------------------------------------------------
   private static MenuMeal map(ResultSet rs) throws SQLException {
     MenuMeal m = new MenuMeal();
     m.setId((UUID) rs.getObject("id"));
     m.setDayId((UUID) rs.getObject("day_id"));
-    m.setSlot(rs.getString("slot"));
+    m.setSlot(rs.getString("meal_slot"));
     m.setName(rs.getString("name"));
     m.setDescription(rs.getString("description"));
-
-    // TIMESTAMPTZ -> OffsetDateTime で受ける（null 許容）
-    OffsetDateTime cAt = null, uAt = null;
-    try { cAt = rs.getObject("created_at", OffsetDateTime.class); } catch (Throwable ignore) {}
-    try { uAt = rs.getObject("updated_at", OffsetDateTime.class); } catch (Throwable ignore) {}
-    m.setCreatedAt(cAt);
-    m.setUpdatedAt(uAt);
-
     return m;
-    }
+  }
 }
