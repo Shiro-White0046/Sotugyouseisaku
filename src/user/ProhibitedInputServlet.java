@@ -130,9 +130,9 @@ public class ProhibitedInputServlet extends HttpServlet {
     // 削除(既存 − 新規)
     Set<Short> toDelete = new LinkedHashSet<Short>(existingIds);
     toDelete.removeAll(newIds);
-    for (Short id : toDelete) {
-      iaDAO.delete(personId, id);
-    }
+
+      iaDAO.delete(personId);
+
 
     // 追加/更新（新規側）
     for (Short id : newIds) {
