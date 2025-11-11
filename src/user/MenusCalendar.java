@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -22,7 +23,10 @@ import javax.servlet.http.HttpSession;
 import bean.Allergen;
 import bean.MenuDay;
 import bean.MenuItem;
-import bean.User; // あなたのUserビーン（getOrgId()がある想定）
+import bean.MenuMeal;
+import bean.User;
+import dao.IndividualAllergyDAO;
+import dao.IndividualDAO;
 import dao.MenuDayDAO;
 import dao.MenuItemAllergenDAO;
 import dao.MenuItemDAO;
@@ -32,33 +36,44 @@ import dao.MenuMealDAO;
 public class MenusCalendar extends HttpServlet {
   private static final long serialVersionUID = 1L;
 
-  private static final String FALLBACK_LOGIN_URL = "/auth/login"; // 実URLに合わせて
+  private static final String FALLBACK_LOGIN_URL = "/auth/login";
+
   private final MenuDayDAO dayDao = new MenuDayDAO();
   private final MenuMealDAO mealDao = new MenuMealDAO();
   private final MenuItemDAO itemDao = new MenuItemDAO();
   private final MenuItemAllergenDAO itemAllergenDao = new MenuItemAllergenDAO();
+  private final IndividualDAO individualDao = new IndividualDAO();
+  private final IndividualAllergyDAO individualAllergyDao = new IndividualAllergyDAO();
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
 
-    // ---- 認証/組織IDの取得 ----
+    // ---- 認証 & ユーザ/組織取得 ----
     HttpSession session = req.getSession(false);
-    Object loginAttr = (session == null) ? null
-        : firstNonNull(session.getAttribute("loginUser"),
-                       session.getAttribute("user"),
-                       session.getAttribute("account"));
-    if (loginAttr == null) {
-      resp.sendRedirect(req.getContextPath() + FALLBACK_LOGIN_URL);
-      return;
-    }
-    UUID orgId = resolveOrgId(session, loginAttr);
-    if (orgId == null) {
-      resp.sendRedirect(req.getContextPath() + FALLBACK_LOGIN_URL);
-      return;
-    }
+    User loginUser = (session == null) ? null : (User) firstNonNull(
+        session.getAttribute("loginUser"),
+        session.getAttribute("user"),
+        session.getAttribute("account"));
+    if (loginUser == null) { resp.sendRedirect(req.getContextPath() + FALLBACK_LOGIN_URL); return; }
+    UUID orgId = loginUser.getOrgId();
 
-    // ---- 月の決定 ----
+    // ---- 個人（児童）特定：User → IndividualDAO.findOneByUser ----
+    bean.Individual person = individualDao.findOneByUser(loginUser);
+    if (person == null) {
+      // 個人未登録なら何も表示しない月画面へ
+      setEmptyMonth(req);
+      req.getRequestDispatcher("/user/menus_calendar.jsp").forward(req, resp);
+      return;
+    }
+    UUID individualId = person.getId();
+
+    // 利用者アレルゲンID集合（1回だけ取得）
+    Set<Short> userAllergenIds = individualAllergyDao.listByPerson(individualId)
+        .stream().map(bean.IndividualAllergy::getAllergenId)
+        .collect(Collectors.toSet());
+
+    // ---- 月決定 ----
     YearMonth ym;
     try {
       String p = req.getParameter("ym");
@@ -69,25 +84,23 @@ public class MenusCalendar extends HttpServlet {
     int firstDow = first.getDayOfWeek().getValue() % 7; // 0=日 … 6=土
     int days = ym.lengthOfMonth();
 
-    // ---- 当月の menu_days を取得（published/非公開の扱いは要件に合わせて。ここでは全件扱い）----
+    // ---- 当月の menu_days ----
     List<MenuDay> daysList = dayDao.listMonth(orgId, ym);
 
-    // 日付→その日に含まれる主要アレルゲン名リスト（重複排除）を構築
+    // 日付 -> 利用者に該当するアレルゲン名だけ（交差）
     Map<LocalDate, List<String>> labelsMap = new HashMap<>();
 
     for (MenuDay day : daysList) {
-      // その日の全食事
-      List<bean.MenuMeal> meals = mealDao.listByDay(day.getId());
+    	Collection<MenuMeal> meals = mealDao.findByDayAsMap(day.getId()).values();
 
-      // その日の全アイテムのアレルゲン名を収集
       Set<String> names = new LinkedHashSet<>();
-      for (bean.MenuMeal meal : meals) {
+      for (MenuMeal meal : meals) {
         List<MenuItem> items = itemDao.listByMeal(meal.getId());
         for (MenuItem it : items) {
-          List<Allergen> as = itemAllergenDao.listByItem(it.getId());
-          for (Allergen a : as) {
-            if (a.getNameJa() != null && !a.getNameJa().isEmpty()) {
-              names.add(a.getNameJa());
+          for (Allergen a : itemAllergenDao.listByItem(it.getId())) {
+            if (userAllergenIds.contains(a.getId())) {
+              String name = a.getNameJa();
+              if (name != null && !name.isEmpty()) names.add(name);
             }
           }
         }
@@ -97,40 +110,33 @@ public class MenusCalendar extends HttpServlet {
       }
     }
 
-    // ---- JSPへ ----
+    // ---- JSP へ ----
     req.setAttribute("year", ym.getYear());
     req.setAttribute("month", ym.getMonthValue());
     req.setAttribute("firstDow", firstDow);
     req.setAttribute("daysInMonth", days);
-
-    Map<String, List<String>> labelsByDate = labelsMap.entrySet().stream()
-        .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue));
-    req.setAttribute("labelsByDate", labelsByDate); // ④：ある日だけ値がある
-
+    req.setAttribute("labelsByDate",
+        labelsMap.entrySet().stream()
+            .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue)));
     req.setAttribute("prevYm", ym.minusMonths(1).toString());
     req.setAttribute("nextYm", ym.plusMonths(1).toString());
 
     req.getRequestDispatcher("/user/menus_calendar.jsp").forward(req, resp);
   }
 
-  // ===== helpers =====
   private static Object firstNonNull(Object... arr) {
     for (Object o : arr) if (o != null) return o;
     return null;
   }
-  private static UUID resolveOrgId(HttpSession session, Object loginAttr) {
-    Object orgIdObj = (session != null) ? session.getAttribute("orgId") : null;
-    if (orgIdObj instanceof UUID) return (UUID) orgIdObj;
-    if (orgIdObj instanceof String) {
-      try { return UUID.fromString((String) orgIdObj); } catch (Exception ignore) {}
-    }
-    if (loginAttr instanceof User) return ((User) loginAttr).getOrgId();
-    try {
-      java.lang.reflect.Method m = loginAttr.getClass().getMethod("getOrgId");
-      Object v = m.invoke(loginAttr);
-      if (v instanceof UUID) return (UUID) v;
-      if (v instanceof String) return UUID.fromString((String) v);
-    } catch (Exception ignore) {}
-    return null;
+
+  private static void setEmptyMonth(HttpServletRequest req) {
+    java.time.YearMonth now = java.time.YearMonth.now();
+    req.setAttribute("year", now.getYear());
+    req.setAttribute("month", now.getMonthValue());
+    req.setAttribute("firstDow", now.atDay(1).getDayOfWeek().getValue() % 7);
+    req.setAttribute("daysInMonth", now.lengthOfMonth());
+    req.setAttribute("labelsByDate", java.util.Collections.emptyMap());
+    req.setAttribute("prevYm", now.minusMonths(1).toString());
+    req.setAttribute("nextYm", now.plusMonths(1).toString());
   }
 }
