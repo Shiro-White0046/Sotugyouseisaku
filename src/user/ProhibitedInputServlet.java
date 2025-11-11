@@ -1,7 +1,6 @@
 package user;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,13 +25,11 @@ import dao.IndividualAllergyDAO;
 import dao.IndividualDAO;
 
 /**
- * 食べられない食材入力（禁止食材）
- * GET: 画面表示
- * POST: 保存 → ホーム画面へリダイレクト
+ * 食べられない食材入力（AVOID）画面
+ * ※ header_user.jsp のリンクは /user/avoid 固定なので、ここで受ける
  */
-@WebServlet("/user/avoid")
+@WebServlet(urlPatterns = {"/user/avoid"}) // ← header_user.jsp のURLに合わせる
 public class ProhibitedInputServlet extends HttpServlet {
-  private static final long serialVersionUID = 1L;
 
   private final AllergenDAO allergenDAO = new AllergenDAO();
   private final IndividualDAO individualDAO = new IndividualDAO();
@@ -44,20 +41,18 @@ public class ProhibitedInputServlet extends HttpServlet {
 
     HttpSession ses = req.getSession(false);
     User user = (ses == null) ? null : (User) ses.getAttribute("user");
-    if (user == null) {
-      resp.sendRedirect(req.getContextPath() + "/user/login");
-      return;
-    }
+    if (user == null) { resp.sendRedirect(req.getContextPath() + "/user/login"); return; }
 
-    // 対象児取得
+    // ユーザー配下の個人
     List<Individual> persons = individualDAO.listByUser(user.getId());
     if (persons.isEmpty()) {
+      req.setAttribute("pageTitle", "食べられない食材入力");
       req.setAttribute("flash", "まずはお子さま（個人）を登録してください。");
-      req.getRequestDispatcher("/user/home.jsp").forward(req, resp);
+      req.getRequestDispatcher("/WEB-INF/views/user/prohibited_input.jsp").forward(req, resp);
       return;
     }
 
-    // person選択（?person=）
+    // person 切替（未指定なら先頭）
     String personParam = req.getParameter("person");
     UUID personId = null;
     if (personParam != null && !personParam.isEmpty()) {
@@ -65,34 +60,30 @@ public class ProhibitedInputServlet extends HttpServlet {
     }
     if (personId == null) personId = persons.get(0).getId();
 
-    // マスタ: AVOID（食べられない食材）
+    // AVOID マスタ
     List<Allergen> avoidList = allergenDAO.listByCategory("AVOID");
 
-    // 既存登録 → code セット
+    // 既存登録（その人の全アレルギー→AVOIDだけ抽出）
     List<Allergen> existing = iaDAO.listAllergensOfPerson(personId);
     Set<String> selectedCodes = existing.stream()
         .filter(a -> "AVOID".equalsIgnoreCase(a.getCategory()))
         .map(Allergen::getCode)
         .collect(Collectors.toCollection(LinkedHashSet::new));
 
-    // noteMap（必要なら）
-    List<IndividualAllergy> rows = iaDAO.listByPerson(personId);
-    Map<Short, String> idToNote = new HashMap<Short, String>();
-    for (IndividualAllergy ia : rows) {
+    // 既存メモ（avoid に紐づく note）
+    List<bean.IndividualAllergy> rows = iaDAO.listByPerson(personId);
+    Map<Short,String> idToNote = new LinkedHashMap<Short,String>();
+    for (bean.IndividualAllergy ia : rows) {
       idToNote.put(ia.getAllergenId(), ia.getNote() == null ? "" : ia.getNote());
     }
-    Map<String, String> noteMap = new LinkedHashMap<String, String>();
-    for (Allergen a : avoidList) {
-      String note = idToNote.getOrDefault(a.getId(), "");
-      noteMap.put(a.getCode(), note);
-    }
 
-    // JSPへ
+    // 画面へ
+    req.setAttribute("pageTitle", "食べられない食材入力");
     req.setAttribute("persons", persons);
     req.setAttribute("personId", personId);
     req.setAttribute("avoidList", avoidList);
     req.setAttribute("selectedCodes", selectedCodes);
-    req.setAttribute("noteMap", noteMap);
+    req.setAttribute("idToNote", idToNote);
 
     req.getRequestDispatcher("/user/prohibited_input.jsp").forward(req, resp);
   }
@@ -102,64 +93,59 @@ public class ProhibitedInputServlet extends HttpServlet {
       throws ServletException, IOException {
 
     req.setCharacterEncoding("UTF-8");
+
     HttpSession ses = req.getSession(false);
     User user = (ses == null) ? null : (User) ses.getAttribute("user");
-    if (user == null) {
-      resp.sendRedirect(req.getContextPath() + "/user/login");
-      return;
-    }
+    if (user == null) { resp.sendRedirect(req.getContextPath() + "/user/login"); return; }
 
     UUID personId = UUID.fromString(req.getParameter("person_id"));
+    String[] codes = req.getParameterValues("avoid"); // 例: ["AVOID_PORK", "AVOID_BEEF"]
 
-    // マスタ取得
+    // AVOID マスタ（code -> id）
     List<Allergen> avoidList = allergenDAO.listByCategory("AVOID");
-    Map<String, Short> codeToId = avoidList.stream()
-        .collect(Collectors.toMap(Allergen::getCode, Allergen::getId));
+    Map<String,Short> codeToId = new LinkedHashMap<String,Short>();
+    for (Allergen a : avoidList) codeToId.put(a.getCode(), a.getId());
 
-    // 新規選択
-    String[] codes = req.getParameterValues("avoid");
+    // 既存（idセット）
+    Set<Short> existingIds = new LinkedHashSet<Short>();
+    for (Allergen a : iaDAO.listAllergensOfPerson(personId)) {
+      if ("AVOID".equalsIgnoreCase(a.getCategory())) existingIds.add(a.getId());
+    }
+
+    // 新規（選択分の id セット + note）
     Set<Short> newIds = new LinkedHashSet<Short>();
-    Map<Short, String> noteById = new LinkedHashMap<Short, String>();
-
+    Map<Short,String> noteById = new LinkedHashMap<Short,String>();
     if (codes != null) {
       for (String code : codes) {
         Short id = codeToId.get(code);
         if (id != null) {
           newIds.add(id);
-          if ("OTHER".equalsIgnoreCase(code)) {
-            String free = req.getParameter("other_text");
-            if (free != null) free = free.trim();
-            noteById.put(id, free == null ? "" : free);
-          } else {
-            noteById.put(id, "");
-          }
+          String note = req.getParameter("note_" + code);
+          if (note == null) note = "";
+          noteById.put(id, note);
         }
       }
     }
 
-    // 既存
-    Set<Short> existingIds = iaDAO.listAllergensOfPerson(personId).stream()
-        .filter(a -> "AVOID".equalsIgnoreCase(a.getCategory()))
-        .map(Allergen::getId)
-        .collect(Collectors.toCollection(LinkedHashSet::new));
-
-    // 差分削除
+    // 削除(既存 − 新規)
     Set<Short> toDelete = new LinkedHashSet<Short>(existingIds);
     toDelete.removeAll(newIds);
-    for (Short id : toDelete) iaDAO.delete(personId, id);
+    for (Short id : toDelete) {
+      iaDAO.delete(personId, id);
+    }
 
-    // 追加/更新
+    // 追加/更新（新規側）
     for (Short id : newIds) {
       IndividualAllergy ia = new IndividualAllergy();
       ia.setPersonId(personId);
       ia.setAllergenId(id);
-      ia.setNote(noteById.getOrDefault(id, ""));
+      ia.setNote(noteById.get(id));
       ia.setConfirmedAt(null);
       iaDAO.upsert(ia);
     }
 
-    // 完了メッセージ → ホームへ
-    ses.setAttribute("flash", "食べられない食材を登録しました");
+    // 完了→ホームへ（alert用フラッシュ）
+    ses.setAttribute("flashMessage", "食べられない食材を登録しました");
     resp.sendRedirect(req.getContextPath() + "/user/home");
   }
 }
