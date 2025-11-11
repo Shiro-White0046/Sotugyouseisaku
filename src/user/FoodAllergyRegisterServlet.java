@@ -59,19 +59,32 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
     }
 
     try {
+
+
+
+    	//user_idと組織コードを取得
+    	UUID userId = user.getId();
+    	UUID org_id=user.getOrgId();
+
+    	IndividualDAO iDao=new IndividualDAO();
+    	Individual individual=new Individual();
+
       // 5) 個体(Individual)の特定
-    	UUID personId = individual.getId(); // ← individuals.id を person_id として使う
-      IndividualDAO individualDAO = new IndividualDAO();
-      Individual individual = individualDAO.findById(orgId, individualId) // null返す実装ならnullチェック
-      if (individual == null) {
+    	individual = iDao.findOneByUserId(org_id, userId); // ← individuals.id を person_id として使う
+    	UUID personId=individual.getId();
+
+      if (personId == null) {
         req.setAttribute("error", "個人情報が未登録です。");
         req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp").forward(req, resp);
         return;
       }
-      UUID personId = individual.getId(); // ← individuals.id を person_id として使う
+
 
       // 6) 登録処理（追加/更新）
       IndividualAllergyDAO iaDao = new IndividualAllergyDAO();
+
+      iaDao.clearIndividualAllergies();
+
       iaDao.upsertMultiple(personId, uniqueIds, null); // note不要なら null。confirmed_at は now()
 
       // 7) （必要なら「その他」処理）

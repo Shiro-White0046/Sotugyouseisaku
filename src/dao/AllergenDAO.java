@@ -6,11 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import bean.Allergen;
-import bean.Individual;
-import bean.User;
 import infra.ConnectionFactory;
 
 public class AllergenDAO {
@@ -55,50 +52,7 @@ public class AllergenDAO {
 	    return queryList(sql, subcategory);
 	  }
 
-//1件取得（UUID）
-  public Individual findOneByUserId(UUID userId) {
-	  final String sql =
-	      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash "
-	    + "FROM individuals "
-	    + "WHERE user_id = ? "
-	    + "ORDER BY id";
 
-	  try (Connection con = ConnectionFactory.getConnection();
-	       PreparedStatement ps = con.prepareStatement(sql)) {
-
-	    ps.setObject(1, userId);
-
-	    try (ResultSet rs = ps.executeQuery()) {
-	      if (rs.next()) {
-	        return mapIndividual(rs);
-	      } else {
-	        return null; // ← 見つからなかった場合
-	      }
-	    }
-
-	  } catch (SQLException e) {
-	    throw new RuntimeException("individual取得（user_id）に失敗しました", e);
-	  }
-	}
-
- // 1件取得（Userオブジェクト）
-  public Individual findOneByUser(User user) {
-	  if (user == null || user.getId() == null) return null;
-	  return findOneByUserId(user.getId());
-	}
-
- private Individual mapIndividual(ResultSet rs) throws SQLException {
-	  Individual i = new Individual();
-	  i.setId(rs.getObject("id", UUID.class));
-	  i.setOrgId(rs.getObject("org_id", UUID.class));
-	  i.setUserId(rs.getObject("user_id", UUID.class));
-	  i.setDisplayName(rs.getString("display_name"));
-	  i.setBirthday(rs.getObject("birthday", java.time.LocalDate.class));
-	  i.setNote(rs.getString("note"));
-	  i.setCreatedAt(rs.getObject("created_at", java.time.OffsetDateTime.class));
-	  i.setPinCodeHash(rs.getString("pin_code_hash"));
-	  return i;
-	}
 
 
 

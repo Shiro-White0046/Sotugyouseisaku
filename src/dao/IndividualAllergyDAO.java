@@ -99,10 +99,10 @@ public class IndividualAllergyDAO {
       throw new RuntimeException(e);
     }
   }
-  
-  
+
+
   /** 複数追加 */
-  
+
   public void upsertMultiple(UUID personId, Collection<Short> allergenIds, String note) {
 	  final String sql =
 	      "INSERT INTO individual_allergies (person_id, allergen_id, note, confirmed_at) " +
@@ -125,8 +125,8 @@ public class IndividualAllergyDAO {
 	    throw new RuntimeException("individual_allergies 複数upsert 失敗", e);
 	  }
 	}
-  
-  
+
+
 
   public boolean delete(java.util.UUID personId, short allergenId) {
     String sql = "DELETE FROM individual_allergies WHERE person_id = ? AND allergen_id = ?";
@@ -140,6 +140,17 @@ public class IndividualAllergyDAO {
       throw new RuntimeException(e);
     }
   }
+
+  public void clearIndividualAllergies() {
+	    String sql = "DELETE FROM individual_allergies";
+	    try (Connection con = ConnectionFactory.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+	      ps.executeUpdate();
+	    } catch (SQLException e) {
+	      throw new RuntimeException("individual_allergies の削除に失敗しました。", e);
+	    }
+	  }
+
 
 	//返却DTO
 	public class AllergyView {
