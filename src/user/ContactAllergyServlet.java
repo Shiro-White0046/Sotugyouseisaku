@@ -141,9 +141,9 @@ public class ContactAllergyServlet extends HttpServlet {
     // 差分：削除（既存 − 新規）
     Set<Short> toDelete = new LinkedHashSet<Short>(existingContactIds);
     toDelete.removeAll(newContactIds);
-    for (Short id : toDelete) {
-      iaDAO.delete(personId, id);
-    }
+
+      iaDAO.delete(personId);
+
 
     // 追加/更新（新規集合）
     for (Short id : newContactIds) {
