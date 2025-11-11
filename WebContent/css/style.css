@@ -394,28 +394,27 @@ html.sidebar-open .sidebar { transform: translateX(0); }
   transform: translateY(1px);
 }
 
-/* ボタン行（中央に3つ並べる） */
-.actions {
+/* 新規登録（アカウント）ページ専用の調整に限定 */
+.register-page .actions {
   margin-top: 28px;
   display: flex;
   justify-content: center;
   gap: 28px;
 }
 
-/* 既存の .button/.ghost をワイヤ風に */
-.button {
+.register-page .button {
   min-width: 120px;
   padding: 10px 20px;
   font-size: 16px;
   border-radius: 6px;
 }
-.button.ghost {
+
+.register-page .button.ghost {
   background: #fff;
   color: #111;
   border: 1.6px solid #666;
 }
-.button.new-btn {
-  background: #2ea44f;               /* 緑 */
-}
-.button.new-btn:hover { background: #238a3b; }
+
+.register-page .button.new-btn { background: #2ea44f; }
+.register-page .button.new-btn:hover { background: #238a3b; }
 
