@@ -167,7 +167,7 @@
           out.write("<td" + tdClass + ">");
 
           if (has) {
-            out.write("<a class='cell-link' href='" + ctx + "/user/menus/detail?date=" + key + "'>");
+            out.write("<a class='cell-link' href='" + ctx + "/user/menu_detail?date=" + key + "'>");
             out.write("<span class='daynum'>" + day + "</span>");
             if (labs != null && !labs.isEmpty()) {
               for (String s : labs) out.write("<div class='menu-badge'>" + s + "</div>");
