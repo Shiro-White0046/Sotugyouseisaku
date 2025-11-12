@@ -104,7 +104,7 @@
   <!-- 戻る（カレンダーへ） -->
   <div class="footer">
     <button type="button" class="btn-back"
-            onclick="location.href='${pageContext.request.contextPath}/user/menu_calendar?ym=${ym}'">戻る</button>
+            onclick="location.href='${pageContext.request.contextPath}/user/menuscalendar?ym=${ym}'">戻る</button>
   </div>
 </div>
 
