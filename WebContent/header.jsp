@@ -97,7 +97,6 @@
         <li><a href="<%= ctx %>/admin/users/register">利用者アカウント作成</a></li>
         <li><a href="<%= ctx %>/admin/allergens">アレルギー情報管理</a></li>
 		<li><a href="<%= ctx %>/admin/menus_new">献立作成</a></li>
-		<li><a href="<%= ctx %>/admin/menus">献立閲覧</a></li>
         <li><a href="<%= ctx %>/admin/support-meals">対応食管理</a></li>
         <li><a href="<%= ctx %>/admin/auth">配膳認証機能</a></li>
         <li><a href="<%= ctx %>/admin/guide">緊急対応ガイド</a></li>
