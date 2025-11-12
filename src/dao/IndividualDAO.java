@@ -100,7 +100,7 @@ public class IndividualDAO {
 	/** 組織コードの個人一覧 */
 	//dao/IndividualDAO.java に追記
 	public java.util.List<bean.Individual> listByOrg(java.util.UUID orgId) {
-	 final String sql = "SELECT display_name" +
+	 final String sql = "SELECT * " +
 	                    "FROM individuals WHERE org_id = ? ORDER BY created_at ASC";
 	 java.util.List<bean.Individual> list = new java.util.ArrayList<>();
 	 try (Connection con = ConnectionFactory.getConnection();
@@ -337,7 +337,32 @@ public class IndividualDAO {
 	  }
 	}
 
+	//1件取得（orgID,personId）
+	  public Individual findOneByOrgIdAndPersonId(UUID org_id,UUID personId) {
+		  final String sql =
+		      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash "
+		    + "FROM individuals "
+		    + "WHERE org_id = ? and person_id=? "
+		    + "ORDER BY id";
 
+		  try (Connection con = ConnectionFactory.getConnection();
+		       PreparedStatement ps = con.prepareStatement(sql)) {
+
+		    ps.setObject(1, org_id);
+		    ps.setObject(2, personId);
+
+		    try (ResultSet rs = ps.executeQuery()) {
+		      if (rs.next()) {
+		        return mapIndividual(rs);
+		      } else {
+		        return null; // ← 見つからなかった場合
+		      }
+		    }
+
+		  } catch (SQLException e) {
+		    throw new RuntimeException("individual取得（user_id）に失敗しました", e);
+		  }
+		}
 	//1件取得（UUID）
 	  public Individual findOneByUserId(UUID org_id,UUID userId) {
 		  final String sql =
