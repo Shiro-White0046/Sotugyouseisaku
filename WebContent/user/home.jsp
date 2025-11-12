@@ -88,7 +88,14 @@
         <div class="meal-card__foot">
           <c:choose>
             <c:when test="${not empty breakfast}">
-              <div class="meal-name"><c:out value="${breakfast.name}"/></div>
+                            <div class="meal-name" style="font-weight:800;"><c:out value="${breakfast.name}"/></div>
+              <c:if test="${not empty breakfastItems}">
+                <ul class="menu-items" style="margin:6px 0 0; padding-left:1.1em; font-size:13px; line-height:1.5; text-align:left;">
+                  <c:forEach var="it" items="${breakfastItems}">
+                    <li style="list-style:disc;"><c:out value="${it.name}"/></li>
+                  </c:forEach>
+                </ul>
+              </c:if>
             </c:when>
             <c:otherwise><div class="meal-empty">登録されていません</div></c:otherwise>
           </c:choose>
@@ -112,7 +119,14 @@
         <div class="meal-card__foot">
           <c:choose>
             <c:when test="${not empty lunch}">
-              <div class="meal-name"><c:out value="${lunch.name}"/></div>
+              <div class="meal-name" style="font-weight:800;"><c:out value="${lunch.name}"/></div>
+              <c:if test="${not empty lunchItems}">
+                <ul class="menu-items" style="margin:6px 0 0; padding-left:1.1em; font-size:13px; line-height:1.5; text-align:left;">
+                  <c:forEach var="it" items="${lunchItems}">
+                    <li style="list-style:disc;"><c:out value="${it.name}"/></li>
+                  </c:forEach>
+                </ul>
+              </c:if>
             </c:when>
             <c:otherwise><div class="meal-empty">登録されていません</div></c:otherwise>
           </c:choose>
@@ -136,7 +150,14 @@
         <div class="meal-card__foot">
           <c:choose>
             <c:when test="${not empty dinner}">
-              <div class="meal-name"><c:out value="${dinner.name}"/></div>
+              <div class="meal-name" style="font-weight:800;"><c:out value="${dinner.name}"/></div>
+              <c:if test="${not empty dinnerItems}">
+                <ul class="menu-items" style="margin:6px 0 0; padding-left:1.1em; font-size:13px; line-height:1.5; text-align:left;">
+                  <c:forEach var="it" items="${dinnerItems}">
+                    <li style="list-style:disc;"><c:out value="${it.name}"/></li>
+                  </c:forEach>
+                </ul>
+              </c:if>
             </c:when>
             <c:otherwise><div class="meal-empty">登録されていません</div></c:otherwise>
           </c:choose>

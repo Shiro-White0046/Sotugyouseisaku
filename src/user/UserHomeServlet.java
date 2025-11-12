@@ -68,6 +68,17 @@ public class UserHomeServlet extends HttpServlet {
     req.setAttribute("lunch",     lunch);
     req.setAttribute("dinner",    dinner);
 
+ // ★ ここを追加（ItemDAO は既に使っている listByMeal を利用）
+    java.util.List<MenuItem> breakfastItems =
+        (breakfast != null) ? itemDao.listByMeal(breakfast.getId()) : java.util.Collections.emptyList();
+    java.util.List<MenuItem> lunchItems =
+        (lunch != null) ? itemDao.listByMeal(lunch.getId()) : java.util.Collections.emptyList();
+    java.util.List<MenuItem> dinnerItems =
+        (dinner != null) ? itemDao.listByMeal(dinner.getId()) : java.util.Collections.emptyList();
+
+    req.setAttribute("breakfastItems", breakfastItems);
+    req.setAttribute("lunchItems",     lunchItems);
+    req.setAttribute("dinnerItems",    dinnerItems);
     // ===== 既存の「自動選択スロット」ロジックは維持（下部リスト表示などで使用） =====
     String chosen = chooseMealSlot(LocalTime.now()); // "breakfast"/"lunch"/"dinner"（下でUPPERに正規化）
     String chosenUpper = chosen.toUpperCase();       // DAOは大文字想定でも小文字でも動くように
