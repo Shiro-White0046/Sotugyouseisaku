@@ -45,6 +45,15 @@
           <c:otherwise>登録されていません</c:otherwise>
         </c:choose>
       </div>
+            <!-- ★追加：この日の朝食の品目一覧（itemsBySlot['BREAKFAST']）を表示 -->
+      <c:if test="${not empty itemsBySlot['BREAKFAST']}">
+        <ul class="item-list">
+          <c:forEach var="it" items="${itemsBySlot['BREAKFAST']}">
+            <li><c:out value="${it.name}"/></li>
+          </c:forEach>
+        </ul>
+      </c:if>
+
     </div>
 
     <!-- 昼食 -->
@@ -72,6 +81,14 @@
           <c:otherwise>登録されていません</c:otherwise>
         </c:choose>
       </div>
+            <!-- ★追加：この日の昼食の品目一覧（itemsBySlot['LUNCH']）を表示 -->
+      <c:if test="${not empty itemsBySlot['LUNCH']}">
+        <ul class="item-list">
+          <c:forEach var="it" items="${itemsBySlot['LUNCH']}">
+            <li><c:out value="${it.name}"/></li>
+          </c:forEach>
+        </ul>
+      </c:if>
     </div>
 
     <!-- 夕食 -->
@@ -99,6 +116,14 @@
           <c:otherwise>登録されていません</c:otherwise>
         </c:choose>
       </div>
+            <!-- ★追加：この日の夕食の品目一覧（itemsBySlot['DINNER']）を表示 -->
+      <c:if test="${not empty itemsBySlot['DINNER']}">
+        <ul class="item-list">
+          <c:forEach var="it" items="${itemsBySlot['DINNER']}">
+            <li><c:out value="${it.name}"/></li>
+          </c:forEach>
+        </ul>
+      </c:if>
     </div>
   </div>
 
