@@ -90,8 +90,7 @@ public class MenuDetail extends HttpServlet {
 
     // ---- 朝→昼→晩 の順に 3セクション分を作る ----
     Map<String, MenuMeal> mealMap = mealDao.findByDayAsMap(day.getId()); // slot -> MenuMeal
-    // スロット定義（DB値に合わせて大文字）
-    String[] slots = {"BREAKFAST", "LUNCH", "DINNER"};
+    String[] slots  = {"BREAKFAST", "LUNCH", "DINNER"};
     String[] labels = {"朝食", "昼食", "夕食"};
 
     List<Map<String,Object>> sections = new ArrayList<>();
@@ -108,9 +107,19 @@ public class MenuDetail extends HttpServlet {
         sec.put("name", "(メニュー未設定)");
         sec.put("description", "");
         sec.put("allergens", Collections.emptyList());
+        sec.put("imagePath", null);               // ← 追加
       } else {
         sec.put("name", meal.getName());
         sec.put("description", meal.getDescription());
+
+        // ← ここが追加：Meal側の画像パス（あれば）
+        String mealImage = null;
+        try {
+          java.lang.reflect.Method m = meal.getClass().getMethod("getImagePath");
+          Object v = m.invoke(meal);
+          if (v != null) mealImage = String.valueOf(v);
+        } catch (Exception ignore) {}
+        sec.put("imagePath", mealImage);
 
         // 品目→アレルゲン→利用者に一致するものだけ
         List<Allergen> filtered = new ArrayList<>();
@@ -125,7 +134,7 @@ public class MenuDetail extends HttpServlet {
     }
 
     // JSPへ
-    req.setAttribute("menuImagePath", day.getImagePath()); // 1日の画像（全セクション共通）
+    req.setAttribute("menuImagePath", day.getImagePath()); // ← 日単位の画像（フォールバック用）
     req.setAttribute("menuDate", day.getMenuDate());
     req.setAttribute("sections", sections);
     setHeadAndYm(req, day.getMenuDate());

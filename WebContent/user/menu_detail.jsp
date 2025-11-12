@@ -38,53 +38,68 @@
   <div class="title">${headTitle}</div>
 
   <!-- セクション（朝食・昼食・夕食） -->
-  <c:forEach var="sec" items="${sections}">
-    <div class="section-title">${sec.label}</div>
+  <!-- ループはそのまま -->
+<c:forEach var="sec" items="${sections}">
+  <div class="section-title">${sec.label}</div>
 
-    <div class="grid">
-      <!-- 左：画像＋説明（画像は1日共通） -->
-      <section class="left-card">
-        <c:set var="img" value="${menuImagePath}" />
-        <c:choose>
-          <c:when test="${not empty img}">
-            <c:choose>
-              <c:when test="${fn:startsWith(img, '/')}">
-                <img class="menu-img" src="${pageContext.request.contextPath}${img}" alt="献立画像">
-              </c:when>
-              <c:otherwise>
-                <img class="menu-img" src="${pageContext.request.contextPath}/${img}" alt="献立画像">
-              </c:otherwise>
-            </c:choose>
-          </c:when>
-          <c:otherwise>
-            <div style="height:260px;display:flex;align-items:center;justify-content:center;color:#666;">
-              写真
-            </div>
-          </c:otherwise>
-        </c:choose>
+  <div class="grid">
+    <section class="left-card">
+      <%-- ① 食事画像があれば最優先 --%>
+      <c:set var="imgMeal" value="${sec.imagePath}" />
+      <c:set var="imgDay"  value="${menuImagePath}" />
+      <c:choose>
+        <c:when test="${not empty imgMeal}">
+          <c:choose>
+            <c:when test="${fn:startsWith(imgMeal, '/')}">
+              <img class="menu-img" src="${pageContext.request.contextPath}${imgMeal}" alt="献立画像">
+            </c:when>
+            <c:otherwise>
+              <img class="menu-img" src="${pageContext.request.contextPath}/${imgMeal}" alt="献立画像">
+            </c:otherwise>
+          </c:choose>
+        </c:when>
 
-        <c:if test="${not empty sec.description}">
-          <div class="desc">${sec.description}</div>
+        <%-- ② 無ければ日単位の画像にフォールバック --%>
+        <c:when test="${not empty imgDay}">
+          <c:choose>
+            <c:when test="${fn:startsWith(imgDay, '/')}">
+              <img class="menu-img" src="${pageContext.request.contextPath}${imgDay}" alt="献立画像">
+            </c:when>
+            <c:otherwise>
+              <img class="menu-img" src="${pageContext.request.contextPath}/${imgDay}" alt="献立画像">
+            </c:otherwise>
+          </c:choose>
+        </c:when>
+
+        <%-- ③ どちらも無ければプレースホルダ --%>
+        <c:otherwise>
+          <div style="height:260px;display:flex;align-items:center;justify-content:center;color:#666;">
+            写真
+          </div>
+        </c:otherwise>
+      </c:choose>
+
+      <c:if test="${not empty sec.description}">
+        <div class="desc">${sec.description}</div>
+      </c:if>
+    </section>
+
+    <!-- 右側（メニュー名・アレルゲン）は従来どおり -->
+    <aside class="right-card">
+      <div class="label">メニュー名</div>
+      <div class="name">${sec.name}</div>
+      <div class="msg">このメニューには以下のものが含まれています！</div>
+      <div class="chips">
+        <c:forEach var="a" items="${sec.allergens}">
+          <span class="chip">${a.nameJa}</span>
+        </c:forEach>
+        <c:if test="${empty sec.allergens}">
+          <span style="color:#666">登録なし</span>
         </c:if>
-      </section>
-
-      <!-- 右：メニュー名＋含有アレルゲン -->
-      <aside class="right-card">
-        <div class="label">メニュー名</div>
-        <div class="name">${sec.name}</div>
-        <div class="msg">このメニューには以下のものが含まれています！</div>
-
-        <div class="chips">
-          <c:forEach var="a" items="${sec.allergens}">
-            <span class="chip">${a.nameJa}</span>
-          </c:forEach>
-          <c:if test="${empty sec.allergens}">
-            <span style="color:#666">登録なし</span>
-          </c:if>
-        </div>
-      </aside>
-    </div>
-  </c:forEach>
+      </div>
+    </aside>
+  </div>
+</c:forEach>
 
   <!-- 戻る（カレンダーへ） -->
   <div class="footer">
