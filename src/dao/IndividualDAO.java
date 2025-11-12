@@ -97,6 +97,38 @@ public class IndividualDAO {
 	 return list;
 	}
 
+	/** 組織コードの個人一覧 */
+	//dao/IndividualDAO.java に追記
+	public java.util.List<bean.Individual> listByOrg(java.util.UUID orgId) {
+	 final String sql = "SELECT display_name" +
+	                    "FROM individuals WHERE org_id = ? ORDER BY created_at ASC";
+	 java.util.List<bean.Individual> list = new java.util.ArrayList<>();
+	 try (Connection con = ConnectionFactory.getConnection();
+	      PreparedStatement ps = con.prepareStatement(sql)) {
+	   ps.setObject(1, orgId);
+	   try (ResultSet rs = ps.executeQuery()) {
+	     while (rs.next()) {
+	       bean.Individual i = new bean.Individual();
+	       i.setId((java.util.UUID) rs.getObject("id"));
+	       i.setOrgId((java.util.UUID) rs.getObject("org_id"));
+	       i.setUserId((java.util.UUID) rs.getObject("user_id"));
+	       i.setDisplayName(rs.getString("display_name"));
+	       java.sql.Date d = rs.getDate("birthday");
+	       if (d != null) i.setBirthday(d.toLocalDate());
+	       i.setNote(rs.getString("note"));
+	       list.add(i);
+	     }
+	   }
+	 } catch (SQLException e) {
+	   throw new RuntimeException("個人一覧の取得に失敗しました", e);
+	 }
+	 return list;
+	}
+
+
+
+
+
 
   /** 件数（任意） */
   public int countByUser(UUID userId) {
@@ -351,7 +383,31 @@ public class IndividualDAO {
 		  i.setPinCodeHash(rs.getString("pin_code_hash"));
 		  return i;
 		}
+	 /** 個人ごとの認証パスワードを更新 */
+	 public void updatePin(Individual ind) {
+	   String sql = "UPDATE individuals SET pin_code_hash = ? WHERE id = ?";
+	   try (Connection con = ConnectionFactory.getConnection();
+	        PreparedStatement ps = con.prepareStatement(sql)) {
+	     ps.setString(1, ind.getPinCodeHash());
+	     ps.setObject(2, ind.getId());
+	     ps.executeUpdate();
+	   } catch (SQLException e) {
+	     throw new RuntimeException("認証パスワード更新に失敗しました", e);
+	   }
+	 }
 
+	// IndividualDAO に追記
+	 public void updatePinHash(Individual ind) {
+	   final String sql = "UPDATE individuals SET pin_code_hash = ? WHERE id = ?";
+	   try (Connection con = ConnectionFactory.getConnection();
+	        PreparedStatement ps = con.prepareStatement(sql)) {
+	     ps.setString(1, ind.getPinCodeHash());
+	     ps.setObject(2, ind.getId());
+	     ps.executeUpdate();
+	   } catch (SQLException e) {
+	     throw new RuntimeException("PIN更新に失敗", e);
+	   }
+	 }
 
 
 }
