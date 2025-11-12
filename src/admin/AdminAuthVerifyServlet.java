@@ -38,10 +38,17 @@ public class AdminAuthVerifyServlet extends HttpServlet {
       return;
     }
 
-    UUID personId = UUID.fromString(idStr);
-    Individual person = iDao.findOneByOrgIdAndPersonId(admin.getOrgId(), personId);
+    UUID personId;
+    try {
+      personId = UUID.fromString(idStr);
+    } catch (IllegalArgumentException e) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+      return;
+    }
+
+    // ★ GET/POSTとも org.getId() で統一
+    Individual person = iDao.findOneByOrgIdAndPersonId(org.getId(), personId);
     if (person == null) {
-      // 存在しない or 他組織
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
       return;
     }
@@ -70,16 +77,30 @@ public class AdminAuthVerifyServlet extends HttpServlet {
       return;
     }
 
-    UUID personId = UUID.fromString(idStr);
-    Individual person = iDao.findOneByOrgIdAndPersonId(org.getId(),personId );
+    UUID personId;
+    try {
+      personId = UUID.fromString(idStr);
+    } catch (IllegalArgumentException e) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+      return;
+    }
+
+    Individual person = iDao.findOneByOrgIdAndPersonId(org.getId(), personId);
     if (person == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
       return;
     }
 
+    pin = pin.trim();
+    if (!pin.matches("\\d{4}")) {              // 4桁数値を要求（JSPのpatternとも一致）
+      req.setAttribute("person", person);
+      req.setAttribute("error", "パスワードは4桁の数字で入力してください。");
+      req.getRequestDispatcher("/admin/auth_verify.jsp").forward(req, resp);
+      return;
+    }
+
     boolean ok = verifyPin(pin, person.getPinCodeHash());
     if (ok) {
-      // TODO: 必要なら認証ログを記録 / person の verified 更新など
       req.getSession().setAttribute("flashMessage", person.getDisplayName() + " を認証しました。");
       resp.sendRedirect(req.getContextPath() + "/admin/auth");
     } else {

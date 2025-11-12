@@ -6,7 +6,7 @@
   request.setAttribute("pageTitle", "認証ページ");
 %>
 
-<jsp:include page="/header_admin.jsp" flush="true" />
+<jsp:include page="/header.jsp" flush="true" />
 
 <style>
 :root{ --bg:#fde9c9; --panel:#f3dcb1; --panel-dark:#e8cda1; --row:#e3a07e; --row-border:#c78866; --header:#f7e6bf; --sticky:#f2dfaf; }
