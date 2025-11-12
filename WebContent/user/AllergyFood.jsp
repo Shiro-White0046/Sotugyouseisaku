@@ -1,8 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<!DOCTYPE html><html lang="ja"><head>
-<meta charset="UTF-8"><title>食物アレルギー</title>
+<jsp:include page="/header_user.jsp" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
 
@@ -34,7 +33,7 @@
 </style>
 </head>
 <body>
-<header><h2 style="margin:0">食物アレルギー入力</h2></header>
+
 
 <div class="wrap">
   <form action="${pageContext.request.contextPath}/user/allergy/confirm" method="post" id="form">

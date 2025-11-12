@@ -28,9 +28,9 @@
 <jsp:include page="/header_user.jsp" />
 
 <main class="content" style="padding:24px 28px 28px;">
-  <h2 class="page-title" style="background:#ffe9c2;border:1px solid #e4c155;border-radius:10px;padding:14px 18px;text-align:center;margin:8px auto 20px;max-width:1040px;font-weight:700;">
+  <!--  <h2 class="page-title" style="background:#ffe9c2;border:1px solid #e4c155;border-radius:10px;padding:14px 18px;text-align:center;margin:8px auto 20px;max-width:1040px;font-weight:700;">
     <%= pageTitle %>
-  </h2>
+  </h2>-->
 
   <!-- 対象児切替 -->
   <form method="get" action="<%= ctx %>/user/avoid" style="max-width:1040px;margin:0 auto 12px;display:flex;gap:8px;align-items:center;">

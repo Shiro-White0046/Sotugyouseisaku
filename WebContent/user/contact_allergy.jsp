@@ -26,11 +26,8 @@
   for (Map.Entry<String,String> ent : labelMap.entrySet()) if (bySub.containsKey(ent.getKey())) order.add(ent.getKey());
   String firstCat = order.isEmpty() ? "OTHER" : order.get(0);
 %>
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title><%= pageTitle %></title>
+<jsp:include page="/header_user.jsp" />
+
 <style>
 :root{--bg:#fde6c9;--panel:#ffe9c2;--card:#fff;--line:#424242;--accent:#e4c155;--accent-bg:#fff7df;--text:#333;}
 body{background:var(--bg);color:var(--text);margin:0;font-family:"Hiragino Sans","Noto Sans JP",sans-serif;}
@@ -63,7 +60,7 @@ main.content{padding:24px 28px 48px;}
 </head>
 <body>
 <main class="content">
-  <h2 class="page-title"><%= pageTitle %></h2>
+  <!--  <h2 class="page-title"><%= pageTitle %></h2>-->
 
   <!-- 子ども切替 -->
   <form method="get" action="<%= ctx %>/user/allergy/contact" class="person-switch">

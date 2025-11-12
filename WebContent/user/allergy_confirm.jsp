@@ -5,11 +5,7 @@
 %>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>食物アレルギー入力（確認）</title>
+<jsp:include page="/header_user.jsp" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   body{background:#f7e1ca;margin:0;font-family:sans-serif}
@@ -29,7 +25,7 @@
 </style>
 </head>
 <body>
-<header><h2 style="margin:0">食物アレルギー入力（確認）</h2></header>
+
 
 <div class="wrap">
   <!-- POSTで登録サーブレットへ -->
