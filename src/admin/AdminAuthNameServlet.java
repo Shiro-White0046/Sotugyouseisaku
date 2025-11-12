@@ -39,6 +39,6 @@ public class AdminAuthNameServlet extends HttpServlet {
 
 
 
-    req.getRequestDispatcher("/admin/authlist.jsp").forward(req, resp);
+    req.getRequestDispatcher("/admin/authverify.jsp").forward(req, resp);
   }
 }
