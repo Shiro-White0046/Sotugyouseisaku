@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import bean.Administrator;
+import bean.Allergen;
 import bean.MenuDay;
 import bean.MenuItem;
 import bean.MenuMeal;
@@ -75,12 +76,17 @@ public class AdminMenuEditServlet extends HttpServlet {
       selectedItems = itemDao.listWithAllergens(mealOpt.get().getId());
     }
 
+    // --- アレルゲン一覧（FOOD + AVOID）を結合表示 ---
+    List<Allergen> allergens = new ArrayList<Allergen>();
+    allergens.addAll(algDao.listByCategory("FOOD"));
+    allergens.addAll(algDao.listByCategory("AVOID"));
+
     // 画面用データ
     req.setAttribute("menuDay", day);
     req.setAttribute("selectedSlot", slot);
     req.setAttribute("meals", mealDao.findByDayAsMap(day.getId()));
     req.setAttribute("selectedItems", selectedItems);
-    req.setAttribute("allergens", algDao.listByCategory("FOOD"));   // FOODのみ表示
+    req.setAttribute("allergens", allergens);   // ← FOOD＋AVOID 両方を渡す
 
     req.getRequestDispatcher("/admin/menus_edit_slot.jsp").forward(req, resp);
   }
@@ -183,11 +189,17 @@ public class AdminMenuEditServlet extends HttpServlet {
             : Collections.<MenuItem>emptyList();
 
         MenuDay day = dayDao.find(dayId).orElse(null);
+
+        // --- FOOD + AVOID を再設定 ---
+        List<Allergen> allergens = new ArrayList<Allergen>();
+        allergens.addAll(algDao.listByCategory("FOOD"));
+        allergens.addAll(algDao.listByCategory("AVOID"));
+
         req.setAttribute("menuDay", day);
         req.setAttribute("selectedSlot", slot);
         req.setAttribute("meals", mealDao.findByDayAsMap(dayId));
         req.setAttribute("selectedItems", selectedItems);
-        req.setAttribute("allergens", algDao.listByCategory("FOOD"));
+        req.setAttribute("allergens", allergens);
       } catch (Exception ignore) {}
 
       req.getRequestDispatcher("/admin/menus_edit_slot.jsp").forward(req, resp);
