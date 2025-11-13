@@ -49,21 +49,7 @@ body{ background:var(--bg); }
           <tr>
             <th class="sticky-left">ID</th>
             <th>名前</th>
-            <td class="sticky-right">認証
-  <c:choose>
-
-    <c:when test="${ind.lastVerifiedDate ne null and ind.lastVerifiedDate eq today}">
-      ○
-    </c:when>
-
-    <c:when test="${fn:length(fn:trim(ind.pinCodeHash)) > 0}">
-      〇
-    </c:when>
-    <c:otherwise>
-
-    </c:otherwise>
-  </c:choose>
-</td>
+            <th class="sticky-right">認証</th>
           </tr>
         </thead>
         <tbody>
@@ -73,12 +59,32 @@ body{ background:var(--bg); }
                 <tr>
                   <td class="sticky-left">${st.index + 1}</td>
                   <td class="col-name">
-                    <a href="<c:url value='/admin/auth/verify'><c:param name='id' value='${ind.id}'/></c:url>">
-                      <c:out value="${ind.displayName}" />
-                    </a>
-                  </td>
+  <c:choose>
+
+    <c:when test="${ind.lastVerifiedDate eq today}">
+      <span class="verified-name">
+        <c:out value="${ind.displayName}" />
+      </span>
+    </c:when>
+
+
+    <c:otherwise>
+      <a href="<c:url value='/admin/auth/verify'><c:param name='id' value='${ind.id}'/></c:url>">
+        <c:out value="${ind.displayName}" />
+      </a>
+    </c:otherwise>
+  </c:choose>
+</td>
                   <td class="sticky-right">
-                    <c:if test="${not empty ind.pinCodeHash}">済</c:if>
+                    <c:choose>
+
+                      <c:when test="${ind.lastVerifiedDate eq today}">
+                        ○
+                      </c:when>
+
+                      <c:otherwise>
+                      </c:otherwise>
+                    </c:choose>
                   </td>
                 </tr>
               </c:forEach>
