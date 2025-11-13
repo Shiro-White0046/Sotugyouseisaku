@@ -1,6 +1,7 @@
 package user;
 
 import java.io.IOException;
+import java.lang.reflect.Method;                 // ★ 追加
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpSession;
 
 import bean.Allergen;
 import bean.MenuDay;
+import bean.MenuItem;                            // ★ 追加
 import bean.MenuMeal;
 import bean.User;
 import dao.IndividualAllergyDAO;
@@ -31,15 +33,15 @@ import dao.MenuItemDAO;
 import dao.MenuMealDAO;
 
 @WebServlet(urlPatterns = {
-    "/user/menudetail",     // 旧リンク
-    "/user/menu_detail",    // 現在のリンク
-    "/user/menus/detail"    // 互換
+    "/user/menudetail",
+    "/user/menu_detail",
+    "/user/menus/detail"
 })
 public class MenuDetail extends HttpServlet {
   private static final long serialVersionUID = 1L;
 
   private static final String FALLBACK_LOGIN_URL = "/auth/login";
-  private static final String FALLBACK_CALENDAR_URL = "/user/menus_calendar";
+  private static final String FALLBACK_CALENDAR_URL = "/user/menuscalendar"; // ★ 統一
 
   private final MenuDayDAO dayDao = new MenuDayDAO();
   private final MenuMealDAO mealDao = new MenuMealDAO();
@@ -78,10 +80,9 @@ public class MenuDetail extends HttpServlet {
     // 指定日取得
     Optional<MenuDay> optDay = dayDao.findByDate(orgId, date);
     if (!optDay.isPresent()) {
-      // 1日分の枠は出すが、全部 未設定 にする
       req.setAttribute("menuImagePath", null);
       req.setAttribute("menuDate", date);
-      req.setAttribute("sections", buildEmptySections());
+      req.setAttribute("sections", buildEmptySections());     // ★ キー整合版に変更済み
       setHeadAndYm(req, date);
       req.getRequestDispatcher("/user/menu_detail.jsp").forward(req, resp);
       return;
@@ -89,13 +90,13 @@ public class MenuDetail extends HttpServlet {
     MenuDay day = optDay.get();
 
     // ---- 朝→昼→晩 の順に 3セクション分を作る ----
-    Map<String, MenuMeal> mealMap = mealDao.findByDayAsMap(day.getId()); // slot -> MenuMeal
+    Map<String, MenuMeal> mealMap = mealDao.findByDayAsMap(day.getId());
     String[] slots  = {"BREAKFAST", "LUNCH", "DINNER"};
     String[] labels = {"朝食", "昼食", "夕食"};
 
     List<Map<String,Object>> sections = new ArrayList<>();
     for (int i = 0; i < slots.length; i++) {
-      String slot = slots[i];
+      String slot  = slots[i];
       String label = labels[i];
 
       Map<String,Object> sec = new LinkedHashMap<>();
@@ -106,35 +107,45 @@ public class MenuDetail extends HttpServlet {
       if (meal == null) {
         sec.put("name", "(メニュー未設定)");
         sec.put("description", "");
-        sec.put("allergens", Collections.emptyList());
-        sec.put("imagePath", null);               // ← 追加
+        sec.put("imagePath", null);
+        sec.put("allergensUser",  Collections.emptyList());
+        sec.put("allergensOther", Collections.emptyList());
       } else {
         sec.put("name", meal.getName());
         sec.put("description", meal.getDescription());
 
-        // ← ここが追加：Meal側の画像パス（あれば）
+        // 画像（Java8互換の反射）
         String mealImage = null;
         try {
-          java.lang.reflect.Method m = meal.getClass().getMethod("getImagePath");
+          Method m = meal.getClass().getMethod("getImagePath");
           Object v = m.invoke(meal);
           if (v != null) mealImage = String.valueOf(v);
         } catch (Exception ignore) {}
         sec.put("imagePath", mealImage);
 
-        // 品目→アレルゲン→利用者に一致するものだけ
-        List<Allergen> filtered = new ArrayList<>();
-        for (bean.MenuItem it : itemDao.listByMeal(meal.getId())) {
+        // その食事に含まれる全アレルゲン（重複除去）
+        Map<Short, Allergen> allMap = new LinkedHashMap<>();
+        for (MenuItem it : itemDao.listByMeal(meal.getId())) {
           for (Allergen a : itemAllergenDao.listByItem(it.getId())) {
-            if (userAllergenIds.contains(a.getId())) filtered.add(a);
+            if (!allMap.containsKey(a.getId())) allMap.put(a.getId(), a);
           }
         }
-        sec.put("allergens", filtered);
+
+        // 利用者一致（赤）／その他（黒）
+        List<Allergen> userList  = new ArrayList<>();
+        List<Allergen> otherList = new ArrayList<>();
+        for (Map.Entry<Short,Allergen> e : allMap.entrySet()) {
+          if (userAllergenIds.contains(e.getKey())) userList.add(e.getValue());
+          else otherList.add(e.getValue());
+        }
+        sec.put("allergensUser",  userList);
+        sec.put("allergensOther", otherList);
       }
       sections.add(sec);
     }
 
     // JSPへ
-    req.setAttribute("menuImagePath", day.getImagePath()); // ← 日単位の画像（フォールバック用）
+    req.setAttribute("menuImagePath", day.getImagePath());
     req.setAttribute("menuDate", day.getMenuDate());
     req.setAttribute("sections", sections);
     setHeadAndYm(req, day.getMenuDate());
@@ -148,6 +159,7 @@ public class MenuDetail extends HttpServlet {
     req.setAttribute("ym", (d == null) ? "" : String.format("%d-%02d", d.getYear(), d.getMonthValue()));
   }
 
+  // ★ 空セクションでも JSP のキーと揃える
   private static List<Map<String,Object>> buildEmptySections() {
     String[] labels = {"朝食", "昼食", "夕食"};
     List<Map<String,Object>> list = new ArrayList<>();
@@ -156,7 +168,9 @@ public class MenuDetail extends HttpServlet {
       m.put("label", label);
       m.put("name", "(メニュー未設定)");
       m.put("description", "");
-      m.put("allergens", Collections.emptyList());
+      m.put("imagePath", null);
+      m.put("allergensUser",  Collections.emptyList());
+      m.put("allergensOther", Collections.emptyList());
       list.add(m);
     }
     return list;
