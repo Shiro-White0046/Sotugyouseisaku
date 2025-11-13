@@ -160,6 +160,23 @@ public class IndividualAllergyDAO {
     }
   }
 
+/** 指定 person・カテゴリのレコードだけ削除（他カテゴリは残す） */
+public void deleteByCategory(UUID personId, String category) {
+  final String sql =
+      "DELETE FROM individual_allergies ia " +
+      "USING allergens a " +
+      "WHERE ia.allergen_id = a.id " +
+      "  AND ia.person_id = ? " +
+      "  AND a.category = ?";
+  try (Connection con = ConnectionFactory.getConnection();
+       PreparedStatement ps = con.prepareStatement(sql)) {
+    ps.setObject(1, personId);
+    ps.setString(2, category);
+    ps.executeUpdate();
+  } catch (SQLException e) {
+    throw new RuntimeException("deleteByCategory 失敗", e);
+  }
+}
   public void clearIndividualAllergies() {
 	    String sql = "DELETE FROM individual_allergies";
 	    try (Connection con = ConnectionFactory.getConnection();
@@ -184,7 +201,25 @@ public class IndividualAllergyDAO {
 	      throw new RuntimeException("exists 失敗", e);
 	    }
 	  }
-
+  /** 指定 person・カテゴリのレコードが1件でもあるか */
+  public boolean existsByCategory(UUID personId, String category) {
+    final String sql =
+        "SELECT 1 " +
+        "FROM individual_allergies ia " +
+        "JOIN allergens a ON a.id = ia.allergen_id " +
+        "WHERE ia.person_id = ? AND a.category = ? " +
+        "LIMIT 1";
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+      ps.setObject(1, personId);
+      ps.setString(2, category);
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next();
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("existsByCategory 失敗", e);
+    }
+  }
 
 
 

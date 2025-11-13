@@ -2,6 +2,7 @@
 package user;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -142,7 +143,7 @@ public class ContactAllergyServlet extends HttpServlet {
     Set<Short> toDelete = new LinkedHashSet<Short>(existingContactIds);
     toDelete.removeAll(newContactIds);
 
-      iaDAO.delete(personId);
+    iaDAO.deleteByCategory(personId, "CONTACT");
 
 
     // 追加/更新（新規集合）
@@ -150,8 +151,10 @@ public class ContactAllergyServlet extends HttpServlet {
       IndividualAllergy ia = new IndividualAllergy();
       ia.setPersonId(personId);
       ia.setAllergenId(id);
-      ia.setNote(noteById.getOrDefault(id, ""));
-      ia.setConfirmedAt(null);
+      String note = noteById.get(id);
+      if (note != null && note.trim().isEmpty()) note = null; // 空文字 → NULL
+      ia.setNote(note);
+      ia.setConfirmedAt(LocalDate.now()); // ここで today をセットしてもOK（DAO側でも可）
       iaDAO.upsert(ia);
     }
 

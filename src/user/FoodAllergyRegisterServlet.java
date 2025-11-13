@@ -89,25 +89,17 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
       System.out.println(personId);
       System.out.println("------------------------------");
       IndividualAllergyDAO iaDao = new IndividualAllergyDAO();
-      if (iaDao.exists(personId)){
-    	  iaDao.delete(personId);//中身削除
-    	  iaDao.upsertMultiple(personId, uniqueIds, null);//中身挿入
-    	  session.setAttribute("flashMessage", "アレルギー登録を更新しました");
-      }else{
-    	  iaDao.upsertMultiple(personId, uniqueIds, null);
-    	  session.setAttribute("flashMessage", "アレルギーを登録しました");
+
+      // ★ FOOD カテゴリだけを消してから入れ直す
+      boolean existed = iaDao.existsByCategory(personId, "FOOD");
+      iaDao.deleteByCategory(personId, "FOOD");
+      iaDao.upsertMultiple(personId, uniqueIds, null);
+
+      if (existed) {
+        session.setAttribute("flashMessage", "食物性アレルギー登録を更新しました");
+      } else {
+        session.setAttribute("flashMessage", "食物性アレルギーを登録しました");
       }
-
-//      iaDao.clearIndividualAllergies();
-//
-//      iaDao.upsertMultiple(personId, uniqueIds, null); // note不要なら null。confirmed_at は now()
-
-      // 7) （必要なら「その他」処理）
-      // if (hasOther && otherName != null && !otherName.trim().isEmpty()) {
-      //   iaDao.insertOtherName(personId, otherName.trim(), user.getId()); // 任意の拡張
-      // }
-
-      // 8) 完了
 
       resp.sendRedirect(req.getContextPath() + "/user/home");
 
