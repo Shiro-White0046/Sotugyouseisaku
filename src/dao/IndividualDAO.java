@@ -337,12 +337,41 @@ public class IndividualDAO {
 	  }
 	}
 
-	//1件取得（orgID,personId）
+
+
+	//1件取得（Id）
+	  public Individual findOneByOrgIdAndPersonId(UUID personId) {
+		  final String sql =
+		      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash "
+		    + "FROM individuals "
+		    + "WHERE id=? "
+		    + "ORDER BY id";
+
+		  try (Connection con = ConnectionFactory.getConnection();
+		       PreparedStatement ps = con.prepareStatement(sql)) {
+
+		    ps.setObject(1, personId);
+
+
+		    try (ResultSet rs = ps.executeQuery()) {
+		      if (rs.next()) {
+		        return mapIndividual(rs);
+		      } else {
+		        return null; // ← 見つからなかった場合
+		      }
+		    }
+
+		  } catch (SQLException e) {
+		    throw new RuntimeException("individual取得（user_id）に失敗しました", e);
+		  }
+	  }
+
+	//1件取得（orgID,Id）
 	  public Individual findOneByOrgIdAndPersonId(UUID org_id,UUID personId) {
 		  final String sql =
 		      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash "
 		    + "FROM individuals "
-		    + "WHERE org_id = ? and person_id=? "
+		    + "WHERE org_id = ? and id=? "
 		    + "ORDER BY id";
 
 		  try (Connection con = ConnectionFactory.getConnection();

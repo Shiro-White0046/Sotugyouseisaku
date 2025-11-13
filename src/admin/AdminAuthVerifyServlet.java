@@ -47,7 +47,7 @@ public class AdminAuthVerifyServlet extends HttpServlet {
     }
 
     // ★ GET/POSTとも org.getId() で統一
-    Individual person = iDao.findOneByOrgIdAndPersonId(org.getId(), personId);
+    Individual person = iDao.findOneByOrgIdAndPersonId(personId);
     if (person == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
       return;
@@ -61,6 +61,8 @@ public class AdminAuthVerifyServlet extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
 
+
+
     req.setCharacterEncoding("UTF-8");
     HttpSession ses = req.getSession(false);
     Administrator admin = (ses != null) ? (Administrator) ses.getAttribute("admin") : null;
@@ -72,6 +74,7 @@ public class AdminAuthVerifyServlet extends HttpServlet {
 
     String idStr = req.getParameter("id");
     String pin   = req.getParameter("pin");
+
     if (idStr == null || pin == null) {
       resp.sendRedirect(req.getContextPath() + "/admin/auth");
       return;
@@ -91,6 +94,9 @@ public class AdminAuthVerifyServlet extends HttpServlet {
       return;
     }
 
+    System.out.println("入力PIN=" + pin);
+    System.out.println("DBのpinCodeHash=" + person.getPinCodeHash());
+
     pin = pin.trim();
     if (!pin.matches("\\d{4}")) {              // 4桁数値を要求（JSPのpatternとも一致）
       req.setAttribute("person", person);
@@ -99,7 +105,7 @@ public class AdminAuthVerifyServlet extends HttpServlet {
       return;
     }
 
-    boolean ok = verifyPin(pin, person.getPinCodeHash());
+    boolean ok = verifyPin(pin, person.getPinCodeHash(), org.getId(), person.getUserId());
     if (ok) {
       req.getSession().setAttribute("flashMessage", person.getDisplayName() + " を認証しました。");
       resp.sendRedirect(req.getContextPath() + "/admin/auth");
@@ -111,23 +117,46 @@ public class AdminAuthVerifyServlet extends HttpServlet {
   }
 
   /** 平文 or BCrypt($2a/$2b/$2y) どちらでも判定できるユーティリティ */
-  private boolean verifyPin(String raw, String hash) {
+  /** 平文 / BCrypt / SHA-256 のいずれでも照合できるユーティリティ */
+  /** 利用者側と同じロジック（orgId:userId:pin）で照合 */
+  private boolean verifyPin(String pin, String hash, UUID orgId, UUID userId) {
     if (hash == null || hash.isEmpty()) return false;
     String h = hash.trim();
     try {
-      if (h.startsWith("$2a$") || h.startsWith("$2b$") || h.startsWith("$2y$")) {
-        // BCrypt 利用時（org.mindrot.jbcrypt.BCrypt）
-        try {
-          return org.mindrot.jbcrypt.BCrypt.checkpw(raw, h);
-        } catch (Throwable t) {
-          // ライブラリ未導入なら false
-          return false;
-        }
-      }
-      // それ以外は平文比較（暫定。運用では必ずハッシュ化してください）
-      return raw.equals(h);
+      if (!h.matches("[0-9a-fA-F]{64}")) return false;
+
+      String src = orgId.toString() + ":" + userId.toString() + ":" + pin;
+      java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+      byte[] digest = md.digest(src.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      StringBuilder sb = new StringBuilder(digest.length * 2);
+      for (byte b : digest) sb.append(String.format("%02x", b));
+      String calc = sb.toString();
+
+      System.out.println("比較対象 src=" + src);
+      System.out.println("計算結果=" + calc);
+      System.out.println("DBハッシュ=" + h);
+
+      return h.equalsIgnoreCase(calc);
     } catch (Exception e) {
+      e.printStackTrace();
       return false;
     }
   }
+
+  /** SHA-256 ハッシュ生成 */
+  private String sha256(String input) {
+    try {
+      java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+      byte[] bytes = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      StringBuilder sb = new StringBuilder();
+      for (byte b : bytes) sb.append(String.format("%02x", b));
+      return sb.toString();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+
+
+
 }

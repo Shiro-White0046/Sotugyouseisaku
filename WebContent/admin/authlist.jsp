@@ -54,7 +54,9 @@ body{ background:var(--bg); }
           <tr>
             <th class="sticky-left">ID</th>
             <th>名前</th>
-            <th class="sticky-right">済</th>
+            <td class="sticky-right">
+  <c:if test="${fn:length(fn:trim(ind.pinCodeHash)) > 0}">✓</c:if>
+</td>
           </tr>
         </thead>
         <tbody>
