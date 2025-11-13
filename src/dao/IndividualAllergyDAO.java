@@ -287,6 +287,59 @@ public void deleteByCategory(UUID personId, String category) {
 	  }
 	  return list;
 	}
+	// ★ 追加：名前（q）とアレルギー名（aq）で検索できる集約版
+	public List<AllergyView> aggregateByCategoryWithFilters(
+	    java.util.UUID orgId, String q /*名前*/, String aq /*アレルギー名*/
+	) {
+	  final String sql =
+	    "WITH base AS ( " +
+	    "  SELECT i.id, i.display_name, i.created_at, a.category, a.name_ja, a.name_en " +
+	    "  FROM individuals i " +
+	    "  LEFT JOIN individual_allergies ia ON ia.person_id = i.id " +
+	    "  LEFT JOIN allergens a ON a.id = ia.allergen_id " +
+	    "  WHERE i.org_id = ? " +
+	    "    AND (COALESCE(?, '') = '' OR i.display_name ILIKE '%' || ? || '%') " +
+	    ") " +
+	    "SELECT b.id, b.display_name, " +
+	    "  STRING_AGG(CASE WHEN b.category='FOOD'   THEN b.name_ja END, '・' ORDER BY b.name_ja)   AS foods, " +
+	    "  STRING_AGG(CASE WHEN b.category='AVOID'  THEN b.name_ja END, '・' ORDER BY b.name_ja)   AS avoids, " +
+	    "  STRING_AGG(CASE WHEN b.category='CONTACT'THEN b.name_ja END, '・' ORDER BY b.name_ja)   AS contacts " +
+	    "FROM base b " +
+	    // アレルギー名フィルタ（任意）。en/ja どちらにヒットしてもOK
+	    "WHERE (COALESCE(?, '') = '' OR EXISTS ( " +
+	    "  SELECT 1 FROM base bx " +
+	    "   WHERE bx.id = b.id " +
+	    "     AND (bx.name_ja ILIKE '%' || ? || '%' OR bx.name_en ILIKE '%' || ? || '%') " +
+	    ")) " +
+	    "GROUP BY b.id, b.display_name " +
+	    "ORDER BY MAX(b.created_at) DESC NULLS LAST, b.id";
 
+	  List<AllergyView> list = new ArrayList<>();
+	  try (Connection con = ConnectionFactory.getConnection();
+	       PreparedStatement ps = con.prepareStatement(sql)) {
+	    String name = (q  == null) ? "" : q.trim();
+	    String alg  = (aq == null) ? "" : aq.trim();
+	    ps.setObject(1, orgId);
+	    ps.setString(2, name);
+	    ps.setString(3, name);
+	    ps.setString(4, alg);
+	    ps.setString(5, alg);
+	    ps.setString(6, alg);
+	    try (ResultSet rs = ps.executeQuery()) {
+	      while (rs.next()) {
+	        list.add(new AllergyView(
+	          (java.util.UUID) rs.getObject("id"),
+	          rs.getString("display_name"),
+	          rs.getString("foods"),
+	          rs.getString("contacts"),
+	          rs.getString("avoids")
+	        ));
+	      }
+	    }
+	  } catch (SQLException e) {
+	    throw new RuntimeException("アレルギー集約（検索付き）の取得に失敗しました", e);
+	  }
+	  return list;
+	}
 
 }

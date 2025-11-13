@@ -14,7 +14,7 @@ import bean.Administrator;
 import dao.IndividualDAO;
 import dao.IndividualDAO.IndividualRow;
 
-@WebServlet("/admin/adminuserlistallergy")
+@WebServlet("/admin/users")
 public class AdminUserListServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
