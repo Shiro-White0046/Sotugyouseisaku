@@ -14,7 +14,7 @@ import javax.servlet.http.HttpSession;
 import bean.Administrator;
 import dao.IndividualAllergyDAO;
 
-@WebServlet("/admin/adminallergies")
+@WebServlet("/admin/allergens")
 public class AdminUserListAllergyServlet extends HttpServlet {
   private final IndividualAllergyDAO iaDao = new IndividualAllergyDAO();
 
