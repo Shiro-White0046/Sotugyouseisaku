@@ -1,6 +1,7 @@
 package user;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -131,7 +132,8 @@ public class ProhibitedInputServlet extends HttpServlet {
     Set<Short> toDelete = new LinkedHashSet<Short>(existingIds);
     toDelete.removeAll(newIds);
 
-      iaDAO.delete(personId);
+    iaDAO.deleteByCategory(personId, "AVOID");
+
 
 
     // 追加/更新（新規側）
@@ -139,8 +141,10 @@ public class ProhibitedInputServlet extends HttpServlet {
       IndividualAllergy ia = new IndividualAllergy();
       ia.setPersonId(personId);
       ia.setAllergenId(id);
-      ia.setNote(noteById.get(id));
-      ia.setConfirmedAt(null);
+      String note = noteById.get(id);
+      if (note != null && note.trim().isEmpty()) note = null; // 空文字 → NULL
+      ia.setNote(note);
+      ia.setConfirmedAt(LocalDate.now()); // ここで today をセットしてもOK（DAO側でも可）
       iaDAO.upsert(ia);
     }
 

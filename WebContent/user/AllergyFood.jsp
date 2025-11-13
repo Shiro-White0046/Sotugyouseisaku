@@ -44,14 +44,19 @@
       <div class="panel" role="group" aria-labelledby="allergenGroupLabel">
         <span id="allergenGroupLabel" class="sr-only">アレルゲン選択</span>
 
-        <div class="grid" id="akGrid">
-          <c:forEach var="a" items="${allergenlist}">
-            <label class="item">
-              <input type="checkbox" name="allergenIds" value="${a.id}" class="ak-check">
-              <span class="ak-name">${a.nameJa}</span>
-            </label>
-          </c:forEach>
-        </div>
+<div class="grid" id="akGrid">
+  <c:forEach var="a" items="${allergenlist}">
+    <label class="item">
+      <input type="checkbox"
+             name="allergenIds"
+             value="${a.id}"
+             class="ak-check"
+             <c:if test="${selectedIds != null and selectedIds.contains(a.id)}">checked</c:if>>
+      <span class="ak-name">${a.nameJa}</span>
+    </label>
+  </c:forEach>
+</div>
+
 
         <div class="other">
           <label class="item" style="margin:0">

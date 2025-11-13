@@ -137,7 +137,7 @@ public class AllergenDAO {
   }
 
   public boolean exists(UUID individualId) {
-	    final String sql = "SELECT 1 FROM allergies WHERE person_id=?";
+	    final String sql = "SELECT 1 FROM individual_allergies WHERE person_id=?";
 	    try (Connection con = ConnectionFactory.getConnection();
 	         PreparedStatement ps = con.prepareStatement(sql)) {
 	      ps.setObject(1, individualId);
