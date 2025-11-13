@@ -16,8 +16,8 @@ import bean.Individual;
 import bean.Organization;
 import dao.IndividualDAO;
 
-@WebServlet("/admin/auth/name")
-public class AdminAuthNameServlet extends HttpServlet {
+@WebServlet("/admin/support-meals")
+public class AdminSupportMealsServlet extends HttpServlet {
 	private final IndividualDAO iDao = new IndividualDAO();
 
 
@@ -39,6 +39,6 @@ public class AdminAuthNameServlet extends HttpServlet {
 
 
 
-    req.getRequestDispatcher("/admin/authverify.jsp").forward(req, resp);
+    req.getRequestDispatcher("/admin/supportMeals.jsp").forward(req, resp);
   }
 }
