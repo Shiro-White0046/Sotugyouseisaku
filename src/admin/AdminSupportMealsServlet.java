@@ -16,7 +16,7 @@ import bean.Individual;
 import bean.Organization;
 import dao.IndividualDAO;
 
-@WebServlet("/admin/support-meals")
+@WebServlet("/admin/supportmeals")
 public class AdminSupportMealsServlet extends HttpServlet {
 	private final IndividualDAO iDao = new IndividualDAO();
 
@@ -34,8 +34,8 @@ public class AdminSupportMealsServlet extends HttpServlet {
     }
 
     UUID org_id=admin.getOrgId();
-    List<Individual> list=iDao.listByOrg(org_id);
-    req.setAttribute("list", list);
+    List<Individual> individual_list=iDao.listByOrg(org_id);
+    req.setAttribute("lindividual_list", individual_list);
 
 
 
