@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -342,7 +343,7 @@ public class IndividualDAO {
 	//1件取得（Id）
 	  public Individual findOneByOrgIdAndPersonId(UUID personId) {
 		  final String sql =
-		      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash "
+		      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash,last_verified_at "
 		    + "FROM individuals "
 		    + "WHERE id=? "
 		    + "ORDER BY id";
@@ -369,7 +370,7 @@ public class IndividualDAO {
 	//1件取得（orgID,Id）
 	  public Individual findOneByOrgIdAndPersonId(UUID org_id,UUID personId) {
 		  final String sql =
-		      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash "
+		      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash,last_verified_at "
 		    + "FROM individuals "
 		    + "WHERE org_id = ? and id=? "
 		    + "ORDER BY id";
@@ -395,7 +396,7 @@ public class IndividualDAO {
 	//1件取得（UUID）
 	  public Individual findOneByUserId(UUID org_id,UUID userId) {
 		  final String sql =
-		      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash "
+		      "SELECT id, org_id, user_id, display_name, birthday, note, created_at, pin_code_hash, last_verified_at "
 		    + "FROM individuals "
 		    + "WHERE user_id = ? and org_id=? "
 		    + "ORDER BY id";
@@ -435,6 +436,7 @@ public class IndividualDAO {
 		  i.setNote(rs.getString("note"));
 		  i.setCreatedAt(rs.getObject("created_at", java.time.OffsetDateTime.class));
 		  i.setPinCodeHash(rs.getString("pin_code_hash"));
+		  i.setLastVerifiedAt(rs.getObject("last_verified_at", java.time.OffsetDateTime.class));
 		  return i;
 		}
 	 /** 個人ごとの認証パスワードを更新 */
@@ -462,6 +464,23 @@ public class IndividualDAO {
 	     throw new RuntimeException("PIN更新に失敗", e);
 	   }
 	 }
+
+	 public void updateLastVerifiedAt(UUID individualId, OffsetDateTime when) {
+		  final String sql = "UPDATE individuals SET last_verified_at = ? WHERE id = ?";
+		  try (Connection con = ConnectionFactory.getConnection();
+		       PreparedStatement ps = con.prepareStatement(sql)) {
+
+		    if (when != null) {
+		      ps.setObject(1, when);  // PostgreSQL + JDBCなら OffsetDateTime をそのまま setObject でOK
+		    } else {
+		      ps.setObject(1, null);
+		    }
+		    ps.setObject(2, individualId);
+		    ps.executeUpdate();
+		  } catch (SQLException e) {
+		    throw new RuntimeException("last_verified_at 更新に失敗しました", e);
+		  }
+		}
 
 
 }

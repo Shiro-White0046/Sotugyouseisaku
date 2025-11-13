@@ -55,7 +55,19 @@ body{ background:var(--bg); }
             <th class="sticky-left">ID</th>
             <th>名前</th>
             <td class="sticky-right">
-  <c:if test="${fn:length(fn:trim(ind.pinCodeHash)) > 0}">✓</c:if>
+  <c:choose>
+
+    <c:when test="${ind.lastVerifiedDate ne null and ind.lastVerifiedDate eq today}">
+      ○
+    </c:when>
+
+    <c:when test="${fn:length(fn:trim(ind.pinCodeHash)) > 0}">
+      済
+    </c:when>
+    <c:otherwise>
+
+    </c:otherwise>
+  </c:choose>
 </td>
           </tr>
         </thead>

@@ -61,8 +61,6 @@ public class AdminAuthVerifyServlet extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
 
-
-
     req.setCharacterEncoding("UTF-8");
     HttpSession ses = req.getSession(false);
     Administrator admin = (ses != null) ? (Administrator) ses.getAttribute("admin") : null;
@@ -74,40 +72,46 @@ public class AdminAuthVerifyServlet extends HttpServlet {
 
     String idStr = req.getParameter("id");
     String pin   = req.getParameter("pin");
-
     if (idStr == null || pin == null) {
       resp.sendRedirect(req.getContextPath() + "/admin/auth");
       return;
     }
 
-    UUID personId;
-    try {
-      personId = UUID.fromString(idStr);
-    } catch (IllegalArgumentException e) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-      return;
-    }
-
+    UUID personId = UUID.fromString(idStr);
     Individual person = iDao.findOneByOrgIdAndPersonId(org.getId(), personId);
     if (person == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
       return;
     }
 
-    System.out.println("入力PIN=" + pin);
-    System.out.println("DBのpinCodeHash=" + person.getPinCodeHash());
+    // ★ 1日1回制限チェック
+    java.time.LocalDate today = java.time.LocalDate.now(); // サーバーのローカル日付（JSTなら翌日0時で自動リセット）
+    if (person.getLastVerifiedDate() != null
+        && person.getLastVerifiedDate().isEqual(today)) {
 
+      req.setAttribute("person", person);
+      req.setAttribute("error", "本日の認証はすでに完了しています。次に認証できるのは明日0時以降です。");
+      req.getRequestDispatcher("/admin/auth_verify.jsp").forward(req, resp);
+      return;
+    }
+
+    // PIN形式チェック
     pin = pin.trim();
-    if (!pin.matches("\\d{4}")) {              // 4桁数値を要求（JSPのpatternとも一致）
+    if (!pin.matches("\\d{4}")) {
       req.setAttribute("person", person);
       req.setAttribute("error", "パスワードは4桁の数字で入力してください。");
       req.getRequestDispatcher("/admin/auth_verify.jsp").forward(req, resp);
       return;
     }
 
+    // PIN照合（前に作った orgId:userId:pin のやつ）
     boolean ok = verifyPin(pin, person.getPinCodeHash(), org.getId(), person.getUserId());
     if (ok) {
-      req.getSession().setAttribute("flashMessage", person.getDisplayName() + " を認証しました。");
+      // ★ 認証時刻を記録（ここから24時間ではなく、「この日付の中で1回だけ」という運用）
+      java.time.OffsetDateTime now = java.time.OffsetDateTime.now();
+      iDao.updateLastVerifiedAt(person.getId(), now);
+
+      ses.setAttribute("flashMessage", person.getDisplayName() + " を認証しました。");
       resp.sendRedirect(req.getContextPath() + "/admin/auth");
     } else {
       req.setAttribute("person", person);
@@ -143,18 +147,6 @@ public class AdminAuthVerifyServlet extends HttpServlet {
     }
   }
 
-  /** SHA-256 ハッシュ生成 */
-  private String sha256(String input) {
-    try {
-      java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-      byte[] bytes = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-      StringBuilder sb = new StringBuilder();
-      for (byte b : bytes) sb.append(String.format("%02x", b));
-      return sb.toString();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
 
 
 

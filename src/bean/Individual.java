@@ -14,6 +14,7 @@ public class Individual {
   private String note;
   private OffsetDateTime createdAt;
   private String pinCodeHash;
+  private OffsetDateTime lastVerifiedAt;
 
   public Individual() {}
 
@@ -41,4 +42,11 @@ public class Individual {
   public String getPinCodeHash() { return pinCodeHash; }
   public void setPinCodeHash(String pinCodeHash) { this.pinCodeHash = pinCodeHash; }
 
+  public OffsetDateTime getLastVerifiedAt() { return lastVerifiedAt; }
+  public void setLastVerifiedAt(OffsetDateTime lastVerifiedAt) { this.lastVerifiedAt = lastVerifiedAt; }
+
+  // JSP で日付だけ使いたい用のヘルパー
+  public LocalDate getLastVerifiedDate() {
+    return (lastVerifiedAt != null) ? lastVerifiedAt.toLocalDate() : null;
+  }
 }
