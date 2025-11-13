@@ -35,14 +35,9 @@ body{ background:var(--bg); }
   <!-- 検索（GET） -->
   <form method="get" action="${pageContext.request.contextPath}/admin/auth" class="search-row" autocomplete="off">
     <div class="search-field">
-      <input type="text" name="q" value="${fn:escapeXml(param.q)}" placeholder="IDを入力してください"
+      <input type="text" name="q" value="${fn:escapeXml(param.q)}" placeholder="検索したい名前を入力してください"
              maxlength="50" pattern=".{0,50}" />
       <button type="submit" aria-label="検索">🔍</button>
-    </div>
-
-    <div class="search-modes">
-      <label><input type="radio" name="mode" value="id" <c:if test="${empty param.mode || param.mode == 'id'}">checked</c:if> /> 利用者ID</label>
-      <label><input type="radio" name="mode" value="name" <c:if test="${param.mode == 'name'}">checked</c:if> /> 名前</label>
     </div>
   </form>
 
@@ -54,7 +49,7 @@ body{ background:var(--bg); }
           <tr>
             <th class="sticky-left">ID</th>
             <th>名前</th>
-            <td class="sticky-right">
+            <td class="sticky-right">認証
   <c:choose>
 
     <c:when test="${ind.lastVerifiedDate ne null and ind.lastVerifiedDate eq today}">
@@ -62,7 +57,7 @@ body{ background:var(--bg); }
     </c:when>
 
     <c:when test="${fn:length(fn:trim(ind.pinCodeHash)) > 0}">
-      済
+      〇
     </c:when>
     <c:otherwise>
 

@@ -47,7 +47,7 @@ public class AdminAuthVerifyServlet extends HttpServlet {
     }
 
     // ★ GET/POSTとも org.getId() で統一
-    Individual person = iDao.findOneByOrgIdAndPersonId(personId);
+    Individual person = iDao.findOneByOrgIdAndPersonId(org.getId(), personId);
     if (person == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
       return;

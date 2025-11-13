@@ -99,31 +99,50 @@ public class IndividualDAO {
 	}
 
 	/** 組織コードの個人一覧 */
-	//dao/IndividualDAO.java に追記
+	/** 組織内の個人一覧（認証表示に必要な全情報を取得） */
 	public java.util.List<bean.Individual> listByOrg(java.util.UUID orgId) {
-	 final String sql = "SELECT * " +
-	                    "FROM individuals WHERE org_id = ? ORDER BY created_at ASC";
-	 java.util.List<bean.Individual> list = new java.util.ArrayList<>();
-	 try (Connection con = ConnectionFactory.getConnection();
-	      PreparedStatement ps = con.prepareStatement(sql)) {
-	   ps.setObject(1, orgId);
-	   try (ResultSet rs = ps.executeQuery()) {
-	     while (rs.next()) {
-	       bean.Individual i = new bean.Individual();
-	       i.setId((java.util.UUID) rs.getObject("id"));
-	       i.setOrgId((java.util.UUID) rs.getObject("org_id"));
-	       i.setUserId((java.util.UUID) rs.getObject("user_id"));
-	       i.setDisplayName(rs.getString("display_name"));
-	       java.sql.Date d = rs.getDate("birthday");
-	       if (d != null) i.setBirthday(d.toLocalDate());
-	       i.setNote(rs.getString("note"));
-	       list.add(i);
-	     }
-	   }
-	 } catch (SQLException e) {
-	   throw new RuntimeException("個人一覧の取得に失敗しました", e);
-	 }
-	 return list;
+	  final String sql =
+	      "SELECT id, org_id, user_id, display_name, birthday, note, " +
+	      "       created_at, pin_code_hash, last_verified_at " +   // ★ここ重要
+	      "FROM individuals " +
+	      "WHERE org_id = ? " +
+	      "ORDER BY created_at ASC";
+
+	  java.util.List<bean.Individual> list = new java.util.ArrayList<>();
+
+	  try (Connection con = ConnectionFactory.getConnection();
+	       PreparedStatement ps = con.prepareStatement(sql)) {
+
+	    ps.setObject(1, orgId);
+	    try (ResultSet rs = ps.executeQuery()) {
+	      while (rs.next()) {
+	        bean.Individual i = new bean.Individual();
+	        i.setId((java.util.UUID) rs.getObject("id"));
+	        i.setOrgId((java.util.UUID) rs.getObject("org_id"));
+	        i.setUserId((java.util.UUID) rs.getObject("user_id"));
+	        i.setDisplayName(rs.getString("display_name"));
+
+	        java.sql.Date d = rs.getDate("birthday");
+	        if (d != null) i.setBirthday(d.toLocalDate());
+
+	        i.setNote(rs.getString("note"));
+
+	        // ★ 認証機能に必須な2つ
+	        i.setPinCodeHash(rs.getString("pin_code_hash"));
+	        java.sql.Timestamp ts = rs.getTimestamp("last_verified_at");
+	        if (ts != null) {
+	          i.setLastVerifiedAt(ts.toInstant().atOffset(java.time.ZoneOffset.UTC));
+	        }
+
+	        list.add(i);
+	      }
+	    }
+
+	  } catch (SQLException e) {
+	    throw new RuntimeException("個人一覧の取得に失敗しました", e);
+	  }
+
+	  return list;
 	}
 
 
@@ -482,6 +501,62 @@ public class IndividualDAO {
 		  }
 		}
 
+
+	 public List<Individual> searchByName(UUID orgId, String keyword) {
+		    final String sql =
+		        "SELECT id, org_id, user_id, display_name, birthday, note, created_at, " +
+		        "       pin_code_hash, last_verified_at " +
+		        "FROM individuals " +
+		        "WHERE org_id = ? " +
+		        "  AND display_name ILIKE ? " +
+		        "ORDER BY display_name ASC";
+
+		    List<Individual> list = new ArrayList<>();
+		    try (Connection con = ConnectionFactory.getConnection();
+		         PreparedStatement ps = con.prepareStatement(sql)) {
+
+		        ps.setObject(1, orgId);
+		        ps.setString(2, "%" + keyword + "%");
+
+		        try (ResultSet rs = ps.executeQuery()) {
+		            while (rs.next()) {
+		                list.add(mapIndividual(rs));
+		            }
+		        }
+
+		    } catch (SQLException e) {
+		        throw new RuntimeException("名前検索に失敗しました", e);
+		    }
+		    return list;
+		}
+
+	 public List<Individual> searchById(UUID orgId, String keyword) {
+		    final String sql =
+		        "SELECT id, org_id, user_id, display_name, birthday, note, created_at, " +
+		        "       pin_code_hash, last_verified_at " +
+		        "FROM individuals " +
+		        "WHERE org_id = ? " +
+		        "  AND CAST(id AS TEXT) ILIKE ? " +   // UUID の文字列検索
+		        "ORDER BY created_at ASC";
+
+		    List<Individual> list = new ArrayList<>();
+		    try (Connection con = ConnectionFactory.getConnection();
+		         PreparedStatement ps = con.prepareStatement(sql)) {
+
+		        ps.setObject(1, orgId);
+		        ps.setString(2, "%" + keyword + "%");
+
+		        try (ResultSet rs = ps.executeQuery()) {
+		            while (rs.next()) {
+		                list.add(mapIndividual(rs));
+		            }
+		        }
+
+		    } catch (SQLException e) {
+		        throw new RuntimeException("ID検索に失敗しました", e);
+		    }
+		    return list;
+		}
 
 }
 
