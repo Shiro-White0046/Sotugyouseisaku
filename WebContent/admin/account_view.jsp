@@ -22,7 +22,7 @@
       <tr><th style="text-align:left;width:220px;">ログインID</th><td><%= u.getLoginId() %></td></tr>
       <tr><th style="text-align:left;">名前</th><td><%= u.getName() %></td></tr>
       <tr><th style="text-align:left;">メールアドレス</th><td><%= (u.getEmail()!=null?u.getEmail():"（未設定）") %></td></tr>
-      <tr><th style="text-align:left;">携帯番号</th><td><%= (u.getPhone()!=null?u.getPhone():"（未設定）") %></td></tr>
+      <!-- ★ 携帯番号の行は削除（getPhone() はもう存在しない） -->
       <tr><th style="text-align:left;">アカウントタイプ</th><td><%= u.getAccountType() %></td></tr>
       <tr><th style="text-align:left;">状態</th><td><%= (u.isActive()?"有効":"無効") %></td></tr>
       <tr><th style="text-align:left;">作成日時</th><td><%= (u.getCreatedAt()!=null?u.getCreatedAt():"") %></td></tr>
