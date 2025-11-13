@@ -30,7 +30,7 @@ import javax.sql.DataSource;
 public class AllergensSeedOnceDualGuard implements ServletContextListener {
 
   private static final String SQL_PATH = "/WEB-INF/sql/allergens_seed.sql";
-  private static final String SEED_KEY = "seed_allergens_sql_v2";
+  private static final String SEED_KEY = "seed_allergens_sql_v1";
   private static final long   LOCK_KEY = 2025110704L;
 
   @Override
