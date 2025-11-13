@@ -145,7 +145,21 @@ INSERT INTO allergens (code,name_ja,name_en,is_active,category,subcategory) VALU
 INSERT INTO allergens (code,name_ja,name_en,is_active,category,subcategory) VALUES
 ('C_ANIMAL_PROPOLIS','プロポリス','Propolis',TRUE,'CONTACT','ANIMAL'),
 ('C_ANIMAL_CARMINE','カルミン(コチニール)','Carmine (cochineal)',TRUE,'CONTACT','ANIMAL'),
-('C_ANIMAL_LANOLIN','ラノリン(ウールアルコール)','Lanolin (wool alcohols)',TRUE,'CONTACT','ANIMAL');
+('C_ANIMAL_LANOLIN','ラノリン(ウールアルコール)','Lanolin (wool alcohols)',TRUE,'CONTACT','ANIMAL')
+('C_ANIMAL_DOG','犬','Dog',TRUE,'CONTACT','ANIMAL'),
+('C_ANIMAL_CAT','猫','Cat',TRUE,'CONTACT','ANIMAL'),
+('C_ANIMAL_RABBIT','ウサギ','Rabbit',TRUE,'CONTACT','ANIMAL'),
+('C_ANIMAL_HAMSTER','ハムスター','Hamster',TRUE,'CONTACT','ANIMAL'),
+('C_ANIMAL_GUINEA_PIG','モルモット','Guinea pig',TRUE,'CONTACT','ANIMAL')
+('C_ANIMAL_HORSE', '馬', 'Horse', TRUE, 'CONTACT', 'ANIMAL'),
+('C_ANIMAL_COW', '牛（動物由来）', 'Cow (animal contact)', TRUE, 'CONTACT', 'ANIMAL'),
+('C_ANIMAL_GOAT', 'ヤギ', 'Goat', TRUE, 'CONTACT', 'ANIMAL'),
+('C_ANIMAL_SHEEP', '羊', 'Sheep', TRUE, 'CONTACT', 'ANIMAL'),
+('C_ANIMAL_FERRET', 'フェレット', 'Ferret', TRUE, 'CONTACT', 'ANIMAL'),
+('C_ANIMAL_BIRD', '鳥（羽・ふん）', 'Birds (feathers/droppings)', TRUE, 'CONTACT', 'ANIMAL'),
+('C_ANIMAL_PARROT', 'オウム・インコ類', 'Parrot/Parakeet', TRUE, 'CONTACT', 'ANIMAL'),
+('C_ANIMAL_HORSEHAIR', '馬毛（乗馬）', 'Horsehair', TRUE, 'CONTACT', 'ANIMAL'),
+('C_ANIMAL_RODENTS', 'げっ歯類（広義）', 'Rodents (general)', TRUE, 'CONTACT', 'ANIMAL');
 
 -- =========================
 -- CONTACT / OTHER（混合・分類困難）
