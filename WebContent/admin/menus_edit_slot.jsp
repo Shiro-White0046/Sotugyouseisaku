@@ -87,7 +87,8 @@
   .row{display:flex;align-items:center;gap:16px;margin:10px 0;}
   .dish{flex:1;min-width:260px;}
   .link{color:#1772d0;text-decoration:underline;}
-  .button.outline{background:#fff;border:1px solid #999;}
+  .button.outline{background:#fff;border:1px solid #999;
+   color:#333;}
   .button.sm{padding:4px 8px;font-size:12px;}
   .alg-box{display:none;border:1px solid #ddd;border-radius:10px;padding:10px;margin:8px 0 14px 0;background:#fff;}
   .alg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
