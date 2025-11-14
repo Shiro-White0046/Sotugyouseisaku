@@ -235,4 +235,19 @@ public class UserDAO {
       throw new RuntimeException("ユーザーの更新に失敗しました", e);
     }
   }
+  /** main_contact_id を更新する（緊急連絡先の紐づけ）!!!!ワンチャン消す */
+  public void updateMainContactId(UUID userId, UUID contactId) {
+	  final String sql = "UPDATE users SET main_contact_id = ? WHERE id = ?";
+
+	  try (Connection con = ConnectionFactory.getConnection();
+	       PreparedStatement ps = con.prepareStatement(sql)) {
+
+	    ps.setObject(1, contactId);
+	    ps.setObject(2, userId);
+	    ps.executeUpdate();
+
+	  } catch (SQLException e) {
+	    throw new RuntimeException("main_contact_id の更新に失敗しました", e);
+	  }
+	}
 }
