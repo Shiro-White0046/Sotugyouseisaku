@@ -33,6 +33,6 @@ public class AdminUserListServlet extends HttpServlet {
 
     req.setAttribute("rows", rows);
     req.setAttribute("q", keyword);
-    req.getRequestDispatcher("/admin/admin_user_list_allergy.jsp").forward(req, resp);
+    req.getRequestDispatcher("/admin/users.jsp").forward(req, resp);
   }
 }
