@@ -80,9 +80,9 @@
   </table>
 
   <div class="actions">
-    <a class="button" href="${pageContext.request.contextPath}/admin/users/allergies">
-      アレルギー管理
-    </a>
+<a class="button" href="${pageContext.request.contextPath}/admin/allergens">
+  アレルギー管理
+</a>
   </div>
 </div>
 
