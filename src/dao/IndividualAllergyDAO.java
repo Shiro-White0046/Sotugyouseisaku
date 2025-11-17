@@ -9,6 +9,7 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -342,4 +343,32 @@ public void deleteByCategory(UUID personId, String category) {
 	  return list;
 	}
 
+    //対応食管理で必要になる部分
+	public Set<UUID> findByPersonIdAsSet(UUID personId) {
+		  String sql =
+		      "SELECT allergen_id " +
+		      "FROM individual_allergies " +
+		      "WHERE person_id = ?";
+
+		  Set<UUID> set = new HashSet<>();
+
+		  try (Connection con = ConnectionFactory.getConnection();
+		       PreparedStatement ps = con.prepareStatement(sql)) {
+
+		    ps.setObject(1, personId);
+
+		    try (ResultSet rs = ps.executeQuery()) {
+		      while (rs.next()) {
+		        UUID allergenId = (UUID) rs.getObject("allergen_id");
+		        if (allergenId != null) {
+		          set.add(allergenId);
+		        }
+		      }
+		    }
+		  } catch (SQLException e) {
+		    throw new RuntimeException("individual_allergies 取得に失敗しました", e);
+		  }
+
+		  return set;
+		}
 }
