@@ -52,6 +52,17 @@
 </head>
 <body>
 
+<!-- 子ども切替（同日付で personId を切り替える） -->
+<form method="get" action="${pageContext.request.contextPath}/user/menu_detail" style="margin:8px 0;">
+  <input type="hidden" name="date" value="${menuDate}" />
+  <select name="personId" onchange="this.form.submit()">
+    <c:forEach var="c" items="${children}">
+      <option value="${c.id}" <c:if test="${c.id eq personId}">selected</c:if>>${c.displayName}</option>
+    </c:forEach>
+  </select>
+  <span style="margin-left:8px;color:#555;">（表示中：${selectedChild.displayName}）</span>
+</form>
+
 <%
   request.setAttribute("headerTitle", "献立");
 %>

@@ -49,6 +49,14 @@
   </style>
 </head>
 <body>
+<form method="get" action="${pageContext.request.contextPath}/user/menuscalendar" style="margin:8px 0;">
+  <select name="personId" onchange="this.form.submit()">
+    <c:forEach var="c" items="${children}">
+      <option value="${c.id}" <c:if test="${c.id eq personId}">selected</c:if>>${c.displayName}</option>
+    </c:forEach>
+  </select>
+  <input type="hidden" name="ym" value="${param.ym}" />
+</form>
 
 <div class="wrap">
   <div class="calendar-nav">
