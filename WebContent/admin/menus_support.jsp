@@ -3,31 +3,19 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <%
-  // ★ 前提：サーブレット側でセットしておく属性
-  // request.setAttribute("mealType", "breakfast" / "lunch" / "dinner");
-  // request.setAttribute("mealLabel", "朝飯" / "昼飯" / "夜飯");
-  // request.setAttribute("items", List<MenuItem>);          // 横軸（メニュー）
-  // request.setAttribute("individuals", List<Individual>);  // 縦軸（名前）
-  // request.setAttribute("supportMap", java.util.Map<String,Boolean>);
-  //   キーは "personId-itemId" の文字列
-  // request.setAttribute("needCount", java.lang.Long);      // 対応食が必要な人数
-
   request.setAttribute("pageTitle", "対応食管理");
+  String ctx = request.getContextPath();
 %>
 
 <jsp:include page="/header.jsp" />
 
-<p>DEBUG: items=${fn:length(items)}, individuals=${fn:length(individuals)}</p>
 
-<%
-  String ctx = request.getContextPath();
-%>
 
 <style>
 /* ===== 全体レイアウト ===== */
 .support-main {
   background: #fde9c9;
-  min-height: calc(100vh - 70px); /* header分をざっくり引く */
+  min-height: calc(100vh - 70px);
   padding: 24px 32px 40px;
   box-sizing: border-box;
 }
@@ -39,7 +27,6 @@
   background: #f9e1c1;
   border-radius: 8px;
   border: 1px solid #d7b88f;
-  box-sizing: border-box;
 }
 
 /* タイトル */
@@ -50,12 +37,11 @@
   margin-bottom: 24px;
 }
 
-/* ===== 上部：食事タブ ===== */
+/* ===== 食事タブ ===== */
 .meal-tabs {
   text-align: left;
   margin-bottom: 16px;
 }
-
 .meal-tab {
   display: inline-block;
   min-width: 110px;
@@ -68,9 +54,7 @@
   text-decoration: none;
   color: #333;
   font-weight: 700;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
 }
-
 .meal-tab.is-active {
   background: #fffbeb;
   border-color: #f97316;
@@ -80,17 +64,15 @@
 /* ===== 中央タイトル ===== */
 .support-subtitle-row {
   display: flex;
-  align-items: center;
   justify-content: center;
   margin: 8px 0 24px;
 }
-
 .support-subtitle {
   font-size: 20px;
   font-weight: 700;
 }
 
-/* ===== 左：人数表示 / 右：表 ===== */
+/* ===== 左：人数 + 右：表 ===== */
 .support-body {
   display: flex;
   align-items: flex-start;
@@ -102,19 +84,12 @@
   width: 220px;
   text-align: center;
 }
-
-.support-left-label {
-  font-size: 16px;
-  margin-bottom: 8px;
-}
-
 .support-count-box {
   width: 160px;
   height: 160px;
-  margin: 0 auto;
-  background: #ffffff;
+  background: #fff;
   border-radius: 16px;
-  border: 2px solid #000000;
+  border: 2px solid #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -122,14 +97,14 @@
   font-weight: 800;
 }
 
-/* 右側（テーブル） */
+/* 右側 */
 .support-right {
   flex: 1;
 }
 
-/* スクロールエリア */
+/* テーブルスクロール枠 */
 .support-table-wrapper {
-  max-height: 280px;     /* 縦に増えたときスクロール */
+  max-height: 280px;
   overflow-y: auto;
   border-radius: 8px;
   border: 1px solid #c1c1c1;
@@ -143,99 +118,74 @@
   font-size: 14px;
 }
 
-/* ヘッダ行 */
+/* ヘッダ */
 .support-table thead th {
   background: #7fb3e8;
-  color: #ffffff;
+  color: white;
   padding: 6px 8px;
-  border-right: 1px solid #ffffff;
+  border-right: 1px solid #fff;
   border-bottom: 1px solid #5a8bc0;
-  text-align: center;
-  font-weight: 700;
   white-space: nowrap;
 }
 
-/* 名前列 */
+/* 名前列（潰れ対策） */
 .support-table .col-name {
-  width: 120px;
+  width: 150px !important;
+  min-width: 150px;
   background: #93c94f;
 }
 
-/* 行の背景 */
-.support-table tbody tr:nth-child(odd) td {
-  background: #c2e08a;
-}
-.support-table tbody tr:nth-child(even) td {
-  background: #b0d676;
-}
-
-/* セル */
-.support-table td {
-  padding: 6px 8px;
-  border-right: 1px solid #ffffff;
-  border-bottom: 1px solid #ffffff;
-  text-align: center;
-  vertical-align: middle;
-}
-
-/* 名前セル */
+/* 名前セル（潰れ対策） */
 .support-table .name-cell {
+  min-width: 150px;
   text-align: left;
   font-weight: 700;
   padding-left: 10px;
 }
 
-/* ○ の見た目（そのまま文字でもOK。必要なら丸枠風に） */
-.circle-mark {
-  font-size: 18px;
+/* 行の背景 */
+.support-table tbody tr:nth-child(odd) td { background: #c2e08a; }
+.support-table tbody tr:nth-child(even) td { background: #b0d676; }
+
+/* セル */
+.support-table td {
+  padding: 6px 8px;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  text-align: center;
 }
 
-/* ===== 下部：戻るボタン ===== */
+/* ===== 戻るボタン ===== */
 .support-footer {
   margin-top: 24px;
   text-align: right;
 }
-
 .back-button {
   display: inline-block;
-  min-width: 140px;
   padding: 10px 20px;
   border-radius: 6px;
   border: 1px solid #d1b37e;
-  background: #ffffff;
-  text-align: center;
-  text-decoration: none;
-  color: #333;
+  background: #fff;
   font-weight: 700;
-}
-.back-button:hover {
-  background: #fff7ed;
 }
 </style>
 
 <main class="support-main">
   <div class="support-wrapper">
 
-    <!-- 上部：朝・昼・夜の切り替えボタン -->
+    <!-- 食事タブ -->
     <div class="meal-tabs">
       <a href="<%= ctx %>/admin/support-meals?mealType=breakfast"
-         class="meal-tab ${mealType eq 'breakfast' ? 'is-active' : ''}">
-        朝飯
-      </a>
+         class="meal-tab ${mealType eq 'breakfast' ? 'is-active' : ''}">朝飯</a>
       <a href="<%= ctx %>/admin/support-meals?mealType=lunch"
-         class="meal-tab ${mealType eq 'lunch' ? 'is-active' : ''}">
-        昼飯
-      </a>
+         class="meal-tab ${mealType eq 'lunch' ? 'is-active' : ''}">昼飯</a>
       <a href="<%= ctx %>/admin/support-meals?mealType=dinner"
-         class="meal-tab ${mealType eq 'dinner' ? 'is-active' : ''}">
-        夜飯
-      </a>
+         class="meal-tab ${mealType eq 'dinner' ? 'is-active' : ''}">夜飯</a>
     </div>
 
-    <!-- 中央タイトル -->
+    <!-- 見出し -->
     <div class="support-title-main">今日の対応食</div>
 
-    <!-- サブタイトル（選択中の食事） -->
     <div class="support-subtitle-row">
       <div class="support-subtitle">
         <c:out value="${mealLabel}" /> の対応食管理表
@@ -244,7 +194,7 @@
 
     <div class="support-body">
 
-      <!-- 左：人数表示 -->
+      <!-- 左：人数 -->
       <div class="support-left">
         <div class="support-left-label">対応食が必要な人数</div>
         <div class="support-count-box">
@@ -252,56 +202,53 @@
         </div>
       </div>
 
-      <!-- 右：テーブル -->
+      <!-- 右：テーブル（items があるときだけ表示） -->
       <div class="support-right">
 
-        <c:if test="${empty items}">
-          現在、この時間帯の献立が登録されていません。
-        </c:if>
-
+        <!-- 献立がある場合のみ表示 -->
         <c:if test="${not empty items}">
           <div class="support-table-wrapper">
             <table class="support-table">
               <thead>
                 <tr>
                   <th class="col-name">名前</th>
-                  <c:forEach var="it" items="${items}">
-                    <!-- MenuItem の名前フィールドに合わせて修正してください -->
-                    <th><c:out value="${it.name}" /></th>
+                  <c:forEach var="item" items="${items}">
+                    <th>${item.name}</th>
                   </c:forEach>
                 </tr>
               </thead>
 
               <tbody>
                 <c:forEach var="ind" items="${individuals}">
-                  <tr>
-                    <td class="name-cell">
-                      <c:out value="${ind.displayName}" />
-                    </td>
+  <tr>
+    <td class="name-cell">
+      <c:out value="${ind.displayName}" />
+    </td>
 
-                    <!-- 各セルの ○ 判定 -->
-                    <c:forEach var="it" items="${items}">
-                      <td>
-                        <c:if test="${supportMap[ind.id + '-' + it.id]}">
-  							○
-						</c:if>
-                      </td>
-                    </c:forEach>
-                  </tr>
-                </c:forEach>
+    <c:forEach var="it" items="${items}">
+      <td>
+
+        <!-- ★ 安全にキーを生成（EL の + を使わない） -->
+        <c:set var="key" value="${ind.id}-${it.id}" />
+
+        <!-- ★ supportMap 参照 -->
+        <c:if test="${supportMap[key]}">○</c:if>
+
+      </td>
+    </c:forEach>
+  </tr>
+</c:forEach>
               </tbody>
             </table>
           </div>
         </c:if>
 
-      </div><!-- /support-right -->
+      </div>
+    </div>
 
-    </div><!-- /support-body -->
-
-    <!-- 下部：戻るボタン -->
     <div class="support-footer">
       <a href="<%= ctx %>/admin/home" class="back-button">戻る</a>
     </div>
 
-  </div><!-- /support-wrapper -->
+  </div>
 </main>

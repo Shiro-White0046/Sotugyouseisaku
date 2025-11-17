@@ -213,9 +213,9 @@ public class MenuItemDAO {
 //指定した meal_slot（breakfast / lunch / dinner）に属する menu_items 一覧
   public List<MenuItem> listByMealSlot(String mealSlot) {
 	  final String sql =
-	      "SELECT i.id, i.menu_meal_id, i.name, i.is_main, i.note " +
+	      "SELECT i.id, i.meal_id, i.name, i.note " +
 	      "FROM menu_items i " +
-	      "JOIN menu_meals m ON i.menu_meal_id = m.id " +
+	      "JOIN menu_meals m ON i.meal_id = m.id " +
 	      "WHERE m.meal_slot = ?::meal_slot " +
 	      "ORDER BY i.id";
 
@@ -229,16 +229,17 @@ public class MenuItemDAO {
 	    try (ResultSet rs = ps.executeQuery()) {
 	      List<MenuItem> list = new ArrayList<>();
 	      while (rs.next()) {
-	        System.out.println("  -> item name = " + rs.getString("name")); // ★追加
+	    	  MenuItem mi = new MenuItem();
+	    	  mi.setId((UUID) rs.getObject("id"));
 
-	        MenuItem mi = new MenuItem();
-	        mi.setId((UUID) rs.getObject("id"));
-	        mi.setMenuMealId((UUID) rs.getObject("menu_meal_id"));
-	        mi.setName(rs.getString("name"));
-	        mi.setMain(rs.getBoolean("is_main"));
-	        mi.setNote(rs.getString("note"));
-	        list.add(mi);
-	      }
+	    	  // ★ Bean は mealId なので、ここも mealId 用の setter を使う
+	    	  mi.setMealId((UUID) rs.getObject("meal_id")); // or "meal_id" 実テーブル名に合わせる
+
+	    	  mi.setName(rs.getString("name"));
+
+	    	  mi.setNote(rs.getString("note"));
+	    	  list.add(mi);
+	    	}
 	      System.out.println("[MenuItemDAO] items.size = " + list.size()); // ★追加
 	      return list;
 	    }

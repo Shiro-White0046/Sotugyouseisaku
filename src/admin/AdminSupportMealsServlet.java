@@ -76,6 +76,13 @@ public class AdminSupportMealsServlet extends HttpServlet {
     // ==== 3) 組織の個人一覧（縦軸） ====
     List<Individual> individuals = individualDAO.listByOrg(org.getId());
 
+ // ★ここで確認
+    System.out.println("=== support-meals individuals ===");
+    for (Individual ind : individuals) {
+      System.out.println("id=" + ind.getId() + ", name=" + ind.getDisplayName());
+    }
+    System.out.println("=== end ===");
+
     // ==== 4) 子どもごとのアレルギーセット（Integer 型） ====
     Map<UUID, Set<Integer>> personAllergies = new HashMap<>();
     for (Individual ind : individuals) {
