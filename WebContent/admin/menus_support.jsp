@@ -17,6 +17,8 @@
 
 <jsp:include page="/header.jsp" />
 
+<p>DEBUG: items=${fn:length(items)}, individuals=${fn:length(individuals)}</p>
+
 <%
   String ctx = request.getContextPath();
 %>
@@ -280,11 +282,9 @@
                     <!-- 各セルの ○ 判定 -->
                     <c:forEach var="it" items="${items}">
                       <td>
-                        <c:set var="key"
-                               value="${fn:concat(ind.id, fn:concat('-', it.id))}" />
-                        <c:if test="${supportMap[key]}">
-                          <span class="circle-mark">○</span>
-                        </c:if>
+                        <c:if test="${supportMap[ind.id + '-' + it.id]}">
+  							○
+						</c:if>
                       </td>
                     </c:forEach>
                   </tr>

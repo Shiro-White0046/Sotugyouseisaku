@@ -4,7 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -225,5 +228,44 @@ public class MenuMealDAO {
       throw new RuntimeException("menu_meals の取得に失敗しました(findAnyByDay)", e);
     }
   }
+
+  //
+  public List<MenuMeal> listByOrgDateAndSlot(UUID orgId, LocalDate date, String mealSlot) {
+	    String sql =
+	        "SELECT m.id, m.day_id, m.meal_slot, m.name, m.description, m.image_path " +
+	        "FROM menu_days d " +
+	        "JOIN menu_meals m ON m.day_id = d.id " +
+	        "WHERE d.org_id = ? " +
+	        "  AND d.menu_date = ? " +
+	        "  AND m.meal_slot = ? " +
+	        "ORDER BY m.id";
+
+	    List<MenuMeal> list = new ArrayList<>();
+
+	    try (Connection con = ConnectionFactory.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ps.setObject(1, orgId);
+	        ps.setObject(2, date);
+	        ps.setString(3, mealSlot);  // breakfast / lunch / dinner
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                MenuMeal m = new MenuMeal();
+	                m.setId((UUID) rs.getObject("id"));
+	                m.setDayId((UUID) rs.getObject("day_id"));
+	                m.setSlot(rs.getString("meal_slot"));
+	                m.setName(rs.getString("name"));
+	                m.setDescription(rs.getString("description"));
+	                m.setImagePath(rs.getString("image_path"));
+	                list.add(m);
+	            }
+	        }
+	    } catch (SQLException e) {
+	        throw new RuntimeException("menu_meals 取得失敗", e);
+	    }
+
+	    return list;
+	}
 
 }

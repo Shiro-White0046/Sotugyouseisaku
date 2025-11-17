@@ -10,8 +10,10 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import bean.Individual;
@@ -556,6 +558,35 @@ public class IndividualDAO {
 		        throw new RuntimeException("ID検索に失敗しました", e);
 		    }
 		    return list;
+		}
+
+	 //対応食管理
+	 public Set<Integer> findByPersonIdAsSet(UUID personId) {
+		  String sql =
+		      "SELECT allergen_id " +
+		      "FROM individual_allergies " +
+		      "WHERE person_id = ?";
+
+		  Set<Integer> set = new HashSet<>();
+
+		  try (Connection con = ConnectionFactory.getConnection();
+		       PreparedStatement ps = con.prepareStatement(sql)) {
+
+		    ps.setObject(1, personId);
+
+		    try (ResultSet rs = ps.executeQuery()) {
+		      while (rs.next()) {
+		        int allergenId = rs.getInt("allergen_id");
+		        if (!rs.wasNull()) {
+		          set.add(allergenId);
+		        }
+		      }
+		    }
+		  } catch (SQLException e) {
+		    throw new RuntimeException("individual_allergies 取得失敗", e);
+		  }
+
+		  return set;
 		}
 
 }

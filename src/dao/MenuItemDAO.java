@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -136,4 +137,114 @@ public class MenuItemDAO {
   public List<bean.MenuItem> listByMeal(UUID mealId) {
 	  return listWithAllergens(mealId);
 	}
+
+//org + 日付 + 朝/昼/夜 からメニュー一覧を取る
+  public List<MenuItem> listByOrgDateAndMealType(UUID orgId, LocalDate date, String mealType) {
+	  String sql =
+	      "SELECT i.id, i.meal_id, i.item_order, i.name, i.note " +
+	      "FROM menu_days d " +
+	      "JOIN menu_meals m ON m.day_id = d.id " +
+	      "JOIN menu_items i ON i.meal_id = m.id " +
+	      "WHERE d.org_id = ? " +
+	      // "  AND d.menu_date = ? " +   // ★ いったん日付条件を外す
+	      "  AND m.meal_slot = CAST(? AS meal_slot) " +
+	      "ORDER BY i.item_order, i.id";
+
+	  List<MenuItem> list = new ArrayList<>();
+
+	  try (Connection con = ConnectionFactory.getConnection();
+	       PreparedStatement ps = con.prepareStatement(sql)) {
+
+	    // パラメータ位置に注意！（2番目が mealType になる）
+	    ps.setObject(1, orgId);
+	    // ps.setObject(2, date);  // ← これもコメントアウト
+	    ps.setString(2, mealType);  // "breakfast" / "lunch" / "dinner"
+
+	    try (ResultSet rs = ps.executeQuery()) {
+	      while (rs.next()) {
+	        MenuItem item = new MenuItem();
+	        item.setId((UUID) rs.getObject("id"));
+	        item.setMealId((UUID) rs.getObject("meal_id"));
+	        item.setItemOrder(rs.getInt("item_order"));
+	        item.setName(rs.getString("name"));
+	        item.setNote(rs.getString("note"));
+	        list.add(item);
+	      }
+	    }
+	  } catch (SQLException e) {
+	    throw new RuntimeException("menu_items 一覧取得に失敗しました", e);
+	  }
+
+	  return list;
+	}
+
+  public List<MenuItem> listByMealId(UUID mealId) {
+	    String sql =
+	        "SELECT id, meal_id, item_order, name, note " +
+	        "FROM menu_items " +
+	        "WHERE meal_id = ? " +
+	        "ORDER BY item_order, id";
+
+	    List<MenuItem> list = new ArrayList<>();
+
+	    try (Connection con = ConnectionFactory.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ps.setObject(1, mealId);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                MenuItem item = new MenuItem();
+	                item.setId((UUID) rs.getObject("id"));
+	                item.setMealId((UUID) rs.getObject("meal_id"));
+	                item.setItemOrder(rs.getInt("item_order"));
+	                item.setName(rs.getString("name"));
+	                item.setNote(rs.getString("note"));
+	                list.add(item);
+	            }
+	        }
+	    } catch (SQLException e) {
+	        throw new RuntimeException("menu_items 取得失敗", e);
+	    }
+
+	    return list;
+	}
+
+//指定した meal_slot（breakfast / lunch / dinner）に属する menu_items 一覧
+  public List<MenuItem> listByMealSlot(String mealSlot) {
+	  final String sql =
+	      "SELECT i.id, i.menu_meal_id, i.name, i.is_main, i.note " +
+	      "FROM menu_items i " +
+	      "JOIN menu_meals m ON i.menu_meal_id = m.id " +
+	      "WHERE m.meal_slot = ?::meal_slot " +
+	      "ORDER BY i.id";
+
+	  try (Connection con = ConnectionFactory.getConnection();
+	       PreparedStatement ps = con.prepareStatement(sql)) {
+
+	    ps.setString(1, mealSlot); // "breakfast" / "lunch" / "dinner" の小文字が入る想定
+
+	    System.out.println("[MenuItemDAO] mealSlot = " + mealSlot);
+
+	    try (ResultSet rs = ps.executeQuery()) {
+	      List<MenuItem> list = new ArrayList<>();
+	      while (rs.next()) {
+	        System.out.println("  -> item name = " + rs.getString("name")); // ★追加
+
+	        MenuItem mi = new MenuItem();
+	        mi.setId((UUID) rs.getObject("id"));
+	        mi.setMenuMealId((UUID) rs.getObject("menu_meal_id"));
+	        mi.setName(rs.getString("name"));
+	        mi.setMain(rs.getBoolean("is_main"));
+	        mi.setNote(rs.getString("note"));
+	        list.add(mi);
+	      }
+	      System.out.println("[MenuItemDAO] items.size = " + list.size()); // ★追加
+	      return list;
+	    }
+	  } catch (SQLException e) {
+	    throw new RuntimeException("menu_items 一覧取得に失敗しました", e);
+	  }
+	}
+
 }

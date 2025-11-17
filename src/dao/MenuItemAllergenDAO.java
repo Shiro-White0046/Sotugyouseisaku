@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import bean.Allergen;
@@ -87,4 +89,36 @@ public class MenuItemAllergenDAO {
       throw new RuntimeException("menu_item_allergens の削除に失敗しました", e);
     }
   }
+
+
+  //メニューに紐づくアレルゲン ID のセット
+  public Set<Integer> findByItemIdAsSet(UUID itemId) {
+	  String sql =
+	      "SELECT allergen_id " +
+	      "FROM menu_item_allergens " +
+	      "WHERE item_id = ?";
+
+	  Set<Integer> set = new HashSet<>();
+
+	  try (Connection con = ConnectionFactory.getConnection();
+	       PreparedStatement ps = con.prepareStatement(sql)) {
+
+	    ps.setObject(1, itemId);
+
+	    try (ResultSet rs = ps.executeQuery()) {
+	      while (rs.next()) {
+	        int allergenId = rs.getInt("allergen_id");
+	        if (!rs.wasNull()) {
+	          set.add(allergenId);
+	        }
+	      }
+	    }
+	  } catch (SQLException e) {
+	    throw new RuntimeException("menu_item_allergens 取得失敗", e);
+	  }
+
+	  return set;
+	}
+
+
 }

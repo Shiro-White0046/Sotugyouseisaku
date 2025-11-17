@@ -344,31 +344,31 @@ public void deleteByCategory(UUID personId, String category) {
 	}
 
     //対応食管理で必要になる部分
-	public Set<UUID> findByPersonIdAsSet(UUID personId) {
-		  String sql =
-		      "SELECT allergen_id " +
-		      "FROM individual_allergies " +
-		      "WHERE person_id = ?";
+	public Set<Integer> findByPersonIdAsSet(UUID personId) {
+	    String sql =
+	        "SELECT allergen_id " +
+	        "FROM individual_allergies " +
+	        "WHERE person_id = ?";
 
-		  Set<UUID> set = new HashSet<>();
+	    Set<Integer> set = new HashSet<>();
 
-		  try (Connection con = ConnectionFactory.getConnection();
-		       PreparedStatement ps = con.prepareStatement(sql)) {
+	    try (Connection con = ConnectionFactory.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
 
-		    ps.setObject(1, personId);
+	        ps.setObject(1, personId);
 
-		    try (ResultSet rs = ps.executeQuery()) {
-		      while (rs.next()) {
-		        UUID allergenId = (UUID) rs.getObject("allergen_id");
-		        if (allergenId != null) {
-		          set.add(allergenId);
-		        }
-		      }
-		    }
-		  } catch (SQLException e) {
-		    throw new RuntimeException("individual_allergies 取得に失敗しました", e);
-		  }
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                int allergenId = rs.getInt("allergen_id");
+	                if (!rs.wasNull()) {
+	                    set.add(allergenId);
+	                }
+	            }
+	        }
+	    } catch (SQLException e) {
+	        throw new RuntimeException("individual_allergies 取得失敗", e);
+	    }
 
-		  return set;
-		}
+	    return set;
+	}
 }
