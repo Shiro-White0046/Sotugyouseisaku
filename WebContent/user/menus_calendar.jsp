@@ -4,56 +4,79 @@
 <%
   request.setAttribute("headerTitle", "献立表示");
 %>
-<jsp:include page="/header_user2.jsp"/>
+<jsp:include page="/header_user2.jsp" />
 
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>献立カレンダー</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>献立表示</title>
 <style>
-  body{ background:#f7e1ca; margin:0; font-family:sans-serif; }
-  .wrap{ max-width:980px; margin:16px auto 28px; padding:0 16px; }
+  :root{
+    --bg:#f7e1ca; --panel:#fff; --line:#d8c8b5; --th:#f4efe6;
+    --sun:#ffe7e7; --sat:#e8f5ff; --chip:#e53935;
+  }
+  body{ background:var(--bg); margin:0; font-family:sans-serif; }
+  .wrap{ max-width:1100px; margin:16px auto 28px; padding:0 16px; }
 
-  .switcher{ display:flex; gap:8px; align-items:center; margin:8px 0 6px; }
-  .switcher select{ padding:6px 8px; }
+  /* 上部バー */
+  .topbar{ display:flex; align-items:center; gap:12px; margin:6px 0 10px; }
+  .child-select{ padding:8px 12px; border:1px solid var(--line); border-radius:8px; }
+  .subtle{ color:#666; }
 
-  .calendar-nav{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
-  .calendar-nav a{ text-decoration:underline; color:#1a73e8; }
+  /* 前月/次月 */
+  .calendar-nav{ display:flex; justify-content:space-between; align-items:center; margin:2px 0 10px; }
+  .month-title{ font-size:26px; font-weight:800; letter-spacing:.02em; }
 
-  .cal{ width:100%; border-collapse:collapse; table-layout:fixed; background:#fff; margin-top:10px; }
-  .cal th,.cal td{ border:1px solid #cfcfcf; vertical-align:top; }
-  .cal th{ height:36px; background:#f2f2f2; }
-  .cal td{ height:96px; position:relative; padding:0; }
-  .dow-sun{ background:#ffe7e7; } .dow-sat{ background:#e7f3ff; }
+  /* カレンダー本体 */
+  table.cal{ width:100%; table-layout:fixed; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); }
+  .cal thead th{ background:var(--th); border-bottom:1px solid var(--line); padding:10px 0; font-weight:700; }
+  .cal td{ border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:0; vertical-align:top; }
+  .cal tr:last-child td{ border-bottom:1px solid var(--line); }
+  .cal td:last-child, .cal thead th:last-child{ border-right:0; }
 
-  .cell-link{ display:block; width:100%; height:100%; padding:4px; text-decoration:none; color:inherit; position:relative; }
-  .cell-link:hover{ background:rgba(0,0,0,.03); }
-  .daynum{ position:absolute; top:4px; right:6px; font-size:12px; color:#333; }
+  .dow-sun{ background:var(--sun); }
+  .dow-sat{ background:var(--sat); }
 
-  .menu-badge{ display:inline-block; margin:8px 8px 0 8px; background:#e53935; color:#fff;
-               padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700; }
-  .no-badge .menu-badge{ display:none; } /* 念のため */
+  /* 内側ラッパ：ここが“セルの高さ” */
+  .cell{ position:relative; height:130px; }
+  /* セル全面リンク */
+  .cell-link{ display:block; height:100%; width:100%; text-decoration:none; color:inherit; padding:6px; }
+  .cell-link.no-badge:hover{ background:rgba(0,0,0,.03); }
 
-  .month-title{ font-weight:800; font-size:22px; }
+  .daynum{ position:absolute; top:6px; right:8px; font-size:12px; color:#333; }
+
+  .badge{ display:inline-block; margin:6px 6px 0 6px; background:var(--chip); color:#fff;
+          padding:4px 8px; border-radius:14px; font-size:12px; line-height:1; }
+
+  /* 週の背景（日曜/土曜列だけ薄く） */
+  .cal tbody td.dow-0{ background:var(--sun); }
+  .cal tbody td.dow-6{ background:var(--sat); }
+
+  /* スマホで高さを少し詰める */
+  @media (max-width:560px){
+    .cell{ height:110px; }
+    .month-title{ font-size:22px; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <!-- 子ども切替 -->
-  <form method="get" action="${pageContext.request.contextPath}/user/menuscalendar" class="switcher">
+  <form method="get" action="${pageContext.request.contextPath}/user/menuscalendar" class="topbar">
     <label>子ども：</label>
-    <select name="personId" onchange="this.form.submit()">
+    <select name="personId" class="child-select" onchange="this.form.submit()">
       <c:forEach var="c" items="${children}">
         <option value="${c.id}" ${c.id == personId ? 'selected' : ''}>${c.displayName}</option>
       </c:forEach>
     </select>
-    <input type="hidden" name="ym" value="${param.ym}"/>
-    <span style="color:#555;">（表示中：<c:out value="${selectedChild != null ? selectedChild.displayName : '—'}"/>）</span>
+    <input type="hidden" name="ym" value="${param.ym}" />
+    <span class="subtle">（表示中：<c:out value="${selectedChild != null ? selectedChild.displayName : ''}"/>）</span>
   </form>
 
+  <!-- 月移動 + タイトル -->
   <div class="calendar-nav">
     <a href="${pageContext.request.contextPath}/user/menuscalendar?ym=${prevYm}&personId=${personId}">◀ 前の月</a>
     <div class="month-title">${year}年${month}月</div>
@@ -63,8 +86,9 @@
   <table class="cal" aria-label="${year}年${month}月の献立カレンダー">
     <thead>
       <tr>
-        <th class="dow-sun">日</th><th>月</th><th>火</th><th>水</th>
-        <th>木</th><th>金</th><th class="dow-sat">土</th>
+        <th class="dow-sun">日</th>
+        <th>月</th><th>火</th><th>水</th><th>木</th><th>金</th>
+        <th class="dow-sat">土</th>
       </tr>
     </thead>
     <tbody>
@@ -74,44 +98,57 @@
       Integer fd = (Integer)request.getAttribute("firstDow");
       Integer dim= (Integer)request.getAttribute("daysInMonth");
 
-      Map<String,Boolean> hasMenuMap =
-        (Map<String,Boolean>)request.getAttribute("hasMenuMap");
-      Map<String,java.util.List<String>> labelsByDate =
-        (Map<String,java.util.List<String>>)request.getAttribute("labelsByDate");
+      java.util.Map<String, Boolean> hasMenuMap =
+        (java.util.Map<String, Boolean>)request.getAttribute("hasMenuMap");
 
-      String ctx = request.getContextPath();
-      String pid = String.valueOf(request.getAttribute("personId"));
+      java.util.Map<String, java.util.List<String>> labelsByDate =
+        (java.util.Map<String, java.util.List<String>>)request.getAttribute("labelsByDate");
+
+      String ctx  = request.getContextPath();
+      String pid  = String.valueOf(request.getAttribute("personId"));
 
       int day = 1;
-      for (int week=0; week<6 && day<=dim; week++) {
+      for (int week = 0; week < 6 && day <= dim; week++) {
         out.write("<tr>");
-        for (int dow=0; dow<7; dow++) {
-          if ((week==0 && dow<fd) || day>dim) { out.write("<td></td>"); continue; }
+        for (int dow = 0; dow < 7; dow++) {
+
+          if ((week == 0 && dow < fd) || day > dim) {
+            out.write("<td class='dow-" + dow + "'><div class=\"cell\"></div></td>");
+            continue;
+          }
 
           java.time.LocalDate d = java.time.LocalDate.of(y, m, day);
           String key = d.toString();
 
-          java.util.List<String> labs = (labelsByDate!=null) ? labelsByDate.get(key) : null;
-          boolean has = (hasMenuMap!=null && Boolean.TRUE.equals(hasMenuMap.get(key)));
+          boolean has = false;
+          java.util.List<String> labs = null;
 
-          String tdClass = (dow==0 ? " class='dow-sun'" : (dow==6 ? " class='dow-sat'" : ""));
-          out.write("<td"+tdClass+">");
-
-          // セル全面リンク（バッジ無しでも常に遷移可能）
-          out.write("<a class='cell-link"+((labs==null||labs.isEmpty())?" no-badge":"")+"' href='"
-              + ctx + "/user/menu_detail?date=" + key + "&personId=" + pid + "'>");
-
-          out.write("<span class='daynum'>" + day + "</span>");
-          if (labs != null && !labs.isEmpty()) {
-            for (String s : labs) {
-              out.write("<div class='menu-badge'>" + s + "</div>");
-            }
-          } else if (has) {
-            // 献立はあるが一致アレルゲンが無い日 → 小さく“献立あり”目印
-            out.write("<div class='menu-badge' style='opacity:.75'>献立あり</div>");
+          if (labelsByDate != null) {
+            labs = labelsByDate.get(key);
+            has = (labs != null && !labs.isEmpty());
+          } else if (hasMenuMap != null) {
+            Boolean b = hasMenuMap.get(key);
+            has = (b != null && b.booleanValue());
           }
-          out.write("</a>");
 
+          out.write("<td class='dow-" + dow + "'>");
+          out.write("<div class='cell'>");
+
+          String href = ctx + "/user/menu_detail?date=" + key + "&personId=" + pid;
+          if (has) {
+            out.write("<a class='cell-link' href='" + href + "' aria-label='" + key + " の献立詳細'>");
+            out.write("<span class='daynum'>" + day + "</span>");
+            for (String s : (labs == null ? java.util.Collections.<String>emptyList() : labs)) {
+              out.write("<span class='badge'>" + s + "</span>");
+            }
+            out.write("</a>");
+          } else {
+            out.write("<a class='cell-link no-badge' href='" + href + "' aria-label='" + key + " の献立詳細'>");
+            out.write("<span class='daynum'>" + day + "</span>");
+            out.write("</a>");
+          }
+
+          out.write("</div>");
           out.write("</td>");
           day++;
         }
@@ -120,7 +157,6 @@
     %>
     </tbody>
   </table>
-
 </div>
 </body>
 </html>
