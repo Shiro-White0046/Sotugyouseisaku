@@ -1,137 +1,194 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page import="java.util.*, bean.Allergen, bean.Individual" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
+<%
+  String ctx = request.getContextPath();
+  String pageTitle = "食物性アレルギー入力";
+  request.setAttribute("pageTitle", pageTitle);
+
+  List<Individual> persons =
+      (List<Individual>) request.getAttribute("persons");
+  java.util.UUID personId =
+      (java.util.UUID) request.getAttribute("personId");
+  List<Allergen> allergenlist =
+      (List<Allergen>) request.getAttribute("allergenlist");
+  Set<Short> selectedIds =
+      (Set<Short>) request.getAttribute("selectedIds");
+  if (selectedIds == null) {
+    selectedIds = new java.util.LinkedHashSet<Short>();
+  }
+%>
+
 <jsp:include page="/header_user.jsp" />
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
 
 <style>
-  body{background:#f7e1ca;margin:0;font-family:sans-serif}
-  header{background:#f6e7be;padding:16px 20px;position:sticky;top:0;z-index:1;text-align:center}
-  .wrap{max-width:980px;margin:20px auto;padding:0 16px}
+  body{background:#f7e1ca;margin:0;font-family:"Hiragino Sans","Noto Sans JP",sans-serif;}
+  main.content{padding:24px 28px 48px;}
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px;}
 
-  /* レイアウト：左（チェック一覧）＋右（選択中） */
-  .row{display:grid; grid-template-columns: 1fr 300px; gap:16px; align-items:start}
+  .person-switch{max-width:980px;margin:0 auto 14px;display:flex;gap:8px;align-items:center;}
+  .person-switch select{padding:6px 10px;border-radius:6px;border:1px solid #bbb;}
 
-  /* 左のスクロールボックス */
-  .panel{background:#fff;border:2px solid #333;height:300px;overflow-y:auto;padding:16px;box-shadow:inset 0 0 0 2px #000}
-  .grid{display:flex;flex-wrap:wrap;gap:28px 36px}
-  .item{display:flex;align-items:center;gap:8px;min-width:120px}
-  .other{display:flex;align-items:center;gap:8px;margin-top:16px}
+  .row{display:grid;grid-template-columns:1fr 260px;gap:16px;align-items:start;}
+  .panel{background:#fff;border:2px solid #333;height:300px;overflow-y:auto;
+         padding:16px;box-shadow:inset 0 0 0 2px #000;}
+  .grid{display:flex;flex-wrap:wrap;gap:28px 36px;}
+  .item{display:flex;align-items:center;gap:8px;min-width:120px;}
+  .other{display:flex;align-items:center;gap:8px;margin-top:16px;}
 
-  /* 右側：選択中リスト */
-  .side{background:#fff;border:2px solid #333;height:300px;overflow:auto;padding:12px}
-  .side h4{margin:0 0 8px 0;font-weight:600}
-  .sel-list{margin:0;padding-left:18px}
-  .sel-empty{color:#777}
+  .side{background:#fff;border:2px solid #333;height:300px;overflow:auto;padding:12px;}
+  .side h4{margin:0 0 8px 0;font-weight:600;}
+  .sel-list{margin:0;padding-left:18px;}
+  .sel-empty{color:#777;}
 
-  /* 下部ボタン */
-  .actions{display:flex;justify-content:space-between;margin-top:18px}
-  .btn{border:2px solid #d8c68f;background:#faefcf;padding:14px 28px;border-radius:22px;cursor:pointer}
-  .btn-primary{background:#f6e7be;border-color:#e6d595}
-  .btn[disabled]{opacity:.5;cursor:not-allowed}
+  .actions{display:flex;justify-content:space-between;margin-top:18px;max-width:980px;margin-left:auto;margin-right:auto;}
+  .btn{border:2px solid #d8c68f;background:#faefcf;padding:14px 28px;border-radius:22px;cursor:pointer;text-decoration:none;color:#333;font-weight:600;}
+  .btn-primary{background:#f6e7be;border-color:#e6d595;}
+  .btn[disabled]{opacity:.5;cursor:not-allowed;}
+
+  @media (max-width:720px){
+    .row{grid-template-columns:1fr;}
+    .actions{flex-direction:column;gap:10px;}
+    .actions .btn{width:100%;text-align:center;}
+  }
 </style>
 </head>
 <body>
+<main class="content">
 
-
-<div class="wrap">
-  <form action="${pageContext.request.contextPath}/user/allergy/confirm" method="post" id="form">
-    <input type="hidden" name="_csrf" value="${csrfToken}"/>
-
-    <div class="row">
-      <!-- 左：チェック一覧（スクロール） -->
-      <div class="panel" role="group" aria-labelledby="allergenGroupLabel">
-        <span id="allergenGroupLabel" class="sr-only">アレルゲン選択</span>
-
-<div class="grid" id="akGrid">
-  <c:forEach var="a" items="${allergenlist}">
-    <label class="item">
-      <input type="checkbox"
-             name="allergenIds"
-             value="${a.id}"
-             class="ak-check"
-             <c:if test="${selectedIds != null and selectedIds.contains(a.id)}">checked</c:if>>
-      <span class="ak-name">${a.nameJa}</span>
+  <!-- 対象児切り替え -->
+  <form method="get" action="<%= ctx %>/user/allergy/food" class="person-switch">
+    <label>対象：
+      <select name="person" onchange="this.form.submit()">
+        <% if (persons != null) {
+             for (Individual p : persons) { %>
+          <option value="<%= p.getId() %>"
+            <%= p.getId().equals(personId) ? "selected" : "" %>>
+            <%= p.getDisplayName() %>
+          </option>
+        <%   }
+           } %>
+      </select>
     </label>
-  </c:forEach>
-</div>
+    <noscript><button class="btn" type="submit">切り替え</button></noscript>
+  </form>
 
+  <div class="wrap">
+    <form action="<%= ctx %>/user/allergy/confirm" method="post" id="form">
+      <input type="hidden" name="_csrf" value="${csrfToken}"/>
+      <!-- ★ 確認・登録まで person_id を引き回す -->
+      <input type="hidden" name="person_id" value="<%= personId %>"/>
 
-        <div class="other">
-          <label class="item" style="margin:0">
-            <input id="otherCheck" type="checkbox" name="allergenOtherFlag" value="1" class="ak-other">
-            <span>その他</span>
-          </label>
-          <input id="otherName" type="text" name="allergenOtherName" maxlength="50" disabled
-                 placeholder="その他のアレルゲン名">
+      <div class="row">
+        <!-- 左：チェック一覧 -->
+        <div class="panel" role="group" aria-labelledby="allergenGroupLabel">
+          <span id="allergenGroupLabel" class="sr-only">アレルゲン選択</span>
+
+          <div class="grid" id="akGrid">
+            <% if (allergenlist != null) {
+                 for (Allergen a : allergenlist) {
+                   short id = a.getId();
+                   String name = a.getNameJa();
+            %>
+              <label class="item">
+                <input type="checkbox"
+                       name="allergenIds"
+                       value="<%= id %>"
+                       class="ak-check"
+                       <%= selectedIds.contains(id) ? "checked" : "" %> >
+                <span class="ak-name"><%= name %></span>
+              </label>
+            <%   }
+               } %>
+          </div>
+
+          <div class="other">
+            <label class="item" style="margin:0">
+              <input id="otherCheck" type="checkbox" name="allergenOtherFlag"
+                     value="1" class="ak-other">
+              <span>その他</span>
+            </label>
+            <input id="otherName" type="text" name="allergenOtherName"
+                   maxlength="50" disabled placeholder="その他のアレルゲン名">
+          </div>
         </div>
+
+        <!-- 右：選択中リスト -->
+        <aside class="side">
+          <h4>選択している項目 <span id="selCount" style="font-weight:normal;color:#666"></span></h4>
+          <ul class="sel-list" id="selList">
+            <li class="sel-empty">未選択です</li>
+          </ul>
+        </aside>
       </div>
 
-      <!-- 右：選択中リスト -->
-      <aside class="side">
-        <h4>選択している項目 <span id="selCount" style="font-weight:normal;color:#666"></span></h4>
-        <ul class="sel-list" id="selList">
-          <li class="sel-empty">未選択です</li>
-        </ul>
-      </aside>
-    </div>
+      <!-- 下：戻る／次へ -->
+      <div class="actions">
+        <a href="<%= ctx %>/user/home" class="btn">戻る</a>
+        <button type="submit" class="btn btn-primary" id="nextBtn" disabled>次へ</button>
+      </div>
+    </form>
+  </div>
 
-    <!-- 下：戻る／次へ -->
-    <div class="actions">
-      <button type="button" class="btn" onclick="history.back()">戻る</button>
-      <button type="submit" class="btn btn-primary" id="nextBtn" disabled>次へ</button>
-    </div>
-  </form>
-</div>
+</main>
 
 <script>
   // 右側「選択している項目」を更新
   function updateSelected(){
-    const list = document.getElementById('selList');
-    const count = document.getElementById('selCount');
-    list.innerHTML = '';
+    var list  = document.getElementById('selList');
+    var count = document.getElementById('selCount');
+    while (list.firstChild) list.removeChild(list.firstChild);
 
-    // チェック済みの名前を収集
-    const checked = Array.from(document.querySelectorAll('.ak-check:checked'))
-      .map(cb => cb.closest('label').querySelector('.ak-name').textContent.trim());
+    var checked = [];
+    var boxes = document.querySelectorAll('.ak-check:checked');
+    for (var i=0;i<boxes.length;i++){
+      var label = boxes[i].closest('label');
+      var nameEl = label ? label.querySelector('.ak-name') : null;
+      var name = nameEl ? nameEl.textContent.replace(/^\s+|\s+$/g,'') : '';
+      if (name) checked.push(name);
+    }
 
-    // その他
-    const oc = document.getElementById('otherCheck');
-    const on = document.getElementById('otherName');
-    if (oc.checked) {
+    var oc = document.getElementById('otherCheck');
+    var on = document.getElementById('otherName');
+    if (oc.checked){
       on.disabled = false;
-      const t = (on.value || '').trim();
-      if (t) checked.push('その他: ' + t);
-    } else {
+      var t = (on.value || '').replace(/^\s+|\s+$/g,'');
+      if (t){ checked.push('その他: ' + t); }
+    }else{
       on.disabled = true;
     }
 
-    if (checked.length === 0) {
-      const li = document.createElement('li');
+    if (checked.length === 0){
+      var li = document.createElement('li');
       li.className = 'sel-empty';
       li.textContent = '未選択です';
       list.appendChild(li);
-    } else {
-      checked.forEach(txt=>{
-        const li = document.createElement('li');
-        li.textContent = txt;
-        list.appendChild(li);
-      });
+    }else{
+      for (var j=0;j<checked.length;j++){
+        var li2 = document.createElement('li');
+        li2.textContent = checked[j];
+        list.appendChild(li2);
+      }
     }
     count.textContent = checked.length ? '(' + checked.length + '件)' : '';
     document.getElementById('nextBtn').disabled = (checked.length === 0);
   }
 
-  // 監視
-  document.addEventListener('change', (e)=>{
-    if (e.target.matches('.ak-check') || e.target.matches('#otherCheck')) updateSelected();
+  document.addEventListener('change', function(e){
+    var t = e.target || e.srcElement;
+    if (t && (t.classList.contains('ak-check') || t.id === 'otherCheck')){
+      updateSelected();
+    }
   });
-  document.addEventListener('input', (e)=>{
-    if (e.target.matches('#otherName')) updateSelected();
+  document.addEventListener('input', function(e){
+    var t = e.target || e.srcElement;
+    if (t && t.id === 'otherName'){
+      updateSelected();
+    }
   });
 
-  // 初期表示
+  // 初期表示（既選択ぶん反映）
   updateSelected();
 </script>
 </body>

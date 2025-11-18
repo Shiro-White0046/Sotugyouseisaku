@@ -59,13 +59,43 @@ public class ContactAllergyServlet extends HttpServlet {
       return;
     }
 
-    // クエリ ?person= 指定があれば優先、なければ先頭
-    String personParam = req.getParameter("person");
+    // ===== 対象児の決定ロジック =====
     UUID personId = null;
-    if (personParam != null && !personParam.isEmpty()) {
-      try { personId = UUID.fromString(personParam); } catch (Exception ignore) {}
+
+    // ① クエリ ?person= または ?personId= があれば最優先
+    String personParam = req.getParameter("person");
+    if (personParam == null || personParam.isEmpty()) {
+      personParam = req.getParameter("personId");
     }
-    if (personId == null) personId = persons.get(0).getId();
+    if (personParam != null && !personParam.isEmpty()) {
+      try {
+        personId = UUID.fromString(personParam);
+      } catch (IllegalArgumentException ignore) {
+        // 無効なUUIDは無視して次へ
+      }
+    }
+
+    // ② セッションに currentPersonId があればそれを使う
+    if (personId == null && ses != null) {
+      Object attr = ses.getAttribute("currentPersonId");
+      if (attr instanceof UUID) {
+        personId = (UUID) attr;
+      } else if (attr instanceof String) {
+        try { personId = UUID.fromString((String) attr); } catch (Exception ignore) {}
+      }
+    }
+
+    // ③ それでも無ければ一覧の先頭を採用
+    if (personId == null) {
+      personId = persons.get(0).getId();
+    }
+
+    // ④ 決まったIDをセッション＆リクエストへ
+    if (ses != null) {
+      ses.setAttribute("currentPersonId", personId);
+    }
+
+
 
     // CONTACT の候補（マスタ）
     List<Allergen> contactList = allergenDAO.listByCategory("CONTACT");
@@ -90,7 +120,7 @@ public class ContactAllergyServlet extends HttpServlet {
 
     // ビューへ
     req.setAttribute("persons", persons);
-    req.setAttribute("personId", personId);
+    req.setAttribute("personId", personId);           // 現在の対象児
     req.setAttribute("contactList", contactList);
     req.setAttribute("selectedCodes", selectedCodes);
     req.setAttribute("noteMap", noteMap);

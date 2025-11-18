@@ -1,3 +1,4 @@
+// src/user/UserFoodInputServlet.java
 package user;
 
 import java.io.IOException;
@@ -23,6 +24,12 @@ import dao.IndividualDAO;
 
 @WebServlet("/user/allergy/food")
 public class UserFoodInputServlet extends HttpServlet {
+  private static final long serialVersionUID = 1L;
+
+  private final IndividualDAO individualDAO = new IndividualDAO();
+  private final AllergenDAO allergenDao = new AllergenDAO();
+  private final IndividualAllergyDAO iaDao = new IndividualAllergyDAO();
+
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
@@ -36,35 +43,56 @@ public class UserFoodInputServlet extends HttpServlet {
       return;
     }
 
-    // ---- ① 個体(お子さん) を取得（FoodAllergyRegisterServlet と同じロジックに揃える） ----
-    UUID orgId  = user.getOrgId();
-    UUID userId = user.getId();
-
-    IndividualDAO individualDAO = new IndividualDAO();
-    Individual person = individualDAO.findOneByUserId(orgId, userId);
-    if (person == null) {
+    // ① この保護者に紐づく個体一覧
+    List<Individual> persons = individualDAO.listByUser(user.getId());
+    if (persons.isEmpty()) {
       req.setAttribute("flash", "まずはお子さま（個人）を登録してください。");
       req.getRequestDispatcher("/user/home.jsp").forward(req, resp);
       return;
     }
-    UUID personId = person.getId();
 
-    // ---- ② 食物アレルギーマスタ（FOOD） ----
-    AllergenDAO allergenDao = new AllergenDAO();
+    // ② 対象児の決定（?person > セッション LAST_PERSON_ID > 先頭）
+    UUID personId = null;
+
+    String personParam = req.getParameter("person");
+    if (personParam != null && !personParam.isEmpty()) {
+      try { personId = UUID.fromString(personParam); } catch (Exception ignore) {}
+    }
+
+    if (personId == null && ses != null) {
+      Object last = ses.getAttribute("LAST_PERSON_ID");
+      if (last instanceof UUID) {
+        personId = (UUID) last;
+      } else if (last instanceof String) {
+        try { personId = UUID.fromString((String) last); } catch (Exception ignore) {}
+      }
+    }
+
+    if (personId == null) {
+      personId = persons.get(0).getId();
+    }
+
+    // セッションにも保存（接触性など別画面と共有するため）
+    if (ses != null) {
+      ses.setAttribute("LAST_PERSON_ID", personId);
+    }
+
+    // ③ 食物アレルギーマスタ（FOOD）
     List<Allergen> list = allergenDao.listByCategory("FOOD");
-    req.setAttribute("allergenlist", list);
 
-    // ---- ③ その子に紐づく既存アレルギーのうち、FOODカテゴリだけを ID セットにする ----
-    IndividualAllergyDAO iaDao = new IndividualAllergyDAO();
+    // ④ その子の既存 FOOD アレルギーだけ ID セットにする
     Set<Short> selectedIds = iaDao.listAllergensOfPerson(personId).stream()
         .filter(a -> "FOOD".equalsIgnoreCase(a.getCategory()))
         .map(Allergen::getId)
         .collect(Collectors.toCollection(LinkedHashSet::new));
 
-    // JSP で事前チェックに使う
+    // JSP に渡す
+    req.setAttribute("persons", persons);
+    req.setAttribute("personId", personId);
+    req.setAttribute("allergenlist", list);
     req.setAttribute("selectedIds", selectedIds);
 
-    // ---- ④ JSPへフォワード ----
+    // ⑤ JSPへフォワード
     req.getRequestDispatcher("/user/AllergyFood.jsp").forward(req, resp);
   }
 }

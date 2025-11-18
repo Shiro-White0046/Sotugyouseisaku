@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.util.*, bean.Allergen, bean.Individual, bean.User" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
   String ctx = request.getContextPath();
   String pageTitle = "接触性アレルギー入力";
@@ -26,6 +27,7 @@
   for (Map.Entry<String,String> ent : labelMap.entrySet()) if (bySub.containsKey(ent.getKey())) order.add(ent.getKey());
   String firstCat = order.isEmpty() ? "OTHER" : order.get(0);
 %>
+
 <jsp:include page="/header_user.jsp" />
 
 <style>
