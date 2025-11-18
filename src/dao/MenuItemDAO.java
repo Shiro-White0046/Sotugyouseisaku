@@ -248,4 +248,43 @@ public class MenuItemDAO {
 	  }
 	}
 
+//MenuItemDAO に追加
+public List<MenuItem> listByOrgDateAndSlot(UUID orgId, LocalDate date, String mealSlot) {
+	String sql =
+		      "SELECT i.id, i.meal_id, i.item_order, i.name, i.note " +
+		      "FROM menu_items i " +
+		      "JOIN menu_meals m ON m.id = i.meal_id " +
+		      "JOIN menu_days  d ON d.id = m.day_id " +
+		      "WHERE d.org_id = ? " +
+		      "  AND d.menu_date = ? " +
+		      "  AND m.meal_slot = CAST(? AS meal_slot) " +   // ★ここをキャスト付きに
+		      "ORDER BY i.item_order";
+
+ List<MenuItem> list = new ArrayList<>();
+
+ try (Connection con = ConnectionFactory.getConnection();
+      PreparedStatement ps = con.prepareStatement(sql)) {
+
+   ps.setObject(1, orgId);
+   ps.setObject(2, java.sql.Date.valueOf(date));
+   ps.setString(3, mealSlot); // "breakfast" / "lunch" / "dinner"
+
+   try (ResultSet rs = ps.executeQuery()) {
+     while (rs.next()) {
+       MenuItem mi = new MenuItem();
+       mi.setId((UUID) rs.getObject("id"));
+       mi.setMealId((UUID) rs.getObject("meal_id"));
+       mi.setItemOrder(rs.getInt("item_order"));
+       mi.setName(rs.getString("name"));
+       mi.setNote(rs.getString("note"));
+       list.add(mi);
+     }
+   }
+ } catch (SQLException e) {
+   throw new RuntimeException("menu_items 一覧取得に失敗しました", e);
+ }
+
+ return list;
+}
+
 }

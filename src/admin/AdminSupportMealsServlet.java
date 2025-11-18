@@ -71,7 +71,9 @@ public class AdminSupportMealsServlet extends HttpServlet {
 
  // ==== 2) この時間帯のメニュー品目一覧（横軸） ====
  // orgId / date は一旦見ないで、meal_slot だけで絞る
- List<MenuItem> items = menuItemDAO.listByMealSlot(mealType);
+
+ // ★今日＋この園(学校)＋朝/昼/夜 で取得
+ List<MenuItem> items = menuItemDAO.listByOrgDateAndSlot(org.getId(), today, mealType);
 
     // ==== 3) 組織の個人一覧（縦軸） ====
     List<Individual> individuals = individualDAO.listByOrg(org.getId());
