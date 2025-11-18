@@ -138,4 +138,67 @@ public class MenuItemAllergenDAO {
     return ids;
   }
 
+//MenuItemAllergenDAO の中
+
+public java.util.List<bean.Allergen> findAllergensByIds(java.util.List<Short> ids) {
+ // null or 空リストならそのまま空で返す
+ if (ids == null || ids.isEmpty()) {
+   return java.util.Collections.emptyList();
+ }
+
+ // IN句を動的に生成
+ StringBuilder sb = new StringBuilder();
+ sb.append("SELECT id, name_ja");
+ // もし他にも必要なカラムがあればここで足す
+ // sb.append(", category, contact_type, name_en, note");
+ sb.append(" FROM allergens WHERE id IN (");
+
+ for (int i = 0; i < ids.size(); i++) {
+   if (i > 0) sb.append(", ");
+   sb.append("?");
+ }
+ sb.append(")");
+
+ java.util.Map<Short, bean.Allergen> tmp = new java.util.HashMap<>();
+
+ try (java.sql.Connection con = infra.ConnectionFactory.getConnection();
+      java.sql.PreparedStatement ps = con.prepareStatement(sb.toString())) {
+
+   int idx = 1;
+   for (Short id : ids) {
+     ps.setShort(idx++, id);
+   }
+
+   try (java.sql.ResultSet rs = ps.executeQuery()) {
+     while (rs.next()) {
+       bean.Allergen a = new bean.Allergen();
+       short id = rs.getShort("id");
+       a.setId(id);
+       a.setNameJa(rs.getString("name_ja"));
+       // 必要なら他のカラムもセット
+       // a.setCategory(rs.getString("category"));
+       // a.setContactType(rs.getString("contact_type"));
+       // a.setNameEn(rs.getString("name_en"));
+       // a.setNote(rs.getString("note"));
+
+       tmp.put(id, a);
+     }
+   }
+ } catch (java.sql.SQLException e) {
+   throw new RuntimeException("findAllergensByIds 取得に失敗しました", e);
+ }
+
+ // 入力された ID の順番を守って List に組み立て直す
+ java.util.List<bean.Allergen> result = new java.util.ArrayList<>();
+ for (Short id : ids) {
+   bean.Allergen a = tmp.get(id);
+   if (a != null) {
+     result.add(a);
+   }
+ }
+ return result;
+}
+
+
+
 }
