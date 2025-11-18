@@ -121,4 +121,21 @@ public class MenuItemAllergenDAO {
 	}
 
 
+  /** 品目に紐づくアレルゲンID（short）だけが欲しいとき */
+  public List<Short> listAllergenIdsByItem(UUID itemId) {
+    final String sql =
+        "SELECT allergen_id FROM menu_item_allergens WHERE item_id = ? ORDER BY allergen_id";
+    List<Short> ids = new ArrayList<>();
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+      ps.setObject(1, itemId);
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) ids.add(rs.getShort(1));
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("menu_item_allergens ID取得に失敗しました", e);
+    }
+    return ids;
+  }
+
 }

@@ -268,4 +268,41 @@ public class MenuMealDAO {
 	    return list;
 	}
 
+  /** ある日（menu_days.id）に紐づく食事（朝/昼/夕）を取得 */
+  public List<MenuMeal> listByDay(UUID dayId) {
+    final String sql =
+        "SELECT id, day_id, slot, name, description, image_path " +
+        "FROM menu_meals " +
+        "WHERE day_id = ? " +
+        "ORDER BY CASE slot " +
+        "  WHEN 'BREAKFAST' THEN 1 " +
+        "  WHEN 'LUNCH'     THEN 2 " +
+        "  WHEN 'DINNER'    THEN 3 " +
+        "  ELSE 99 END, id";
+
+    List<MenuMeal> list = new ArrayList<>();
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+      ps.setObject(1, dayId);
+
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          MenuMeal m = new MenuMeal();
+          m.setId((UUID) rs.getObject("id"));
+          m.setDayId((UUID) rs.getObject("day_id"));
+          m.setSlot(rs.getString("slot"));              // enum → String で受ける
+          m.setName(rs.getString("name"));
+          m.setDescription(rs.getString("description"));
+          // 画像列が無いスキーマなら下2行は削除
+          try { m.getClass().getMethod("setImagePath", String.class); m.setImagePath(rs.getString("image_path")); } catch (Exception ignore) {}
+          list.add(m);
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("menu_meals 日別一覧の取得に失敗しました", e);
+    }
+    return list;
+  }
+
 }
