@@ -99,7 +99,7 @@
 		<li><a href="<%= ctx %>/admin/menus_new">献立作成</a></li>
         <li><a href="<%= ctx %>/admin/support-meals">対応食管理</a></li>
         <li><a href="<%= ctx %>/admin/auth">認証機能</a></li>
-        <li><a href="<%= ctx %>/admin/guide">緊急対応ガイド</a></li>
+        <li><a href="<%= ctx %>/admin/emergency_guide.jsp">緊急対応ガイド</a></li>
         <li><a href="<%= ctx %>/admin/logout">ログアウト</a></li>
       </ul>
     </nav>
