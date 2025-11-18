@@ -250,4 +250,45 @@ public class UserDAO {
 	    throw new RuntimeException("main_contact_id の更新に失敗しました", e);
 	  }
 	}
+
+  /** 退会処理（個人・アレルギー削除＋ユーザ無効化） */
+  public void withdrawUser(UUID userId) {
+    String sqlDeleteIa =
+        "DELETE FROM individual_allergies " +
+        "WHERE person_id IN (SELECT id FROM individuals WHERE user_id = ?)";
+    String sqlDeleteInd =
+        "DELETE FROM individuals WHERE user_id = ?";
+    String sqlDeactivateUser =
+        "UPDATE users SET is_active = false WHERE id = ?";
+
+    try (Connection con = ConnectionFactory.getConnection()) {
+      try {
+        con.setAutoCommit(false);
+
+        try (PreparedStatement ps1 = con.prepareStatement(sqlDeleteIa)) {
+          ps1.setObject(1, userId);
+          ps1.executeUpdate();
+        }
+
+        try (PreparedStatement ps2 = con.prepareStatement(sqlDeleteInd)) {
+          ps2.setObject(1, userId);
+          ps2.executeUpdate();
+        }
+
+        try (PreparedStatement ps3 = con.prepareStatement(sqlDeactivateUser)) {
+          ps3.setObject(1, userId);
+          ps3.executeUpdate();
+        }
+
+        con.commit();
+      } catch (SQLException e) {
+        con.rollback();
+        throw new RuntimeException("退会処理に失敗しました", e);
+      } finally {
+        con.setAutoCommit(true);
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("退会処理に失敗しました", e);
+    }
+  }
 }

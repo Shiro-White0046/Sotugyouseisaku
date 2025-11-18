@@ -66,7 +66,7 @@
 
   <!-- 子ども切替 -->
   <form method="get" action="${pageContext.request.contextPath}/user/menuscalendar" class="topbar">
-    <label>子ども：</label>
+    <label>対象者：</label>
     <select name="personId" class="child-select" onchange="this.form.submit()">
       <c:forEach var="c" items="${children}">
         <option value="${c.id}" ${c.id == personId ? 'selected' : ''}>${c.displayName}</option>
