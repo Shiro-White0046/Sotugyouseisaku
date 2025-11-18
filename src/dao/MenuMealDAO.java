@@ -271,13 +271,13 @@ public class MenuMealDAO {
   /** ある日（menu_days.id）に紐づく食事（朝/昼/夕）を取得 */
   public List<MenuMeal> listByDay(UUID dayId) {
     final String sql =
-        "SELECT id, day_id, slot, name, description, image_path " +
+        "SELECT id, day_id, meal_slot, name, description, image_path " +
         "FROM menu_meals " +
         "WHERE day_id = ? " +
-        "ORDER BY CASE slot " +
-        "  WHEN 'BREAKFAST' THEN 1 " +
-        "  WHEN 'LUNCH'     THEN 2 " +
-        "  WHEN 'DINNER'    THEN 3 " +
+        "ORDER BY CASE meal_slot " +
+        "  WHEN 'breakfast' THEN 1 " +
+        "  WHEN 'lunch'     THEN 2 " +
+        "  WHEN 'dinner'    THEN 3 " +
         "  ELSE 99 END, id";
 
     List<MenuMeal> list = new ArrayList<>();
@@ -291,7 +291,7 @@ public class MenuMealDAO {
           MenuMeal m = new MenuMeal();
           m.setId((UUID) rs.getObject("id"));
           m.setDayId((UUID) rs.getObject("day_id"));
-          m.setSlot(rs.getString("slot"));              // enum → String で受ける
+          m.setSlot(rs.getString("meal_slot"));              // enum → String で受ける
           m.setName(rs.getString("name"));
           m.setDescription(rs.getString("description"));
           // 画像列が無いスキーマなら下2行は削除
