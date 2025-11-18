@@ -17,9 +17,9 @@ import bean.User;
 import dao.IndividualAllergyDAO;
 import dao.IndividualDAO;
 
-
 @WebServlet("/user/allergy/register")
 public class FoodAllergyRegisterServlet extends HttpServlet {
+
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
@@ -29,68 +29,81 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
     // 1) 同意チェック
     if (!"agree".equals(req.getParameter("consent"))) {
       req.setAttribute("error", "同意が必須です。");
-      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp").forward(req, resp);
+      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+         .forward(req, resp);
       return;
     }
 
     // 2) パラメータ取得
-    String[] ids = req.getParameterValues("allergenIds");
-    String otherFlag = req.getParameter("allergenOtherFlag");
-    String otherName = req.getParameter("allergenOtherName");
+    String[] ids      = req.getParameterValues("allergenIds");
+    String otherFlag  = req.getParameter("allergenOtherFlag");
+    String otherName  = req.getParameter("allergenOtherName");
+    String personStr  = req.getParameter("person_id");   // ★ 追加：どの子か
 
     // 3) ログインユーザー
     HttpSession session = req.getSession(false);
-    if (session == null) { resp.sendError(HttpServletResponse.SC_UNAUTHORIZED); return; }
+    if (session == null) {
+      resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+      return;
+    }
     User user = (User) session.getAttribute("user");
-    if (user == null || user.getId() == null) { resp.sendError(HttpServletResponse.SC_UNAUTHORIZED); return; }
+    if (user == null || user.getId() == null) {
+      resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+      return;
+    }
 
-    // 4) ID配列の正規化
-    Set<Short> uniqueIds = new LinkedHashSet<>();
+    // 4) 対象児(person_id) の決定＆妥当性チェック
+    UUID personId = null;
+    try {
+      if (personStr != null && !personStr.isEmpty()) {
+        personId = UUID.fromString(personStr);
+      }
+    } catch (IllegalArgumentException e) {
+      personId = null;
+    }
+
+    if (personId == null) {
+      req.setAttribute("error", "対象の子どもが指定されていません。");
+      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+         .forward(req, resp);
+      return;
+    }
+
+    // 念のため「このユーザーの子どもか」チェック
+    IndividualDAO iDao = new IndividualDAO();
+    Individual ind = iDao.findById(user.getOrgId(), personId)
+                         .orElse(null);
+    if (ind == null || !user.getId().equals(ind.getUserId())) {
+      req.setAttribute("error", "対象の子どもを確認できません。");
+      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+         .forward(req, resp);
+      return;
+    }
+
+    // 5) ID配列の正規化
+    Set<Short> uniqueIds = new LinkedHashSet<Short>();
     if (ids != null) {
       for (String s : ids) {
-        try { uniqueIds.add(Short.parseShort(s)); } catch (NumberFormatException ignore) {}
+        try { uniqueIds.add(Short.parseShort(s)); }
+        catch (NumberFormatException ignore) {}
       }
     }
-    boolean hasOther = "1".equals(otherFlag) || "true".equalsIgnoreCase(otherFlag);
-    if (uniqueIds.isEmpty() && !(hasOther && otherName != null && !otherName.trim().isEmpty())) {
+    boolean hasOther = "1".equals(otherFlag)
+        || "true".equalsIgnoreCase(otherFlag);
+
+    if (uniqueIds.isEmpty()
+        && !(hasOther && otherName != null && !otherName.trim().isEmpty())) {
+
       req.setAttribute("error", "登録対象がありません。");
-      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp").forward(req, resp);
+      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+         .forward(req, resp);
       return;
     }
 
     try {
-
-
-
-    	//user_idと組織コードを取得
-    	UUID userId = user.getId();
-    	UUID org_id=user.getOrgId();
-
-    	IndividualDAO iDao=new IndividualDAO();
-    	Individual individual=new Individual();
-
-      // 5) 個体(Individual)の特定
-    	individual = iDao.findOneByUserId(org_id, userId); // ← individuals.id を person_id として使う
-    	UUID personId=individual.getId();
-
-      if (personId == null) {
-        req.setAttribute("error", "個人情報が未登録です。");
-        req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp").forward(req, resp);
-        return;
-      }
-
-
-      // 6) 登録処理（追加/更新）
-
-
-      System.out.println("------------------------------");
-      System.out.println(userId);
-      System.out.println(org_id);
-      System.out.println(personId);
-      System.out.println("------------------------------");
       IndividualAllergyDAO iaDao = new IndividualAllergyDAO();
 
-      // ★ FOOD カテゴリだけを消してから入れ直す
+      // ★ FOODカテゴリだけ消して入れ直し
       boolean existed = iaDao.existsByCategory(personId, "FOOD");
       iaDao.deleteByCategory(personId, "FOOD");
       iaDao.upsertMultiple(personId, uniqueIds, null);
@@ -109,7 +122,8 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
       req.setAttribute("originalIds", ids == null ? new String[0] : ids);
       req.setAttribute("otherFlag", otherFlag);
       req.setAttribute("otherName", otherName);
-      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp").forward(req, resp);
+      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+         .forward(req, resp);
     }
   }
 }

@@ -30,7 +30,7 @@
 <div class="wrap">
   <!-- POSTで登録サーブレットへ -->
   <form action="${pageContext.request.contextPath}/user/allergy/register" method="post">
-    <input type="hidden" name="_csrf" value="${csrfToken}"/>
+  <input type="hidden" name="person_id" value="${personId}">
 
     <!-- 次のPOSTに引き継ぐ hidden -->
     <c:forEach var="id" items="${originalIds}">

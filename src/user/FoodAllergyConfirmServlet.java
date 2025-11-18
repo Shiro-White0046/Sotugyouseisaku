@@ -23,6 +23,9 @@ public class FoodAllergyConfirmServlet extends HttpServlet {
 
     req.setCharacterEncoding("UTF-8");
 
+    // ★どの子か（Food入力画面から hidden で送ってもらう）
+    String personId = req.getParameter("person_id");
+
     // 入力画面で送られてきた値
     String[] ids = req.getParameterValues("allergenIds"); // 複数
     String otherFlag = req.getParameter("allergenOtherFlag");
@@ -31,16 +34,17 @@ public class FoodAllergyConfirmServlet extends HttpServlet {
     if (ids == null || ids.length == 0) {
       // 最低1件必須（入力画面に戻すでもOK）
       req.setAttribute("error", "アレルゲンを1件以上選択してください。");
-      req.getRequestDispatcher("/user/allergy_input.jsp").forward(req, resp);
+      // ※入力画面が AllergyFood.jsp ならここも合わせておく
+      req.getRequestDispatcher("/user/AllergyFood.jsp").forward(req, resp);
       return;
     }
 
     // ID→名称を解決
-    List<Short> idList = new ArrayList<>();
+    List<Short> idList = new ArrayList<Short>();
     for (String s : ids) idList.add(Short.parseShort(s));
     List<Allergen> selected = allergenDAO.findByIdsPreserveOrder(idList);
 
- // 「その他」がチェックされ名前があれば表示対象に加える
+    // 「その他」がチェックされ名前があれば表示対象に加える
     if ("1".equals(otherFlag) && otherName != null && !otherName.trim().isEmpty()) {
       Allergen oth = new Allergen();
       oth.setId((short) -1);          // 仮ID（保存時の分岐用）
@@ -53,6 +57,9 @@ public class FoodAllergyConfirmServlet extends HttpServlet {
     req.setAttribute("originalIds", ids);            // 次のPOSTに引き継ぐため
     req.setAttribute("otherFlag", otherFlag);
     req.setAttribute("otherName", otherName);
+
+    // ★ personId も確認画面に引き継ぐ
+    req.setAttribute("personId", personId);
 
     // CSRFトークンを引き継ぐならここで再発行/渡し
     req.getRequestDispatcher("/user/allergy_confirm.jsp").forward(req, resp);

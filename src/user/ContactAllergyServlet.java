@@ -189,6 +189,7 @@ public class ContactAllergyServlet extends HttpServlet {
     }
 
     // フラッシュをセッションに格納してホームへ（PRG）
+    ses.setAttribute("currentPersonId", personId);
     ses.setAttribute("flashMessage", "アレルギーを登録しました");
     resp.sendRedirect(req.getContextPath() + "/user/home");
   }

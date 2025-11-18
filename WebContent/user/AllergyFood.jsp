@@ -75,8 +75,9 @@
   </form>
 
   <div class="wrap">
-    <form action="<%= ctx %>/user/allergy/confirm" method="post" id="form">
-      <input type="hidden" name="_csrf" value="${csrfToken}"/>
+    <form action="${pageContext.request.contextPath}/user/allergy/confirm" method="post" id="form">
+  <input type="hidden" name="person_id" value="${personId}"/>
+
       <!-- ★ 確認・登録まで person_id を引き回す -->
       <input type="hidden" name="person_id" value="<%= personId %>"/>
 

@@ -72,9 +72,9 @@ public class UserFoodInputServlet extends HttpServlet {
       personId = persons.get(0).getId();
     }
 
-    // セッションにも保存（接触性など別画面と共有するため）
+    // 決定した personId をセッションにも保存（他画面用）
     if (ses != null) {
-      ses.setAttribute("LAST_PERSON_ID", personId);
+      ses.setAttribute("currentPersonId", personId);
     }
 
     // ③ 食物アレルギーマスタ（FOOD）
