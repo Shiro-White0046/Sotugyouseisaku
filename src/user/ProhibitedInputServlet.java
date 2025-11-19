@@ -1,3 +1,4 @@
+// src/user/ProhibitedInputServlet.java
 package user;
 
 import java.io.IOException;
@@ -42,24 +43,28 @@ public class ProhibitedInputServlet extends HttpServlet {
 
     HttpSession ses = req.getSession(false);
     User user = (ses == null) ? null : (User) ses.getAttribute("user");
-    if (user == null) { resp.sendRedirect(req.getContextPath() + "/user/login"); return; }
+    if (user == null) {
+      resp.sendRedirect(req.getContextPath() + "/user/login");
+      return;
+    }
 
     // ユーザー配下の個人
     List<Individual> persons = individualDAO.listByUser(user.getId());
     if (persons.isEmpty()) {
       req.setAttribute("pageTitle", "食べられない食材入力");
       req.setAttribute("flash", "まずはお子さま（個人）を登録してください。");
-      req.getRequestDispatcher("/WEB-INF/views/user/prohibited_input.jsp").forward(req, resp);
+      req.getRequestDispatcher("user/prohibited_input.jsp")
+         .forward(req, resp);
       return;
     }
 
-    // person 切替（未指定なら先頭）
-    String personParam = req.getParameter("person");
-    UUID personId = null;
-    if (personParam != null && !personParam.isEmpty()) {
-      try { personId = UUID.fromString(personParam); } catch (Exception ignore) {}
+    // ===== ★ 対象児の決定（共通ロジック） =====
+    UUID personId = resolvePersonId(req, ses, persons);
+
+    // ★ 決定した対象児をセッションに保存（他画面と共有）
+    if (ses != null) {
+      ses.setAttribute("currentPersonId", personId);
     }
-    if (personId == null) personId = persons.get(0).getId();
 
     // AVOID マスタ
     List<Allergen> avoidList = allergenDAO.listByCategory("AVOID");
@@ -72,9 +77,9 @@ public class ProhibitedInputServlet extends HttpServlet {
         .collect(Collectors.toCollection(LinkedHashSet::new));
 
     // 既存メモ（avoid に紐づく note）
-    List<bean.IndividualAllergy> rows = iaDAO.listByPerson(personId);
+    List<IndividualAllergy> rows = iaDAO.listByPerson(personId);
     Map<Short,String> idToNote = new LinkedHashMap<Short,String>();
-    for (bean.IndividualAllergy ia : rows) {
+    for (IndividualAllergy ia : rows) {
       idToNote.put(ia.getAllergenId(), ia.getNote() == null ? "" : ia.getNote());
     }
 
@@ -97,9 +102,18 @@ public class ProhibitedInputServlet extends HttpServlet {
 
     HttpSession ses = req.getSession(false);
     User user = (ses == null) ? null : (User) ses.getAttribute("user");
-    if (user == null) { resp.sendRedirect(req.getContextPath() + "/user/login"); return; }
+    if (user == null) {
+      resp.sendRedirect(req.getContextPath() + "/user/login");
+      return;
+    }
 
     UUID personId = UUID.fromString(req.getParameter("person_id"));
+
+    // ★ POST 時にも currentPersonId を更新しておくと、保存後も対象児が維持される
+    if (ses != null) {
+      ses.setAttribute("currentPersonId", personId);
+    }
+
     String[] codes = req.getParameterValues("avoid"); // 例: ["AVOID_PORK", "AVOID_BEEF"]
 
     // AVOID マスタ（code -> id）
@@ -134,8 +148,6 @@ public class ProhibitedInputServlet extends HttpServlet {
 
     iaDAO.deleteByCategory(personId, "AVOID");
 
-
-
     // 追加/更新（新規側）
     for (Short id : newIds) {
       IndividualAllergy ia = new IndividualAllergy();
@@ -151,5 +163,49 @@ public class ProhibitedInputServlet extends HttpServlet {
     // 完了→ホームへ（alert用フラッシュ）
     ses.setAttribute("flashMessage", "食べられない食材を登録しました");
     resp.sendRedirect(req.getContextPath() + "/user/home");
+  }
+
+  // ===== ★ MenusCalendar と同じ対象児決定ロジック =====
+  private UUID resolvePersonId(HttpServletRequest req, HttpSession ses, List<Individual> persons) {
+    UUID personId = null;
+
+    // ① クエリ ?person= or ?personId=
+    String personParam = req.getParameter("person");
+    if (personParam == null || personParam.isEmpty()) {
+      personParam = req.getParameter("personId");
+    }
+    if (personParam != null && !personParam.isEmpty()) {
+      try {
+        personId = UUID.fromString(personParam);
+      } catch (IllegalArgumentException ignore) {
+        personId = null;
+      }
+    }
+
+    // ② セッション currentPersonId
+    if (personId == null && ses != null) {
+      Object attr = ses.getAttribute("currentPersonId");
+      if (attr instanceof UUID) {
+        personId = (UUID) attr;
+      } else if (attr instanceof String) {
+        try { personId = UUID.fromString((String) attr); } catch (Exception ignore) {}
+      }
+    }
+
+    // ③ まだ null なら先頭の子
+    if (personId == null) {
+      personId = persons.get(0).getId();
+    }
+
+    // 念のため「このユーザーの子どもか」をチェック
+    boolean belongs = false;
+    for (Individual p : persons) {
+      if (p.getId().equals(personId)) { belongs = true; break; }
+    }
+    if (!belongs) {
+      personId = persons.get(0).getId();
+    }
+
+    return personId;
   }
 }

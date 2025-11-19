@@ -41,8 +41,8 @@ public class UserFoodInputServlet extends HttpServlet {
     // ★ 対象児一覧を取得（single でも1件だけ返る想定）
     List<Individual> persons = individualDAO.listByUser(user.getId());
     if (persons.isEmpty()) {
-      req.setAttribute("flash", "まずはお子さま（個人）を登録してください。");
-      req.getRequestDispatcher("/user/home.jsp").forward(req, resp);
+      req.setAttribute("flashMessage", "まずはお子さま（個人）を登録してください。");
+      req.getRequestDispatcher("/user/home").forward(req, resp);
       return;
     }
 
