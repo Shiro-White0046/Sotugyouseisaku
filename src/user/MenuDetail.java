@@ -55,7 +55,10 @@ public class MenuDetail extends HttpServlet {
         ses.getAttribute("loginUser"),
         ses.getAttribute("user"),
         ses.getAttribute("account"));
-    if (loginUser == null) { resp.sendRedirect(req.getContextPath() + FALLBACK_LOGIN_URL); return; }
+    if (loginUser == null) {
+      resp.sendRedirect(req.getContextPath() + FALLBACK_LOGIN_URL);
+      return;
+    }
 
     UUID orgId = loginUser.getOrgId();
 
@@ -67,15 +70,14 @@ public class MenuDetail extends HttpServlet {
     }
     req.setAttribute("children", children);
 
-    // personId 決定
-    UUID personId = parseUUID(req.getParameter("personId"));
-    boolean belongs = false;
-    if (personId != null) {
-      for (bean.Individual c : children) {
-        if (c.getId().equals(personId)) { belongs = true; break; }
-      }
+    // ★ 対象児 personId を共通ロジックで決定
+    UUID personId = resolvePersonId(req, ses, children);
+
+    // ★ 決定した対象児をセッションに保存（他画面と共有）
+    if (ses != null) {
+      ses.setAttribute("currentPersonId", personId);
     }
-    if (!belongs) personId = children.get(0).getId();
+
     req.setAttribute("personId", personId);
 
     // 表示中の child を入れておく（JSP表示用）
@@ -99,7 +101,10 @@ public class MenuDetail extends HttpServlet {
     }
     LocalDate date;
     try { date = LocalDate.parse(dateStr); }
-    catch (Exception e) { resp.sendRedirect(req.getContextPath() + FALLBACK_CALENDAR_URL); return; }
+    catch (Exception e) {
+      resp.sendRedirect(req.getContextPath() + FALLBACK_CALENDAR_URL);
+      return;
+    }
 
     // 日のメニューヘッダ
     Optional<MenuDay> optDay = dayDao.findByDate(orgId, date);
@@ -187,12 +192,56 @@ public class MenuDetail extends HttpServlet {
 
   private static UUID parseUUID(String s) {
     if (s == null || s.trim().isEmpty()) return null;
-    try { return java.util.UUID.fromString(s.trim()); } catch (Exception ignore) { return null; }
+    try { return java.util.UUID.fromString(s.trim()); }
+    catch (Exception ignore) { return null; }
   }
 
   private static void setHeadAndYm(HttpServletRequest req, LocalDate d) {
     req.setAttribute("headTitle", (d == null) ? "この日のメニュー"
         : (d.getMonthValue() + "月" + d.getDayOfMonth() + "日のメニュー"));
     req.setAttribute("ym", (d == null) ? "" : String.format("%d-%02d", d.getYear(), d.getMonthValue()));
+  }
+
+  // ★ 追加：対象児 personId を決める共通ロジック
+  private static UUID resolvePersonId(HttpServletRequest req, HttpSession ses, List<bean.Individual> children) {
+    UUID personId = null;
+
+    // ① クエリ ?person= or ?personId= を最優先
+    String personParam = req.getParameter("person");
+    if (personParam == null || personParam.isEmpty()) {
+      personParam = req.getParameter("personId");
+    }
+    if (personParam != null && !personParam.isEmpty()) {
+      personId = parseUUID(personParam);
+    }
+
+    // ② セッション currentPersonId
+    if (personId == null && ses != null) {
+      Object attr = ses.getAttribute("currentPersonId");
+      if (attr instanceof UUID) {
+        personId = (UUID) attr;
+      } else if (attr instanceof String) {
+        personId = parseUUID((String) attr);
+      }
+    }
+
+    // ③ まだ null なら先頭の子
+    if (personId == null) {
+      personId = children.get(0).getId();
+    }
+
+    // 念のため「このユーザーの子どもか」をチェック
+    boolean belongs = false;
+    for (bean.Individual c : children) {
+      if (c.getId().equals(personId)) {
+        belongs = true;
+        break;
+      }
+    }
+    if (!belongs) {
+      personId = children.get(0).getId();
+    }
+
+    return personId;
   }
 }
