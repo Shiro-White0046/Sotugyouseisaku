@@ -71,18 +71,12 @@ public class MenusCalendar extends HttpServlet {
     }
     req.setAttribute("children", children);
 
-    // personId 決定
-    final UUID ppid = parseUUID(req.getParameter("personId"));
+    // ===== ★ 対象児の決定（共通ロジック） =====
+    UUID personId = resolvePersonId(req, ses, children);
 
-    UUID personId;
-    if (ppid != null) {
-        boolean belongs = false;
-        for (bean.Individual c : children) {
-            if (c.getId().equals(ppid)) { belongs = true; break; }
-        }
-        personId = belongs ? ppid : children.get(0).getId();
-    } else {
-        personId = children.get(0).getId();
+    // ★ 決定した対象児をセッションに保存（他画面と共有）
+    if (ses != null) {
+      ses.setAttribute("currentPersonId", personId);
     }
 
     req.setAttribute("personId", personId);
@@ -90,7 +84,8 @@ public class MenusCalendar extends HttpServlet {
     // 選択された子ども
     Individual selectedChild = children.stream()
         .filter(c -> c.getId().equals(personId))
-        .findFirst().orElse(children.get(0));
+        .findFirst()
+        .orElse(children.get(0));
     req.setAttribute("selectedChild", selectedChild);
 
     // 子どものアレルゲンID一覧
@@ -177,5 +172,45 @@ public class MenusCalendar extends HttpServlet {
   private Object firstNonNull(Object... arr) {
     for (Object o : arr) if (o != null) return o;
     return null;
+  }
+
+  // ===== ★ 共通「対象児 personId 決定」ロジック =====
+  private UUID resolvePersonId(HttpServletRequest req, HttpSession ses, List<Individual> children) {
+    UUID personId = null;
+
+    // ① クエリ ?person= または ?personId= があれば最優先
+    String personParam = req.getParameter("person");
+    if (personParam == null || personParam.isEmpty()) {
+      personParam = req.getParameter("personId");
+    }
+    if (personParam != null && !personParam.isEmpty()) {
+      personId = parseUUID(personParam);
+    }
+
+    // ② セッション currentPersonId があればそれを使う
+    if (personId == null && ses != null) {
+      Object attr = ses.getAttribute("currentPersonId");
+      if (attr instanceof UUID) {
+        personId = (UUID) attr;
+      } else if (attr instanceof String) {
+        personId = parseUUID((String) attr);
+      }
+    }
+
+    // ③ まだ null なら一覧の先頭の子
+    if (personId == null) {
+      personId = children.get(0).getId();
+    }
+
+    // 念のため「このユーザーの子どもか」をチェック
+    boolean belongs = false;
+    for (Individual c : children) {
+      if (c.getId().equals(personId)) { belongs = true; break; }
+    }
+    if (!belongs) {
+      personId = children.get(0).getId();
+    }
+
+    return personId;
   }
 }

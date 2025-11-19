@@ -52,6 +52,12 @@
 </head>
 <body>
 
+
+
+<%
+  request.setAttribute("headerTitle", "献立");
+%>
+<jsp:include page="/header_user2.jsp" />
 <!-- 子ども切替（同日付で personId を切り替える） -->
 <form method="get" action="${pageContext.request.contextPath}/user/menu_detail" style="margin:8px 0;">
   <input type="hidden" name="date" value="${menuDate}" />
@@ -60,14 +66,8 @@
       <option value="${c.id}" <c:if test="${c.id eq personId}">selected</c:if>>${c.displayName}</option>
     </c:forEach>
   </select>
-  <span style="margin-left:8px;color:#555;">（表示中：${selectedChild.displayName}）</span>
+  <span style="margin-left:8px;color:#555;"></span>
 </form>
-
-<%
-  request.setAttribute("headerTitle", "献立");
-%>
-<jsp:include page="/header_user2.jsp" />
-
 <div class="wrap">
   <!-- 日付タイトル（1回だけ） -->
   <div class="title">${headTitle}</div>

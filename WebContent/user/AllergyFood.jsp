@@ -61,19 +61,16 @@
   <form method="get" action="<%= ctx %>/user/allergy/food" class="person-switch">
     <label>対象：
       <select name="person" onchange="this.form.submit()">
-        <% if (persons != null) {
-             for (Individual p : persons) { %>
+        <% for (Individual p : persons) { %>
           <option value="<%= p.getId() %>"
             <%= p.getId().equals(personId) ? "selected" : "" %>>
             <%= p.getDisplayName() %>
           </option>
-        <%   }
-           } %>
+        <% } %>
       </select>
     </label>
-    <noscript><button class="btn" type="submit">切り替え</button></noscript>
+    <noscript><button type="submit" class="btn">切り替え</button></noscript>
   </form>
-
   <div class="wrap">
     <form action="${pageContext.request.contextPath}/user/allergy/confirm" method="post" id="form">
   <input type="hidden" name="person_id" value="${personId}"/>
