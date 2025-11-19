@@ -66,14 +66,14 @@
 
   <!-- 子ども切替 -->
   <form method="get" action="${pageContext.request.contextPath}/user/menuscalendar" class="topbar">
-    <label>対象者：</label>
+    <label>対象：</label>
     <select name="personId" class="child-select" onchange="this.form.submit()">
       <c:forEach var="c" items="${children}">
         <option value="${c.id}" ${c.id == personId ? 'selected' : ''}>${c.displayName}</option>
       </c:forEach>
     </select>
     <input type="hidden" name="ym" value="${param.ym}" />
-    <span class="subtle">（表示中：<c:out value="${selectedChild != null ? selectedChild.displayName : ''}"/>）</span>
+    <span class="subtle"></span>
   </form>
 
   <!-- 月移動 + タイトル -->
