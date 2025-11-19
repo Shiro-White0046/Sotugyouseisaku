@@ -251,44 +251,72 @@ public class UserDAO {
 	  }
 	}
 
-  /** 退会処理（個人・アレルギー削除＋ユーザ無効化） */
-  public void withdrawUser(UUID userId) {
-    String sqlDeleteIa =
-        "DELETE FROM individual_allergies " +
-        "WHERE person_id IN (SELECT id FROM individuals WHERE user_id = ?)";
-    String sqlDeleteInd =
-        "DELETE FROM individuals WHERE user_id = ?";
-    String sqlDeactivateUser =
-        "UPDATE users SET is_active = false WHERE id = ?";
+ public void withdrawUser(UUID userId) {
+   // 個人アレルギー
+   String sqlDeleteIa =
+       "DELETE FROM individual_allergies " +
+       "WHERE person_id IN (SELECT id FROM individuals WHERE user_id = ?)";
 
-    try (Connection con = ConnectionFactory.getConnection()) {
-      try {
-        con.setAutoCommit(false);
+   // 個人（子ども）
+   String sqlDeleteInd =
+       "DELETE FROM individuals WHERE user_id = ?";
 
-        try (PreparedStatement ps1 = con.prepareStatement(sqlDeleteIa)) {
-          ps1.setObject(1, userId);
-          ps1.executeUpdate();
-        }
+   // 緊急連絡先
+   String sqlDeleteContacts =
+       "DELETE FROM user_contacts WHERE user_id = ?";
 
-        try (PreparedStatement ps2 = con.prepareStatement(sqlDeleteInd)) {
-          ps2.setObject(1, userId);
-          ps2.executeUpdate();
-        }
+   // アカウントトークン（保護者分）
+   String sqlDeleteTokens =
+       "DELETE FROM account_tokens " +
+       "WHERE account_type = 'guardian' AND account_id = ?";
 
-        try (PreparedStatement ps3 = con.prepareStatement(sqlDeactivateUser)) {
-          ps3.setObject(1, userId);
-          ps3.executeUpdate();
-        }
+   // ユーザー本体
+   String sqlDeleteUser =
+       "DELETE FROM users WHERE id = ?";
 
-        con.commit();
-      } catch (SQLException e) {
-        con.rollback();
-        throw new RuntimeException("退会処理に失敗しました", e);
-      } finally {
-        con.setAutoCommit(true);
-      }
-    } catch (SQLException e) {
-      throw new RuntimeException("退会処理に失敗しました", e);
-    }
-  }
+   try (Connection con = ConnectionFactory.getConnection()) {
+     try {
+       con.setAutoCommit(false);
+
+       // 1) 子どもに紐づくアレルギー削除
+       try (PreparedStatement ps1 = con.prepareStatement(sqlDeleteIa)) {
+         ps1.setObject(1, userId);
+         ps1.executeUpdate();
+       }
+
+       // 2) 子どもレコード削除
+       try (PreparedStatement ps2 = con.prepareStatement(sqlDeleteInd)) {
+         ps2.setObject(1, userId);
+         ps2.executeUpdate();
+       }
+
+       // 3) 緊急連絡先削除
+       try (PreparedStatement ps3 = con.prepareStatement(sqlDeleteContacts)) {
+         ps3.setObject(1, userId);
+         ps3.executeUpdate();
+       }
+
+       // 4) guardian 向けトークン削除
+       try (PreparedStatement ps4 = con.prepareStatement(sqlDeleteTokens)) {
+         ps4.setObject(1, userId);
+         ps4.executeUpdate();
+       }
+
+       // 5) ユーザー本体削除
+       try (PreparedStatement ps5 = con.prepareStatement(sqlDeleteUser)) {
+         ps5.setObject(1, userId);
+         ps5.executeUpdate();
+       }
+
+       con.commit();
+     } catch (SQLException e) {
+       con.rollback();
+       throw new RuntimeException("退会処理に失敗しました", e);
+     } finally {
+       con.setAutoCommit(true);
+     }
+   } catch (SQLException e) {
+     throw new RuntimeException("退会処理に失敗しました", e);
+   }
+ }
 }
