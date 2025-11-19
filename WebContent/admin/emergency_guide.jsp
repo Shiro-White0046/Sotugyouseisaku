@@ -128,6 +128,63 @@
     color:#b91c1c;
   }
 
+  /* エピペン手順のレイアウト */
+  .epipen-grid{
+    display:grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap:16px;
+    margin-top:8px;
+  }
+  .epipen-steps{
+    list-style:none;
+    margin:0;
+    padding:0;
+    font-size:13px;
+  }
+  .epipen-step{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .epipen-step-num{
+    flex:none;
+    width:22px;
+    height:22px;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:700;
+    color:var(--accent);
+  }
+  .epipen-step-body strong{
+    font-weight:700;
+  }
+
+  .epipen-figure{
+    background:#fff7ec;
+    border-radius:8px;
+    border:1px dashed var(--border);
+    padding:10px;
+    font-size:12px;
+    line-height:1.6;
+    text-align:center;
+  }
+  .epipen-figure img{
+    max-width:100%;
+    height:auto;
+    display:block;
+    margin:0 auto 6px;
+  }
+  .epipen-figure-caption{
+    font-size:11px;
+    color:#555;
+  }
+
   /* 戻るボタン */
   .guide-back{
     margin-top:24px;
@@ -154,6 +211,9 @@
     .guide-body{
       padding:18px 12px 22px;
     }
+    .epipen-grid{
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 
@@ -164,97 +224,183 @@
 
   <div class="guide-body">
     <p class="guide-lead">
-      このページは、アレルギーのあるお子さまが<span style="font-weight:600;">誤って原因となる食べ物を口にしてしまったとき</span>の
-      基本的な対応の流れをまとめたものです。<br>
-      少しでも様子がおかしいと感じたら、迷わず医療機関や救急相談に連絡してください。
+      このページは、<strong>園・学校などの職員向け</strong>に、アレルギーのあるお子さまが
+      <strong>誤って原因となる食べ物を口にしてしまったとき</strong>の対応の流れをまとめたものです。<br>
+      実際の対応では、<strong>保護者から預かっている「アレルギー対応指示書」「エピペン指示書」</strong>と、
+      医師・救急隊の指示を必ず優先してください。
     </p>
 
     <div class="guide-alert">
-      ※このガイドはあくまで目安です。<br>
-      <strong>実際の診断・治療・判断は必ず医師・救急隊の指示を優先してください。</strong>
+      【重要な注意】<br>
+      ・このガイドは<strong>一般的な目安</strong>であり、すべてのケースをカバーするものではありません。<br>
+      ・<strong>診断・治療・薬剤使用の最終判断は医師・救急隊の指示に従ってください。</strong><br>
+      ・迷ったときは「様子を見る」のではなく、<strong>早めに相談・受診する</strong>ことを基本とします。
     </div>
 
-    <!-- 1. 今すぐ確認・対応すること -->
+    <!-- 1. 最初の3ステップ -->
     <section class="guide-section">
-      <h3>1．今すぐ行うこと <span class="badge">最優先</span></h3>
+      <h3>1．何かあったかもしれない時の「最初の3ステップ」 <span class="badge">最優先</span></h3>
       <ul class="guide-list">
-        <li>口に残っている食べ物があれば、<strong>無理をさせない範囲で取り除く</strong>（吐かせるのは医師の指示がある場合のみ）。</li>
-        <li>息苦しさ・顔色・声の出し方・ぐったりしていないかなど、<strong>いつもと違う様子がないか確認</strong>する。</li>
-        <li>エピペン（アドレナリン自己注射薬）を処方されている場合は、<strong>使用するタイミングについて事前に医師から聞いておいた指示</strong>に従う。</li>
-        <li>迷ったとき・不安なときは、<strong>ためらわずに医療機関・救急（119番）・#7119などの救急相談窓口</strong>に連絡する。</li>
+        <li><strong>① その場で食事・活動を中断する</strong><br>
+          ・口にしている食べ物を止め、本人を安全な場所に移動させます。<br>
+          ・無理に吐かせたり、走らせたりしないようにします。
+        </li>
+        <li><strong>② 様子を観察しながら、情報を整理する</strong><br>
+          ・<strong>「いつ」「何を」「どのくらい」</strong>口にしたかを確認する。<br>
+          ・過去の反応歴（重い症状だったかどうか）を、保護者の申告情報や園の記録から確認する。
+        </li>
+        <li><strong>③ すぐに責任者へ報告する</strong><br>
+          ・クラス担任だけで抱え込まず、<strong>園長・主任・看護師など責任者</strong>にすぐ共有する。<br>
+          ・「現在の症状」と「これからどうするか」を一緒に判断します。
+        </li>
       </ul>
       <div class="guide-important">
-        特に、<strong>呼吸が苦しそう・声がかすれる・ぐったりしている・意識がぼんやりする</strong>などの症状があれば、
-        すぐに119番通報し、アレルギーがあることと、口にしたものの名前を伝えてください。
+        この段階で、すでに<strong>咳き込み・顔色悪化・ぐったり</strong>などが見られる場合は、<br>
+        「様子を見てから」ではなく、<strong>先に救急要請（119）や救急相談（#7119 等）につなぐ</strong>ことを検討してください。
       </div>
     </section>
 
-    <!-- 2. 症状の目安 -->
+    <!-- 2. 症状の目安（軽症〜重症） -->
     <section class="guide-section">
-      <h3>2．よくみられる症状の例</h3>
-      <p>アレルギー症状は、<strong>数分以内～2時間程度</strong>で現れることが多いとされています。</p>
+      <h3>2．症状の目安と観察のポイント</h3>
+      <p>アレルギー症状は、<strong>数分以内〜2時間程度</strong>で現れることが多いとされています。</p>
       <ul class="guide-list">
         <li><strong>皮ふ：</strong>じんましん、赤み、かゆみ、まぶたや唇・耳たぶのはれ など</li>
         <li><strong>消化器：</strong>腹痛、吐き気、嘔吐、下痢 など</li>
-        <li><strong>呼吸器：</strong>せきこみ、ゼーゼー・ヒューヒューする息、息苦しさ、声が出しにくい など</li>
-        <li><strong>全身：</strong>顔色が悪い、ぐったりする、意識がもうろうとする など</li>
+        <li><strong>呼吸器：</strong>咳き込み、ゼーゼー・ヒューヒューする息、息苦しさ、声が出しにくい など</li>
+        <li><strong>全身：</strong>顔色が悪い、ぐったりする、ぼーっとして反応が悪い など</li>
       </ul>
       <div class="guide-important">
-        皮ふだけの軽い症状であっても、<strong>短時間で症状が変化・悪化する場合があります。</strong><br>
-        「さっきよりも悪くなっていないか」をこまめに観察し、必要に応じて医療機関へ連絡してください。
+        <strong>「皮ふだけだから軽い」と決めつけない</strong>ことが重要です。<br>
+        ・<strong>短時間で症状が増えていないか／範囲が広がっていないか</strong><br>
+        ・呼吸や意識の変化が出ていないか<br>
+        を、数分おきに確認し、少しでも悪化傾向があれば早めに受診・相談してください。
       </div>
     </section>
 
-    <!-- 3. 救急車を呼ぶ目安 -->
+    <!-- 3. エピペン等の一般的な使い方 -->
     <section class="guide-section">
-      <h3>3．救急車を呼ぶ目安</h3>
+      <h3>3．エピネフリン自己注射薬（エピペン等）の一般的な使い方</h3>
+      <p>
+        保護者から<strong>エピペン（エピネフリン自己注射薬）を預かっている場合</strong>は、
+        必ず事前に <strong>医師の指示書・園としてのマニュアル</strong> を確認し、
+        実際の使用はその指示に従ってください。<br>
+        ここでは、あくまで<strong>一般的な流れのイメージ</strong>を示します。
+      </p>
+
+      <div class="epipen-grid">
+        <ul class="epipen-steps">
+          <li class="epipen-step">
+            <div class="epipen-step-num">1</div>
+            <div class="epipen-step-body">
+              <strong>症状と指示書を確認する</strong><br>
+              ・呼吸が苦しそう、声が出しにくい、ぐったりしている、意識がもうろうとしている等、
+              <strong>重い症状が出ているか</strong>を確認。<br>
+              ・保護者からの <strong>「このような症状のときはエピペン使用」</strong> の指示があるか確認する。
+            </div>
+          </li>
+          <li class="epipen-step">
+            <div class="epipen-step-num">2</div>
+            <div class="epipen-step-body">
+              <strong>エピペン本体を確認する</strong><br>
+              ・本人の名前、有効期限、用量（体重に応じて処方）が正しいか確認する。<br>
+              ・ケースから本体を取り出し、<strong>針の出る側（先端）を必ず確認</strong>する。
+            </div>
+          </li>
+          <li class="epipen-step">
+            <div class="epipen-step-num">3</div>
+            <div class="epipen-step-body">
+              <strong>安全キャップを外す</strong><br>
+              ・指定されている色の安全キャップ（多くは「青」など）をまっすぐ引き抜く。<br>
+              ・この時点で<strong>先端側を手で握り込まない</strong>よう注意する（誤注射防止）。
+            </div>
+          </li>
+          <li class="epipen-step">
+            <div class="epipen-step-num">4</div>
+            <div class="epipen-step-body">
+              <strong>太ももの外側に垂直にあてて押し込む</strong><br>
+              ・本人をできるだけ寝かせ、必要に応じて大人が支える。<br>
+              ・太ももの外側に<strong>衣服の上からでも良い</strong>ので、先端をしっかりあてる。<br>
+              ・垂直に強く押し当てて注射が始まるまで押し込む。
+            </div>
+          </li>
+          <li class="epipen-step">
+            <div class="epipen-step-num">5</div>
+            <div class="epipen-step-body">
+              <strong>数秒間そのまま保持する</strong><br>
+              ・製品ごとの指示に従い、<strong>おおよそ数秒間</strong>太ももに押し当てたままにする。<br>
+              ・終わったらまっすぐ引き抜き、太ももを軽くもむようにさする。
+            </div>
+          </li>
+          <li class="epipen-step">
+            <div class="epipen-step-num">6</div>
+            <div class="epipen-step-body">
+              <strong>すぐに救急要請し、経過を観察する</strong><br>
+              ・<strong>エピペン使用後は必ず医療機関の受診が必要</strong>です。119番通報を行い、<br>
+              「エピペンを使用したこと」「使用した時間」「症状の経過」を伝える。<br>
+              ・その後も呼吸・意識の状態を継続して見守る。
+            </div>
+          </li>
+        </ul>
+
+        <div class="epipen-figure">
+          <!-- ここに施設で作成した図解画像を設置するとわかりやすい -->
+          <!-- 例：<img src="${pageContext.request.contextPath}/images/A_set_of_six_instructional_black_and_white_line_ar.png" alt="エピペン使用のイメージ図"> -->
+         <img src="${pageContext.request.contextPath}/image/A_set_of_six_instructional_black_and_white_line_ar.png" alt="エピペン使用の手順図">
+          <div class="epipen-figure-caption">
+            図：太ももの外側に垂直にあてて数秒間押し続けるイメージ。<br>
+            実際の使い方は、必ず製品付属の説明書と医師の指示を優先してください。
+          </div>
+        </div>
+      </div>
+
+      <div class="guide-important" style="margin-top:10px;">
+        ・ここでの説明はあくまで<strong>一般的な流れ</strong>です。実際の使用方法・保持時間などは製品によって異なります。<br>
+        ・園・学校としては、<strong>事前にダミー練習用キットなどで職員研修を行う</strong>ことが望ましいです。
+      </div>
+    </section>
+
+    <!-- 4. 救急車を呼ぶ目安 -->
+    <section class="guide-section">
+      <h3>4．救急車を呼ぶ目安</h3>
       <p>次のような様子がひとつでも見られたら、<strong>すぐに119番通報</strong>し、救急車を呼びます。</p>
       <ul class="guide-list">
         <li>声が出しにくい、かすれる、犬が吠えるようなせきが出る</li>
         <li>ゼーゼー・ヒューヒューと苦しそうな呼吸をしている</li>
         <li>唇や爪の色が紫っぽい、顔色が明らかに悪い</li>
         <li>立ち上がれない・歩けない・ぐったりしている</li>
-        <li>意識がもうろうとしている、呼びかけに反応しない</li>
+        <li>意識がもうろうとしている、呼びかけに反応しにくい</li>
       </ul>
       <div class="guide-important">
-        救急隊への連絡時には、<br>
-        ・お子さまの年齢・体重<br>
+        通報時には、次の点を簡潔に伝えるとスムーズです。<br>
+        ・お子さまの年齢・体重（わかる範囲で）<br>
         ・もともとのアレルギー（卵・牛乳・小麦 など）<br>
-        ・誤って口にした食品の名前と量、食べてからの時間<br>
-        ・エピペンを使用したかどうか<br>
-        を伝えると、よりスムーズです。
+        ・誤って口にした食品の名前・量・食べてからの時間<br>
+        ・エピペンを持っているか／使用したかどうか・使用した時間
       </div>
     </section>
 
-    <!-- 4. やってはいけないこと -->
+    <!-- 5. 園・学校としての事前準備 -->
     <section class="guide-section">
-      <h3>4．やってはいけないこと</h3>
+      <h3>5．園・学校としての事前準備</h3>
       <ul class="guide-list">
-        <li><strong>自己判断で吐かせること</strong>（誤嚥や状態悪化のおそれがあります）。</li>
-        <li><strong>市販薬だけで様子を見ること</strong>（症状の変化を見逃すおそれがあります）。</li>
-        <li><strong>「少しだから大丈夫」と決めつけて、受診や相談を先延ばしにすること。</strong></li>
-        <li>エピペンの使い方に自信がないまま、<strong>説明書を読まずに自己流で使用すること。</strong></li>
-      </ul>
-    </section>
-
-    <!-- 5. 普段からできる準備 -->
-    <section class="guide-section">
-      <h3>5．普段からの準備</h3>
-      <ul class="guide-list">
-        <li>かかりつけ医と相談し、<strong>「どのような症状が出たらエピペンを使うか」「どのタイミングで受診・救急要請するか」</strong>を書面などで確認しておく。</li>
-        <li>園・学校・家族・預け先などと情報を共有し、<strong>緊急連絡先・持参薬の保管場所</strong>を分かりやすくしておく。</li>
-        <li>エピペンをお持ちの場合は、<strong>有効期限・保管温度・持ち歩き方法</strong>を定期的に確認する。</li>
-        <li>誤飲・誤食を防ぐため、<strong>原材料表示の確認・食材の管理・アレルゲンの持ち込みルール</strong>を家族で話し合っておく。</li>
+        <li>保護者・医師と相談し、<strong>個別のアレルギー対応指示書・エピペン指示書</strong>を整備する。</li>
+        <li>指示書に基づき、<strong>職員向けの園内マニュアル</strong>を作成・更新する。</li>
+        <li>エピペンを預かる場合は、<strong>保管場所・持ち出し方法・有効期限</strong>を一元管理する。</li>
+        <li>新年度や職員異動のタイミングで、<strong>全職員への研修とシミュレーション訓練</strong>を行う。</li>
+        <li>誤飲・誤食を防ぐため、<strong>食材の管理・表示・持ち込みルール</strong>を園全体で共有する。</li>
       </ul>
     </section>
 
     <div class="guide-footer">
-      <strong>【重要】</strong><br>
-      このページは、緊急時の行動の「めやす」を示したものであり、すべての状況をカバーするものではありません。<br>
-      少しでも迷ったとき、不安を感じたときは、<strong>ためらわずに医療機関や救急相談窓口に連絡し、専門家の指示に従ってください。</strong>
+      <strong>【最終確認】</strong><br>
+      このページは、緊急時の行動の「めやす」を示したものであり、<br>
+      実際の判断・処置・薬剤の使用は、<strong>必ず医師・救急隊・かかりつけ医の指示に従ってください。</strong><br>
+      システム上で管理しているアレルギー情報も、<strong>日々の保護者との連絡・診断書の内容</strong>と合わせて確認することが重要です。
     </div>
 
     <div class="guide-back">
-      <a href="${pageContext.request.contextPath}/user/home">ホームに戻る</a>
+      <a href="${pageContext.request.contextPath}/admin/home">ホームに戻る</a>
     </div>
   </div>
+</main>
