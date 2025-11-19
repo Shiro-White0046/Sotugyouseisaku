@@ -53,7 +53,7 @@ public class ProhibitedInputServlet extends HttpServlet {
     if (persons.isEmpty()) {
       req.setAttribute("pageTitle", "食べられない食材入力");
       req.setAttribute("flash", "まずはお子さま（個人）を登録してください。");
-      req.getRequestDispatcher("/WEB-INF/views/user/prohibited_input.jsp")
+      req.getRequestDispatcher("user/prohibited_input.jsp")
          .forward(req, resp);
       return;
     }

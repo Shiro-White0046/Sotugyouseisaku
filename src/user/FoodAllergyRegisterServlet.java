@@ -29,7 +29,7 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
     // 1) 同意チェック
     if (!"agree".equals(req.getParameter("consent"))) {
       req.setAttribute("error", "同意が必須です。");
-      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+      req.getRequestDispatcher("/user/allergy_confirm.jsp")
          .forward(req, resp);
       return;
     }
@@ -64,7 +64,7 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
 
     if (personId == null) {
       req.setAttribute("error", "対象の子どもが指定されていません。");
-      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+      req.getRequestDispatcher("/user/allergy_confirm.jsp")
          .forward(req, resp);
       return;
     }
@@ -75,7 +75,7 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
                          .orElse(null);
     if (ind == null || !user.getId().equals(ind.getUserId())) {
       req.setAttribute("error", "対象の子どもを確認できません。");
-      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+      req.getRequestDispatcher("/user/allergy_confirm.jsp")
          .forward(req, resp);
       return;
     }
@@ -95,7 +95,7 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
         && !(hasOther && otherName != null && !otherName.trim().isEmpty())) {
 
       req.setAttribute("error", "登録対象がありません。");
-      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+      req.getRequestDispatcher("/user/allergy_confirm.jsp")
          .forward(req, resp);
       return;
     }
@@ -122,7 +122,7 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
       req.setAttribute("originalIds", ids == null ? new String[0] : ids);
       req.setAttribute("otherFlag", otherFlag);
       req.setAttribute("otherName", otherName);
-      req.getRequestDispatcher("/WEB-INF/views/user/allergy_confirm.jsp")
+      req.getRequestDispatcher("/user/allergy_confirm.jsp")
          .forward(req, resp);
     }
   }
