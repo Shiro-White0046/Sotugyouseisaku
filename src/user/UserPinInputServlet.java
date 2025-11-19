@@ -3,6 +3,7 @@ package user;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.List;      // ★追加
 import java.util.UUID;
 
 import javax.servlet.ServletException;
@@ -31,14 +32,33 @@ public class UserPinInputServlet extends HttpServlet {
       return;
     }
 
-    Individual ind = individualDAO.findOneByUserId(user.getOrgId(), user.getId());
+    // ★ここから：複数子ども対応 ＋ currentPersonId 共通ロジック
+    List<Individual> persons = individualDAO.listByUser(user.getId());
+    if (persons.isEmpty()) {
+      req.setAttribute("pageTitle", "認証パスワード設定");
+      req.setAttribute("error", "まずはお子さま（個人）を登録してください。");
+      req.getRequestDispatcher("/user/Pin.jsp").forward(req, resp);
+      return;
+    }
+
+    UUID personId = resolvePersonId(req, ses, persons);
+    if (ses != null) {
+      ses.setAttribute("currentPersonId", personId);
+    }
+    req.setAttribute("persons", persons);
+    req.setAttribute("personId", personId);
+
+    // 選択中の子ども
+    Individual ind = null;
+    for (Individual p : persons) {
+      if (p.getId().equals(personId)) { ind = p; break; }
+    }
     req.setAttribute("individual", ind);
+    // ★ここまで
+
     req.setAttribute("pageTitle", "認証パスワード設定");
 
-    // ★JSPの実在場所に合わせて片方だけ使う
-    // 推奨: /WEB-INF 配下
-   // req.getRequestDispatcher("/WEB-INF/views/user/Pin.jsp").forward(req, resp);
-    // もし /user/Pin.jsp に置いているなら上をコメントアウトして↓を有効化
+    // JSP のパスはすでにここに合わせているのでそのまま
     req.getRequestDispatcher("/user/Pin.jsp").forward(req, resp);
   }
 
@@ -55,23 +75,45 @@ public class UserPinInputServlet extends HttpServlet {
     }
 
     String pin = req.getParameter("pin");
-    if (pin == null || !pin.matches("\\d{4}")) { // Java側は \\d
+    if (pin == null || !pin.matches("\\d{4}")) { // Java側は \\d でOK
       req.setAttribute("error", "認証パスワードは数字4桁で入力してください。");
       doGet(req, resp);
       return;
     }
 
-    Individual ind = individualDAO.findOneByUserId(user.getOrgId(), user.getId());
-    if (ind == null) {
-      req.setAttribute("error", "利用者情報が見つかりません。");
+    // ★どの子のPINか（hiddenから取得）
+    String p = req.getParameter("person_id");
+    UUID personId = null;
+    try {
+      if (p != null && !p.isEmpty()) {
+        personId = UUID.fromString(p);
+      }
+    } catch (Exception ignore) {}
+
+    if (personId == null) {
+      req.setAttribute("error", "対象の子どもが指定されていません。");
       doGet(req, resp);
       return;
     }
 
-    // --- ここでハッシュ化して保存 ---
+    // 念のため「このユーザーの子どもか」確認
+    Individual ind = individualDAO.findById(user.getOrgId(), personId)
+                                  .orElse(null);
+    if (ind == null || !user.getId().equals(ind.getUserId())) {
+      req.setAttribute("error", "対象の子どもを確認できません。");
+      doGet(req, resp);
+      return;
+    }
+
+    // ★ currentPersonId を更新しておく
+    if (ses != null) {
+      ses.setAttribute("currentPersonId", personId);
+    }
+
+    // --- ここでハッシュ化して保存（従来どおり） ---
     String hash = hashPin(user.getOrgId(), user.getId(), pin);
     ind.setPinCodeHash(hash);              // Individual に対応する setter を用意
-    individualDAO.updatePinHash(ind);      // DAO 側も pin_code_hash を更新するメソッド名に
+    individualDAO.updatePinHash(ind);      // DAO 側も pin_code_hash を更新するメソッド
 
     ses.setAttribute("flashMessage", "認証パスワードを設定しました。");
     resp.sendRedirect(req.getContextPath() + "/user/home");
@@ -89,5 +131,41 @@ public class UserPinInputServlet extends HttpServlet {
     } catch (Exception e) {
       throw new RuntimeException("PINハッシュ化に失敗", e);
     }
+  }
+
+  // ★共通：対象児決定ロジック
+  private static UUID resolvePersonId(HttpServletRequest req, HttpSession ses,
+                                      java.util.List<Individual> children) {
+    UUID personId = null;
+
+    String personParam = req.getParameter("person");
+    if (personParam == null || personParam.isEmpty()) {
+      personParam = req.getParameter("personId");
+    }
+    if (personParam != null && !personParam.isEmpty()) {
+      try { personId = UUID.fromString(personParam); } catch (Exception ignore) {}
+    }
+
+    if (personId == null && ses != null) {
+      Object attr = ses.getAttribute("currentPersonId");
+      if (attr instanceof UUID) {
+        personId = (UUID) attr;
+      } else if (attr instanceof String) {
+        try { personId = UUID.fromString((String) attr); } catch (Exception ignore) {}
+      }
+    }
+
+    if (personId == null && !children.isEmpty()) {
+      personId = children.get(0).getId();
+    }
+
+    boolean belongs = false;
+    for (Individual c : children) {
+      if (c.getId().equals(personId)) { belongs = true; break; }
+    }
+    if (!belongs && !children.isEmpty()) {
+      personId = children.get(0).getId();
+    }
+    return personId;
   }
 }

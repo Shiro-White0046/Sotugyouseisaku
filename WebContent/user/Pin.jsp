@@ -1,12 +1,19 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-
+<%@ page import="java.util.List, bean.Individual" %>  <!-- ★追加 -->
 <%
   // 画面タイトル（ヘッダー共通の場合）
   if (request.getAttribute("pageTitle") == null) {
     request.setAttribute("pageTitle", "認証パスワード設定");
   }
+
+  // ★追加：対象者リストと選択中ID
+  String ctx = request.getContextPath();
+  List<Individual> persons =
+      (List<Individual>) request.getAttribute("persons");
+  java.util.UUID personId =
+      (java.util.UUID) request.getAttribute("personId");
 %>
 
 <jsp:include page="/header_user.jsp" />
@@ -16,6 +23,21 @@
   .pin-card {
     max-width: 860px; margin: 0 auto; background:#fde8d7;
     padding: 48px 24px;
+  }
+   /* ★追加：対象児セレクト */
+  .person-switch{
+    max-width:860px;
+    margin:0 auto 16px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    font-size:14px;
+  }
+  .person-switch select{
+    padding:4px 8px;
+    border-radius:4px;
+    border:1px solid #bbb;
+    background:#fff;
   }
   .pin-title { font-size:20px; font-weight:700; margin: 0 0 32px; text-align:center;}
   .grid2 { display:grid; grid-template-columns: 160px 1fr; gap: 16px 24px; align-items:center; }
@@ -32,14 +54,36 @@
     min-width:160px; height:56px; border:1px solid #333; background:#fff;
     border-radius:4px; font-size:18px; cursor:pointer;
   }
-  .btn:active { transform: translateY(1px); }
+  .btn:active { transform: translateY(1px);
+  }
+
 </style>
 
 <div class="pin-page">
   <div class="pin-card">
+  <!-- ★追加：対象児の切り替えフォーム -->
+    <form method="get" action="<%= ctx %>/user/pin" class="person-switch">
+      <label>対象：
+        <select name="person" onchange="this.form.submit()">
+          <% if (persons != null) {
+               for (Individual p : persons) { %>
+            <option value="<%= p.getId() %>"
+              <%= p.getId().equals(personId) ? "selected" : "" %>>
+              <%= p.getDisplayName() %>
+            </option>
+          <%   }
+             } %>
+        </select>
+      </label>
+      <noscript><button type="submit">切り替え</button></noscript>
+    </form>
+    <!-- ★ここまで -->
+
     <h2 class="pin-title">認証パスワード設定</h2>
 
     <form action="${pageContext.request.contextPath}/user/pin" method="post" autocomplete="off">
+    <input type="hidden" name="person_id" value="<%= personId %>">
+
       <div class="grid2">
         <!-- 名前 -->
         <div class="label">名前</div>

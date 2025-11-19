@@ -4,10 +4,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
 
+<%
+  // ★追加：対象児リストと選択中ID
+  String ctx = request.getContextPath();
+  java.util.List<bean.Individual> persons =
+      (java.util.List<bean.Individual>) request.getAttribute("persons");
+  java.util.UUID personId =
+      (java.util.UUID) request.getAttribute("personId");
+%>
 <style>
   body { background:#f7e1ca; margin:0; font-family:sans-serif; }
   header { background:#f6e7be; padding:16px 20px; text-align:center; }
   .wrap { max-width:720px; margin:20px auto; padding:0 16px; }
+/* ★追加：対象者セレクト用 */
+  .person-switch{
+    max-width:720px;
+    margin:0 auto 12px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    font-size:14px;
+  }
+  .person-switch select{
+    padding:4px 8px;
+    border-radius:4px;
+    border:1px solid #bbb;
+    background:#fff;
+  }
 
   .card {
     background:#fff;
@@ -78,6 +101,22 @@
 <body>
 
 <div class="wrap">
+<!-- ★追加：接触性と同じスタイルの対象児セレクト -->
+  <form method="get" action="<%= ctx %>/user/emergency" class="person-switch">
+    <label>対象：
+      <select name="person" onchange="this.form.submit()">
+        <% if (persons != null) {
+             for (bean.Individual p : persons) { %>
+          <option value="<%= p.getId() %>"
+            <%= p.getId().equals(personId) ? "selected" : "" %>>
+            <%= p.getDisplayName() %>
+          </option>
+        <%   }
+           } %>
+      </select>
+    </label>
+    <noscript><button type="submit">切り替え</button></noscript>
+  </form>
   <h2>緊急連絡先の設定</h2>
 
   <!-- フラッシュメッセージ -->
@@ -94,8 +133,10 @@
     </div>
   </c:if>
 
-  <div class="card">
+   <div class="card">
     <form action="${pageContext.request.contextPath}/user/emergency" method="post">
+      <!-- ★追加：どの子の画面から来たかを一応保持しておく -->
+      <input type="hidden" name="person_id" value="<%= personId %>">
 
       <c:set var="c" value="${contact}" />
 
