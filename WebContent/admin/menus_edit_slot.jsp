@@ -28,9 +28,11 @@
                style="flex:1;min-width:260px;" placeholder="例：シーフードカレー" />
         <!-- ★ 画像追加は slot 付きで遷移 -->
         <a class="link" href="<%=ctx%>/admin/menus_new/image?dayId=${menuDay.id}&slot=${selectedSlot}">献立の画像を追加</a>
-        <span style="color:#666;">
+
+        <!--span style="color:#666;">
           <c:if test="${meals[selectedSlot] != null}">${meals[selectedSlot].imagePath}</c:if>
-        </span>
+        </span>-->
+
       </div>
 
       <div style="text-align:right;margin-bottom:8px;">
