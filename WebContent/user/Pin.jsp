@@ -56,6 +56,12 @@
   }
   .btn:active { transform: translateY(1px);
   }
+    /* ★ このページだけ layout の固定幅を解除して右の余白をなくす */
+  .layout {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
 
 </style>
 

@@ -418,3 +418,26 @@ html.sidebar-open .sidebar { transform: translateX(0); }
 .register-page .button.new-btn { background: #2ea44f; }
 .register-page .button.new-btn:hover { background: #238a3b; }
 
+
+/* ★ 利用者ホームのメイン領域を全幅に（home専用の調整が必要ならこちらで） */
+body.page-user-home .content,
+body.page-user-home .content--peach {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+/* ★ user画面で右余白をなくす（PIN など） */
+body.page-user-wide .layout {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden;
+}
+
+body.page-user-wide .content,
+body.page-user-wide .pin-page {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+}

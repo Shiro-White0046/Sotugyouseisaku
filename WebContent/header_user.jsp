@@ -16,6 +16,11 @@
   // このページが /user/home のときだけ body に page-user-home を付与
   String uri = request.getRequestURI();
   boolean isUserHome = (uri != null) && (uri.endsWith("/user/home") || uri.endsWith("/user/home.jsp"));
+  // ★ここで body に付けるクラス文字列を作る
+  String bodyClass = "page-user";                // 利用者ページ共通
+  if (isUserHome) {
+    bodyClass += " page-user-home";             // ホームだけ追加クラス
+  }
 %>
 <!DOCTYPE html>
 <html lang="ja">
@@ -93,7 +98,7 @@
     });
   </script>
 </head>
-<body class="<%= isUserHome ? "page-user-home" : "" %>">
+<body class="page-user <%= isUserHome ? "page-user-home" : "page-user-wide" %>">
   <!-- ヘッダー -->
   <header class="app-header">
     <button class="hamburger" aria-label="menu" onclick="toggleSidebar()">≡</button>
@@ -108,6 +113,7 @@
   <div class="layout">
     <!-- サイドバー（利用者メニュー） -->
     <nav class="sidebar" aria-label="サイドバー">
+
       <div class="sidebar-user"><%= userName %></div>
       <ul class="nav">
         <li><a href="<%= ctx %>/user/home">ホーム</a></li>
