@@ -166,23 +166,35 @@
   }
 
   .epipen-figure{
-    background:#fff7ec;
-    border-radius:8px;
-    border:1px dashed var(--border);
-    padding:10px;
+    /* 画像の大きさにほぼフィットさせる */
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+
+    /* 目立つ外枠を消す */
+    background:transparent;
+    border:none;
+    padding:4px 0;
+
     font-size:12px;
     line-height:1.6;
     text-align:center;
   }
+
   .epipen-figure img{
+    display:block;
     max-width:100%;
     height:auto;
-    display:block;
-    margin:0 auto 6px;
+    /* 画像のまわりの余白だけ少しだけ */
+    margin:0 auto 4px;
+    border-radius:8px;
   }
+
   .epipen-figure-caption{
     font-size:11px;
     color:#555;
+    margin-top:2px;
   }
 
   /* 戻るボタン */
