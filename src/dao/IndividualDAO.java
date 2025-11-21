@@ -102,41 +102,24 @@ public class IndividualDAO {
 
 	/** 組織コードの個人一覧 */
 	/** 組織内の個人一覧（認証表示に必要な全情報を取得） */
-	public java.util.List<bean.Individual> listByOrg(java.util.UUID orgId) {
+	public List<Individual> listByOrg(UUID orgId) {
 	  final String sql =
 	      "SELECT id, org_id, user_id, display_name, birthday, note, " +
-	      "       created_at, pin_code_hash, last_verified_at " +   // ★ここ重要
+	      "       created_at, pin_code_hash, last_verified_at " +
 	      "FROM individuals " +
 	      "WHERE org_id = ? " +
 	      "ORDER BY created_at ASC";
 
-	  java.util.List<bean.Individual> list = new java.util.ArrayList<>();
+	  List<Individual> list = new ArrayList<>();
 
 	  try (Connection con = ConnectionFactory.getConnection();
 	       PreparedStatement ps = con.prepareStatement(sql)) {
 
 	    ps.setObject(1, orgId);
+
 	    try (ResultSet rs = ps.executeQuery()) {
 	      while (rs.next()) {
-	        bean.Individual i = new bean.Individual();
-	        i.setId((java.util.UUID) rs.getObject("id"));
-	        i.setOrgId((java.util.UUID) rs.getObject("org_id"));
-	        i.setUserId((java.util.UUID) rs.getObject("user_id"));
-	        i.setDisplayName(rs.getString("display_name"));
-
-	        java.sql.Date d = rs.getDate("birthday");
-	        if (d != null) i.setBirthday(d.toLocalDate());
-
-	        i.setNote(rs.getString("note"));
-
-	        // ★ 認証機能に必須な2つ
-	        i.setPinCodeHash(rs.getString("pin_code_hash"));
-	        java.sql.Timestamp ts = rs.getTimestamp("last_verified_at");
-	        if (ts != null) {
-	          i.setLastVerifiedAt(ts.toInstant().atOffset(java.time.ZoneOffset.UTC));
-	        }
-
-	        list.add(i);
+	        list.add(mapIndividual(rs));   // ★ 手でフィールド詰めず mapIndividual 統一
 	      }
 	    }
 
@@ -146,6 +129,7 @@ public class IndividualDAO {
 
 	  return list;
 	}
+
 
 
 
@@ -447,17 +431,17 @@ public class IndividualDAO {
 		  return findOneByUserId(user.getOrgId(),user.getId());
 		}
 
-	 private Individual mapIndividual(ResultSet rs) throws SQLException {
+	  private Individual mapIndividual(ResultSet rs) throws SQLException {
 		  Individual i = new Individual();
 		  i.setId(rs.getObject("id", UUID.class));
 		  i.setOrgId(rs.getObject("org_id", UUID.class));
 		  i.setUserId(rs.getObject("user_id", UUID.class));
 		  i.setDisplayName(rs.getString("display_name"));
-		  i.setBirthday(rs.getObject("birthday", java.time.LocalDate.class));
+		  i.setBirthday(rs.getObject("birthday", LocalDate.class));
 		  i.setNote(rs.getString("note"));
-		  i.setCreatedAt(rs.getObject("created_at", java.time.OffsetDateTime.class));
+		  i.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
 		  i.setPinCodeHash(rs.getString("pin_code_hash"));
-		  i.setLastVerifiedAt(rs.getObject("last_verified_at", java.time.OffsetDateTime.class));
+		  i.setLastVerifiedAt(rs.getObject("last_verified_at", OffsetDateTime.class));
 		  return i;
 		}
 	 /** 個人ごとの認証パスワードを更新 */

@@ -1,7 +1,10 @@
-// src/admin/AdminAuthVerifyServlet.java
 package admin;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import javax.servlet.ServletException;
@@ -18,6 +21,9 @@ import dao.IndividualDAO;
 
 @WebServlet("/admin/auth/verify")
 public class AdminAuthVerifyServlet extends HttpServlet {
+
+  private static final long serialVersionUID = 1L;
+
   private final IndividualDAO iDao = new IndividualDAO();
 
   @Override
@@ -46,7 +52,7 @@ public class AdminAuthVerifyServlet extends HttpServlet {
       return;
     }
 
-    // ★ GET/POSTとも org.getId() で統一
+    // org.getId() で統一
     Individual person = iDao.findOneByOrgIdAndPersonId(org.getId(), personId);
     if (person == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -84,16 +90,43 @@ public class AdminAuthVerifyServlet extends HttpServlet {
       return;
     }
 
-    // ★ 1日1回制限チェック
-    java.time.LocalDate today = java.time.LocalDate.now(); // サーバーのローカル日付（JSTなら翌日0時で自動リセット）
-    if (person.getLastVerifiedDate() != null
-        && person.getLastVerifiedDate().isEqual(today)) {
+    // ==== 1日3回まで（朝・昼・夜それぞれ1回）の制限 ====
+    // 日本時間(JST, +09:00)で「今日」「現在時刻」を判定
+    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.ofHours(9));
+    LocalDate today = now.toLocalDate();
+    LocalTime nowTime = now.toLocalTime();
 
+    // 現在時刻がどの時間帯か
+    String nowSlot = judgeSlot(nowTime);
+    if (nowSlot == null) {
+      // 時間帯外のときはエラー扱いにする
       req.setAttribute("person", person);
-      req.setAttribute("error", "本日の認証はすでに完了しています。次に認証できるのは明日0時以降です。");
+      req.setAttribute("error",
+          "認証できるのは 朝(6～11時未満)・昼(11～17時未満)・夜(17～21時未満) の時間帯のみです。");
       req.getRequestDispatcher("/admin/auth_verify.jsp").forward(req, resp);
       return;
     }
+
+    // 直近の認証が同じ日・同じ時間帯なら NG
+    OffsetDateTime last = person.getLastVerifiedAt(); // Individual に getter がある前提
+    if (last != null) {
+      // 保存されている時刻を日本時間に変換
+      OffsetDateTime lastJst = last.withOffsetSameInstant(ZoneOffset.ofHours(9));
+      if (lastJst.toLocalDate().isEqual(today)) {
+        String lastSlot = judgeSlot(lastJst.toLocalTime());
+        if (nowSlot.equals(lastSlot)) {
+          req.setAttribute("person", person);
+          req.setAttribute("error",
+              "本日の「" +
+              ("MORNING".equals(nowSlot) ? "朝" :
+               "NOON".equals(nowSlot)    ? "昼" : "夜") +
+              "」の認証はすでに完了しています。");
+          req.getRequestDispatcher("/admin/auth_verify.jsp").forward(req, resp);
+          return;
+        }
+      }
+    }
+    // ==== ここまで制限ロジック ====
 
     // PIN形式チェック
     pin = pin.trim();
@@ -104,11 +137,10 @@ public class AdminAuthVerifyServlet extends HttpServlet {
       return;
     }
 
-    // PIN照合（前に作った orgId:userId:pin のやつ）
+    // PIN照合（orgId:userId:pin の SHA-256）
     boolean ok = verifyPin(pin, person.getPinCodeHash(), org.getId(), person.getUserId());
     if (ok) {
-      // ★ 認証時刻を記録（ここから24時間ではなく、「この日付の中で1回だけ」という運用）
-      java.time.OffsetDateTime now = java.time.OffsetDateTime.now();
+      // 認証時刻を記録（last_verified_at を更新） ※ now は JST
       iDao.updateLastVerifiedAt(person.getId(), now);
 
       ses.setAttribute("flashMessage", person.getDisplayName() + " を認証しました。");
@@ -120,8 +152,6 @@ public class AdminAuthVerifyServlet extends HttpServlet {
     }
   }
 
-  /** 平文 or BCrypt($2a/$2b/$2y) どちらでも判定できるユーティリティ */
-  /** 平文 / BCrypt / SHA-256 のいずれでも照合できるユーティリティ */
   /** 利用者側と同じロジック（orgId:userId:pin）で照合 */
   private boolean verifyPin(String pin, String hash, UUID orgId, UUID userId) {
     if (hash == null || hash.isEmpty()) return false;
@@ -147,8 +177,31 @@ public class AdminAuthVerifyServlet extends HttpServlet {
     }
   }
 
+  /**
+   * 時間帯判定
+   * 朝 : 6:00–10:59
+   * 昼 : 11:00–16:59
+   * 夜 : 17:00–20:59
+   * それ以外は null
+   */
+  private static String judgeSlot(LocalTime t) {
+    LocalTime mStart = LocalTime.of(6, 0);
+    LocalTime mEnd   = LocalTime.of(11, 0);  // 11:00未満 → 朝
 
+    LocalTime nStart = LocalTime.of(11, 0);
+    LocalTime nEnd   = LocalTime.of(17, 0);  // 17:00未満 → 昼
 
+    LocalTime eStart = LocalTime.of(17, 0);
+    LocalTime eEnd   = LocalTime.of(21, 0);  // 21:00未満 → 夜
 
-
+    if (!t.isBefore(mStart) && t.isBefore(mEnd)) {
+      return "MORNING";   // 06:00〜10:59
+    } else if (!t.isBefore(nStart) && t.isBefore(nEnd)) {
+      return "NOON";      // 11:00〜16:59
+    } else if (!t.isBefore(eStart) && t.isBefore(eEnd)) {
+      return "NIGHT";     // 17:00〜20:59
+    } else {
+      return null;
+    }
+  }
 }
