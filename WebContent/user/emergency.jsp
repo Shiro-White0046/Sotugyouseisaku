@@ -159,6 +159,16 @@
         <div class="note">半角数字とハイフンで入力してください。（例: 090-1234-5678）</div>
       </div>
 
+      <div class="field">
+        <label for="email">メールアドレス</label>
+        <input id="email" name="email" type="email"
+               value="<c:out value='${user.email}'/>"
+               maxlength="255"
+               placeholder="example@example.com">
+        <div class="note">連絡を受け取りたいメールアドレスを入力してください。</div>
+      </div>
+
+
       <div class="actions">
         <button type="button" class="btn" onclick="history.back()">戻る</button>
         <button type="submit" class="btn btn-primary">

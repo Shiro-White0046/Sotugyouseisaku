@@ -319,4 +319,23 @@ public class UserDAO {
      throw new RuntimeException("退会処理に失敗しました", e);
    }
  }
+
+ public void updateEmail(UUID userId, String email) {
+	    final String sql = "UPDATE users SET email = ? WHERE id = ?";
+	    try (Connection con = ConnectionFactory.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	      if (email == null || email.isEmpty()) {
+	        ps.setNull(1, java.sql.Types.VARCHAR);
+	      } else {
+	        ps.setString(1, email);
+	      }
+	      ps.setObject(2, userId);
+	      ps.executeUpdate();
+
+	    } catch (SQLException e) {
+	      throw new RuntimeException("メールアドレス更新に失敗しました", e);
+	    }
+	}
+
 }
