@@ -5,7 +5,7 @@
 <%
   request.setAttribute("headerTitle", "利用者アレルギー一覧");
 %>
-<jsp:include page="/header2.jsp" />
+<jsp:include page="/header.jsp" />
 
 <!DOCTYPE html>
 <html lang="ja">

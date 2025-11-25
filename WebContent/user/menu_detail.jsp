@@ -57,7 +57,7 @@
 <%
   request.setAttribute("headerTitle", "献立");
 %>
-<jsp:include page="/header_user2.jsp" />
+<jsp:include page="/header_user.jsp" />
 <!-- 子ども切替（同日付で personId を切り替える） -->
 <form method="get" action="${pageContext.request.contextPath}/user/menu_detail" style="margin:8px 0;">
   <input type="hidden" name="date" value="${menuDate}" />

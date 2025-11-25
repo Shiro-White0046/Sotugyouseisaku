@@ -4,7 +4,7 @@
 <%
   request.setAttribute("headerTitle", "献立表示");
 %>
-<jsp:include page="/header_user2.jsp" />
+<jsp:include page="/header_user.jsp" />
 
 <!DOCTYPE html>
 <html lang="ja">
