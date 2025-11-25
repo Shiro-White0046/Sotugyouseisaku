@@ -80,7 +80,7 @@
 
     <nav class="header-actions">
       <% if (adminObj != null) { %>
-        <a class="btn-logout" href="<%= ctx %>/user/logout">ログアウト</a>
+        <a class="btn-logout" href="<%= ctx %>/admin/logout">ログアウト</a>
       <% } %>
     </nav>
   </header>
