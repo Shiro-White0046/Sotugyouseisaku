@@ -221,6 +221,83 @@ public class AllergenDAO {
 	  return list;
 	}
 
+  /** 管理画面用：名前・カテゴリ・サブカテゴリで部分一致検索 */
+  public List<Allergen> searchForAdmin(String keyword) {
+    List<Allergen> list = new ArrayList<>();
+
+    String sql =
+        "SELECT id, code, name_ja, name_en, is_active, category, subcategory " +
+        "FROM allergens ";
+
+    boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+    if (hasKeyword) {
+      sql += "WHERE (name_ja ILIKE ? OR category ILIKE ? OR subcategory ILIKE ?) ";
+    }
+    sql += "ORDER BY id";
+
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+      if (hasKeyword) {
+        String like = "%" + keyword.trim() + "%";
+        ps.setString(1, like);
+        ps.setString(2, like);
+        ps.setString(3, like);
+      }
+
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          Allergen a = new Allergen();
+          a.setId(rs.getShort("id"));
+          a.setCode(rs.getString("code"));
+          a.setNameJa(rs.getString("name_ja"));
+          a.setNameEn(rs.getString("name_en"));
+          a.setActive(rs.getBoolean("is_active"));
+          a.setCategory(rs.getString("category"));
+          a.setSubcategory(rs.getString("subcategory"));
+          list.add(a);
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("allergens 検索に失敗しました", e);
+    }
+
+    return list;
+  }
+
+  /** 管理画面用：アレルギーを追加 */
+  public void insertForAdmin(String nameJa, String category, String subcategory) {
+
+    final String sql =
+        "INSERT INTO allergens (code, name_ja, name_en, is_active, category, subcategory) " +
+        "VALUES (?, ?, NULL, TRUE, ?, ?)";
+
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+      String code = generateCode(nameJa); // 簡易コード生成
+
+      ps.setString(1, code);
+      ps.setString(2, nameJa);
+      ps.setString(3, category);
+      ps.setString(4, subcategory);
+
+      ps.executeUpdate();
+
+    } catch (SQLException e) {
+      throw new RuntimeException("allergens 追加に失敗しました", e);
+    }
+  }
+
+  /** code を簡易自動生成（必要なら好きなロジックに変更してOK） */
+  private String generateCode(String nameJa) {
+    if (nameJa == null || nameJa.isEmpty()) return "ALGN";
+    // 記号などを消して大文字にするだけの簡易版
+    return nameJa.replaceAll("\\s+", "").toUpperCase();
+  }
+
+
+
 
 }
 

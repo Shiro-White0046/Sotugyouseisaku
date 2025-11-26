@@ -35,10 +35,10 @@ public class AdminAllergenServlet extends HttpServlet {
 
     String q = trim(req.getParameter("q"));
 
-    List<Allergen> list = allergenDAO.search(admin.getOrgId(), q);
+    List<Allergen> list = allergenDAO.searchForAdmin(q);
+    req.setAttribute("allergens", list);
 
     req.setAttribute("q", q);
-    req.setAttribute("allergens", list);
 
     req.getRequestDispatcher("/admin/admin_allergens.jsp").forward(req, resp);
   }
@@ -59,7 +59,7 @@ public class AdminAllergenServlet extends HttpServlet {
     String cat  = trim(req.getParameter("category"));
     String sub  = trim(req.getParameter("subCategory"));
 
-    allergenDAO.insert(admin.getOrgId(), name, cat, sub);
+    allergenDAO.insertForAdmin(name, cat, sub);
 
     resp.sendRedirect(req.getContextPath() + "/admin/allergens-master");
   }
