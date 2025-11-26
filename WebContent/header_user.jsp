@@ -114,7 +114,12 @@
     <!-- サイドバー（利用者メニュー） -->
     <nav class="sidebar" aria-label="サイドバー">
 
-      <div class="sidebar-user"><%= userName %></div>
+      <div class="sidebar-user">
+		  <a href="<%= ctx %>/user/account-info" style="display:block;color:inherit;text-decoration:none;">
+		    <%= userName %>
+		  </a>
+		</div>
+
       <ul class="nav">
         <li><a href="<%= ctx %>/user/home">ホーム</a></li>
         <li><a href="<%= ctx %>/user/allergy/food">食物性アレルギー入力</a></li>

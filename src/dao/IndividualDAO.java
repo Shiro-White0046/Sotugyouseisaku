@@ -560,4 +560,37 @@ public class IndividualDAO {
 
         return set;
     }
+    public void updateBirthdayAndNote(UUID id, LocalDate birthday, String note) {
+    	  String sql = "UPDATE individuals SET birthday=?, note=? WHERE id=?";
+    	  try (Connection con = ConnectionFactory.getConnection();
+    	       PreparedStatement ps = con.prepareStatement(sql)) {
+
+    	    if (birthday != null) {
+    	      ps.setObject(1, birthday);
+    	    } else {
+    	      ps.setNull(1, Types.DATE);
+    	    }
+    	    ps.setString(2, note);
+    	    ps.setObject(3, id);
+
+    	    ps.executeUpdate();
+    	  } catch (SQLException e) {
+    	    throw new RuntimeException("birthday/note 更新失敗", e);
+    	  }
+    	}
+
+    public void updateBasicInfo(UUID id, Date birthday, String note) {
+    	  String sql = "UPDATE individuals SET birthday = ?, note = ? WHERE id = ?";
+
+    	  try (Connection con = ConnectionFactory.getConnection();
+    	       PreparedStatement ps = con.prepareStatement(sql)) {
+    	    ps.setObject(1, birthday);
+    	    ps.setString(2, note);
+    	    ps.setObject(3, id);
+    	    ps.executeUpdate();
+    	  } catch (SQLException e) {
+    	    throw new RuntimeException("individual 更新に失敗しました", e);
+    	  }
+    	}
+
 }

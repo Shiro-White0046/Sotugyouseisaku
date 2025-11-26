@@ -1,11 +1,14 @@
 package dao;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import bean.Allergen;
@@ -148,6 +151,75 @@ public class AllergenDAO {
 	      throw new RuntimeException("exists 失敗", e);
 	    }
 	  }
+
+
+  /** 主キーでアレルゲン1件取得 */
+  public Optional<Allergen> findById(short id) {
+      final String sql =
+          "SELECT id, code, name_ja, name_en, is_active, category, subcategory " +
+          "FROM allergens WHERE id = ?";
+
+      try (Connection con = ConnectionFactory.getConnection();
+           PreparedStatement ps = con.prepareStatement(sql)) {
+
+          ps.setShort(1, id);
+
+          try (ResultSet rs = ps.executeQuery()) {
+              if (rs.next()) {
+                  Allergen a = new Allergen();
+                  a.setId(rs.getShort("id"));
+                  a.setCode(rs.getString("code"));
+                  a.setNameJa(rs.getString("name_ja"));
+                  a.setNameEn(rs.getString("name_en"));
+                  a.setActive(rs.getBoolean("is_active"));
+                  a.setCategory(rs.getString("category"));
+                  a.setSubcategory(rs.getString("subcategory"));
+                  return Optional.of(a);
+              }
+          }
+      } catch (SQLException e) {
+          throw new RuntimeException("findById failed", e);
+      }
+
+      return Optional.empty();
+  }
+  public List<Allergen> findAllByIds(List<Short> ids) {
+	  if (ids == null || ids.isEmpty()) {
+	    return Collections.emptyList();
+	  }
+
+	  final String sql =
+	      "SELECT id, code, name_ja, name_en, is_active, category, subcategory " +
+	      "FROM allergens WHERE id = ANY (?) AND is_active = true";
+
+	  List<Allergen> list = new ArrayList<>();
+
+	  try (Connection con = ConnectionFactory.getConnection();
+	       PreparedStatement ps = con.prepareStatement(sql)) {
+
+	    Short[] arr = ids.toArray(new Short[0]);
+	    Array sqlArray = con.createArrayOf("smallint", arr);
+	    ps.setArray(1, sqlArray);
+
+	    try (ResultSet rs = ps.executeQuery()) {
+	      while (rs.next()) {
+	        Allergen a = new Allergen();
+	        a.setId(rs.getShort("id"));
+	        a.setCode(rs.getString("code"));
+	        a.setNameJa(rs.getString("name_ja"));
+	        a.setNameEn(rs.getString("name_en"));
+	        a.setActive(rs.getBoolean("is_active"));
+	        a.setCategory(rs.getString("category"));
+	        a.setSubcategory(rs.getString("subcategory"));
+	        list.add(a);
+	      }
+	    }
+	  } catch (Exception e) {
+	    throw new RuntimeException("findAllByIds error", e);
+	  }
+
+	  return list;
+	}
 
 
 }
