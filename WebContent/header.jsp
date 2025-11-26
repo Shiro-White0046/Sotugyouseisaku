@@ -95,7 +95,7 @@
         <li><a href="<%= ctx %>/admin/home">ホーム</a></li>
         <li><a href="<%= ctx %>/admin/users">利用者一覧</a></li>
         <li><a href="<%= ctx %>/admin/users/register">利用者アカウント作成</a></li>
-        <li><a href="<%= ctx %>/admin/allergens-master">アレルギー情報管理</a></li>
+        <li><a href="<%= ctx %>/admin/allergens">アレルギー情報管理</a></li>
 		<li><a href="<%= ctx %>/admin/menus_new">献立作成</a></li>
         <li><a href="<%= ctx %>/admin/support-meals">対応食管理</a></li>
         <li><a href="<%= ctx %>/admin/auth">認証機能</a></li>
