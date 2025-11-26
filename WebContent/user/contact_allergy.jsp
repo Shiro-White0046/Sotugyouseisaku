@@ -115,12 +115,21 @@ main.content{padding:24px 28px 48px;}
       </aside>
     </div>
 
-    <div class="form-actions">
-      <a href="<%= ctx %>/user/home" class="btn left">戻る</a>
-      <!-- ✅ action先を /confirm に -->
-      <button id="submitBtn" type="submit" class="btn right">次へ</button>
-	</div>
+<div class="form-actions">
 
+      <!-- ★ここに追加（エラーメッセージ） -->
+      <div id="errorMsg"
+           style="color:red; font-weight:600; display:none; margin-bottom:10px; grid-column:1 / span 2;">
+        ※ 1つ以上チェックを入れてください
+      </div>
+      <!-- ★ここまで追加 -->
+
+      <a href="<%= ctx %>/user/home" class="btn left">戻る</a>
+
+      <!-- 次へボタン -->
+      <button id="submitBtn" type="submit" class="btn right">次へ</button>
+
+</div>
   </form>
 
   <% if (request.getAttribute("flash") != null) { %>
@@ -172,6 +181,14 @@ main.content{padding:24px 28px 48px;}
   root.addEventListener('change', function(e){
     var t = e.target || e.srcElement;
     if (t && t.name === 'allergen') render();
+  });
+//========= チェックが1件以上あるか判定 =========
+  document.getElementById("submitBtn").addEventListener("click", function(e){
+    var boxes = document.querySelectorAll('input[name="allergen"]:checked');
+    if (boxes.length === 0) {
+      document.getElementById("errorMsg").style.display = "block";
+      e.preventDefault();   // ★ 次へ進ませない
+    }
   });
   // 初期表示（既選択の反映）
   render();

@@ -87,6 +87,7 @@
           </label>
         </div>
       </div>
+
 <!-- 右：選択している項目 -->
 <aside style="background:#fffbe8;border:2px solid #e7d68d;border-radius:10px;width:280px;">
   <div style="padding:10px 14px;border-bottom:2px solid #e7d68d;font-weight:700;">選択している項目</div>
@@ -108,6 +109,15 @@
 </aside>
 
 
+<div id="errorMsg"
+     style="color:red;
+            font-weight:600;
+            display:none;
+            margin:12px auto 0;
+            max-width:1040px;
+            text-align:center;">
+  ※ 1つ以上チェックを入れてください
+</div>
 
 <div style="display:flex;
             justify-content:space-between;
@@ -117,6 +127,7 @@
             margin-left:auto;
             margin-right:auto;
             gap:200px; /* ← 追加: ボタン間を広げる！ */">
+
   <a href="<%= ctx %>/user/home"
      class="btn"
      style="display:inline-block;
@@ -133,19 +144,21 @@
      戻る
   </a>
 
-  <button type="submit"
-          class="btn"
-          style="width:120px;
-                 text-align:center;
-                 padding:10px 0;
-                 border-radius:22px;
-                 border:2px solid #e4c155;
-                 background:#fff7df;
-                 font-weight:600;
-                 cursor:pointer;
-                 transition:transform .06s;">
-    登録
-  </button>
+ <button id="submitBtn"
+        type="submit"
+        class="btn"
+        style="width:120px;
+               text-align:center;
+               padding:10px 0;
+               border-radius:22px;
+               border:2px solid #e4c155;
+               background:#fff7df;
+               font-weight:600;
+               cursor:pointer;
+               transition:transform .06s;">
+  登録
+</button>
+
 </div>
 
   </form>
@@ -203,6 +216,18 @@
   document.addEventListener('input', function(e){
     if (e.target && e.target.id === 'otherText') refreshPicked();
   });
+  document.getElementById("submitBtn").addEventListener("click", function(e){
+	  var boxes = document.querySelectorAll('input[name="avoid"]:checked');
+	  var otherChecked = document.getElementById('otherCheck').checked;
+
+	  // チェックも「その他」も無いときだけエラー
+	  if (boxes.length === 0 && !otherChecked) {
+	    document.getElementById("errorMsg").style.display = "block";
+	    e.preventDefault();
+	  } else {
+	    document.getElementById("errorMsg").style.display = "none";
+	  }
+	});
 
   refreshPicked();
 })();
