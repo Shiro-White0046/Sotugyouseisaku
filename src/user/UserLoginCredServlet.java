@@ -9,7 +9,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import bean.Organization;       // ★ 追加（見やすさ用・FQCNでもOK）
 import bean.User;
+import infra.AuditLogger;      // ★ 追加
 
 @WebServlet("/user/login/cred")
 public class UserLoginCredServlet extends HttpServlet {
@@ -18,7 +20,7 @@ public class UserLoginCredServlet extends HttpServlet {
       throws ServletException, IOException {
     // 直リンク対策：org 未選択なら 1画面目へ戻す
     HttpSession ses = req.getSession(false);
-    bean.Organization org = (ses != null) ? (bean.Organization) ses.getAttribute("org") : null;
+    Organization org = (ses != null) ? (Organization) ses.getAttribute("org") : null;
     if (org == null) { resp.sendRedirect(req.getContextPath() + "/user/login"); return; }
 
     req.getRequestDispatcher("/user/login_cred.jsp").forward(req, resp);
@@ -30,7 +32,7 @@ public class UserLoginCredServlet extends HttpServlet {
     req.setCharacterEncoding("UTF-8");
 
     HttpSession ses = req.getSession(false);
-    bean.Organization org = (ses != null) ? (bean.Organization) ses.getAttribute("org") : null;
+    Organization org = (ses != null) ? (Organization) ses.getAttribute("org") : null;
     if (org == null) { resp.sendRedirect(req.getContextPath() + "/user/login"); return; }
 
     String loginId = req.getParameter("loginId");
@@ -54,7 +56,19 @@ public class UserLoginCredServlet extends HttpServlet {
       doGet(req, resp); return;
     }
 
+    // ログイン成功
     ses.setAttribute("user", u);
+
+    // ★ 操作ログ（保護者ログイン）
+    AuditLogger.logGuardian(
+        req,
+        org,
+        u,
+        "login",
+        "users",
+        u.getId().toString()
+    );
+
     if (u.isMustChangePassword()) {
       resp.sendRedirect(req.getContextPath() + "/user/first-password");
     } else {

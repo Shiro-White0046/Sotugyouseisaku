@@ -24,6 +24,7 @@ import dao.AllergenDAO;
 import dao.MenuDayDAO;
 import dao.MenuItemDAO;
 import dao.MenuMealDAO;
+import infra.AuditLogger;  // ★ 追加
 
 /**
  * 献立：時間帯ごとの追加／編集ページ
@@ -173,6 +174,14 @@ public class AdminMenuEditServlet extends HttpServlet {
           itemDao.saveMealItems(mealId, Collections.<MenuItemDAO.ItemForm>emptyList());
         }
       }
+
+      // ★ 操作ログ（献立の更新／作成）
+      AuditLogger.logAdminFromSession(
+          req,
+          "update_menu",
+          "menu_days",
+          dayId.toString()
+      );
 
       ses.setAttribute("flash", "保存しました。");
       resp.sendRedirect(req.getContextPath() + "/admin/menus_new/edit?dayId=" + dayId + "&slot=" + slot);

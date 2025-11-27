@@ -13,6 +13,7 @@ import javax.servlet.http.HttpSession;
 import bean.Administrator;
 import bean.User;
 import dao.UserDAO;
+import infra.AuditLogger;   // ★ 追加
 import infra.Password;
 
 @WebServlet(urlPatterns = {"/admin/users/register"})
@@ -21,7 +22,7 @@ public class AdminUserRegisterServlet extends HttpServlet {
   private static final Pattern PW_PATTERN =
       Pattern.compile("^(?=\\S+$)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,16}$");
 
-  // ✅ これを追加（GETアクセス用）
+  // GETアクセス用
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
@@ -66,6 +67,14 @@ public class AdminUserRegisterServlet extends HttpServlet {
       String hash = Password.hash(tmpPw);
       User created = new UserDAO().create(admin.getOrgId(), name.trim(), hash, type);
 
+      // ★ 操作ログ（利用者アカウント作成）
+      AuditLogger.logAdminFromSession(
+          req,
+          "create_user",
+          "users",
+          created.getId().toString()
+      );
+
       ses.setAttribute("createdUser", created);
       ses.setAttribute("tempPwPlain", tmpPw);
 
@@ -76,4 +85,3 @@ public class AdminUserRegisterServlet extends HttpServlet {
     }
   }
 }
-

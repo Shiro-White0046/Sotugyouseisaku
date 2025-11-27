@@ -20,6 +20,7 @@ import bean.Administrator;
 import bean.MenuMeal;
 import bean.Organization;
 import dao.MenuMealDAO;
+import infra.AuditLogger;  // ★ 追加
 
 /**
  * 画像を「時間帯（slot）ごと」に登録
@@ -131,6 +132,14 @@ public class AdminMenuImageServlet extends HttpServlet {
     if (relPath.startsWith("/")) relPath = relPath.substring(1);
 
     mealDao.updateImagePath(dayId, slot, relPath);
+
+    // ★ 操作ログ（献立画像の追加／更新）
+    AuditLogger.logAdminFromSession(
+        req,
+        "update_menu_image",
+        "menu_days",
+        dayId.toString()
+    );
 
     ses.setAttribute("flash", "画像を保存しました。");
     resp.sendRedirect(req.getContextPath() + "/admin/menus_new/edit?dayId=" + dayId + "&slot=" + slot);

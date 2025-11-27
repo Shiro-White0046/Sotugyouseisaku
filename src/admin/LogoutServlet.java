@@ -9,6 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import bean.Administrator;
+import bean.Organization;
+import infra.AuditLogger;   // ★ 追加
+
 @WebServlet(urlPatterns = {"/admin/logout"})
 public class LogoutServlet extends HttpServlet {
 
@@ -16,16 +20,33 @@ public class LogoutServlet extends HttpServlet {
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
 
-    // セッション破棄（ログアウト処理）
+    // ★ ログアウト前にログを書き込む
     HttpSession ses = req.getSession(false);
-    if (ses != null) ses.invalidate();
+    if (ses != null) {
+      Organization org = (Organization) ses.getAttribute("org");
+      Administrator admin = (Administrator) ses.getAttribute("admin");
+
+      if (org != null && admin != null) {
+        AuditLogger.logAdmin(
+            req,
+            org,
+            admin,
+            "logout",
+            "administrators",
+            admin.getId().toString()
+        );
+      }
+
+      // セッション破棄（ログアウト処理）
+      ses.invalidate();
+    }
 
     // 戻るボタン対策：キャッシュ無効化
     resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     resp.setHeader("Pragma", "no-cache");
     resp.setDateHeader("Expires", 0);
 
-    // ✅ admin配下の index.jsp に戻す
+    // admin配下の index.jsp に戻す
     resp.sendRedirect(req.getContextPath() + "/admin/index.jsp");
   }
 

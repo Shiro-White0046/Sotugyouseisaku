@@ -16,6 +16,7 @@ import javax.servlet.http.HttpSession;
 import bean.Individual;
 import bean.User;
 import dao.IndividualDAO;
+import infra.AuditLogger;   // ★ 追加
 
 @WebServlet("/user/pin")
 public class UserPinInputServlet extends HttpServlet {
@@ -114,6 +115,14 @@ public class UserPinInputServlet extends HttpServlet {
     String hash = hashPin(user.getOrgId(), user.getId(), pin);
     ind.setPinCodeHash(hash);              // Individual に対応する setter を用意
     individualDAO.updatePinHash(ind);      // DAO 側も pin_code_hash を更新するメソッド
+
+    // ★ 操作ログ（認証パスワード更新）
+    AuditLogger.logGuardianFromSession(
+        req,
+        "update_pin",
+        "individuals",
+        personId.toString()
+    );
 
     ses.setAttribute("flashMessage", "認証パスワードを設定しました。");
     resp.sendRedirect(req.getContextPath() + "/user/home");

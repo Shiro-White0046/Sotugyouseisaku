@@ -24,6 +24,7 @@ import dao.AllergenDAO;
 import dao.IndividualAllergyDAO;
 import dao.IndividualDAO;
 import dao.UserDAO;
+import infra.AuditLogger;   // ★ 追加
 
 @WebServlet("/user/account-info")
 public class UserAccountInfoServlet extends HttpServlet {
@@ -91,7 +92,18 @@ public class UserAccountInfoServlet extends HttpServlet {
       birthday = Date.valueOf(birthdayStr);
     }
 
+    // 基本情報の更新
     individualDao.updateBasicInfo(personId, birthday, note);
+
+    // ★ 操作ログ（保護者による個人情報の更新）
+    AuditLogger.logGuardian(
+        req,
+        (bean.Organization) ses.getAttribute("org"),  // セッションに org が必ずある前提
+        user,
+        "update_individual_info",
+        "individuals",
+        personId.toString()
+    );
 
     // 完了メッセージ
     req.getSession().setAttribute("flash", "保存しました。");

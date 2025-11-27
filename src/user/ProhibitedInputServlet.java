@@ -25,6 +25,7 @@ import bean.User;
 import dao.AllergenDAO;
 import dao.IndividualAllergyDAO;
 import dao.IndividualDAO;
+import infra.AuditLogger;   // ★ 追加
 
 /**
  * 食べられない食材入力（AVOID）画面
@@ -159,6 +160,14 @@ public class ProhibitedInputServlet extends HttpServlet {
       ia.setConfirmedAt(LocalDate.now()); // ここで today をセットしてもOK（DAO側でも可）
       iaDAO.upsert(ia);
     }
+
+    // ★ 操作ログ（食べられない食材の更新）
+    AuditLogger.logGuardianFromSession(
+        req,
+        "update_allergy",
+        "individual_allergies",
+        personId.toString()
+    );
 
     // 完了→ホームへ（alert用フラッシュ）
     ses.setAttribute("flashMessage", "食べられない食材を登録しました");

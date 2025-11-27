@@ -17,6 +17,7 @@ import bean.Individual;
 import bean.User;
 import dao.IndividualDAO;
 import dao.UserDAO;
+import infra.AuditLogger;   // ★ 追加
 
 @WebServlet("/admin/users/delete")
 public class AdminUserDeleteServlet extends HttpServlet {
@@ -95,6 +96,14 @@ public class AdminUserDeleteServlet extends HttpServlet {
 
     // 削除
     new IndividualDAO().delete(individualId);
+
+    // ★ 操作ログ（個人の削除）
+    AuditLogger.logAdminFromSession(
+        req,
+        "delete_individual",
+        "individuals",
+        individualId.toString()
+    );
 
     ses.setAttribute("flash", "個人「" + indOpt.get().getDisplayName() + "」を削除しました。");
     resp.sendRedirect(req.getContextPath()+"/admin/users");

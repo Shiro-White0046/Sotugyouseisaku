@@ -26,6 +26,7 @@ import bean.User;
 import dao.AllergenDAO;
 import dao.IndividualAllergyDAO;
 import dao.IndividualDAO;
+import infra.AuditLogger;   // ★ 追加
 
 /**
  * 接触性アレルギーの入力・保存
@@ -95,8 +96,6 @@ public class ContactAllergyServlet extends HttpServlet {
       ses.setAttribute("currentPersonId", personId);
     }
 
-
-
     // CONTACT の候補（マスタ）
     List<Allergen> contactList = allergenDAO.listByCategory("CONTACT");
 
@@ -125,7 +124,7 @@ public class ContactAllergyServlet extends HttpServlet {
     req.setAttribute("selectedCodes", selectedCodes);
     req.setAttribute("noteMap", noteMap);
 
-    // 入力 JSP を表示（パスはあなたの配置に合わせて）
+    // 入力 JSP を表示
     req.getRequestDispatcher("/user/contact_allergy.jsp").forward(req, resp);
   }
 
@@ -175,7 +174,6 @@ public class ContactAllergyServlet extends HttpServlet {
 
     iaDAO.deleteByCategory(personId, "CONTACT");
 
-
     // 追加/更新（新規集合）
     for (Short id : newContactIds) {
       IndividualAllergy ia = new IndividualAllergy();
@@ -187,6 +185,14 @@ public class ContactAllergyServlet extends HttpServlet {
       ia.setConfirmedAt(LocalDate.now()); // ここで today をセットしてもOK（DAO側でも可）
       iaDAO.upsert(ia);
     }
+
+    // ★ 操作ログ（接触アレルギー更新）
+    AuditLogger.logGuardianFromSession(
+        req,
+        "update_allergy",
+        "individual_allergies",
+        personId.toString()
+    );
 
     // フラッシュをセッションに格納してホームへ（PRG）
     ses.setAttribute("currentPersonId", personId);

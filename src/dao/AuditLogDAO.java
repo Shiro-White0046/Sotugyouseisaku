@@ -54,4 +54,29 @@ public class AuditLogDAO {
 
     return list;
   }
+  public void insert(AuditLog log) {
+	    String sql =
+	        "INSERT INTO audit_logs "
+	      + "  (org_id, actor_type, actor_id, action, entity, entity_id, ip) "
+	      + "VALUES "
+	      + "  (?, ?, ?, ?, ?, ?, ?)";
+
+	    try (Connection con = ConnectionFactory.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	      ps.setObject(1, log.getOrgId());      // UUID
+	      ps.setString(2, log.getActorType());  // "admin" or "guardian"
+	      ps.setObject(3, log.getActorId());    // UUID
+	      ps.setString(4, log.getAction());
+	      ps.setString(5, log.getEntity());
+	      ps.setString(6, log.getEntityId());
+	      ps.setString(7, log.getIp());         // null OK
+
+	      ps.executeUpdate();
+
+	    } catch (SQLException e) {
+	      throw new RuntimeException("操作ログの保存に失敗しました", e);
+	    }
+	  }
+
 }

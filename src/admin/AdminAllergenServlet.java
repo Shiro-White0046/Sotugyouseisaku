@@ -14,6 +14,7 @@ import javax.servlet.http.HttpSession;
 import bean.Administrator;
 import bean.Allergen;
 import dao.AllergenDAO;
+import infra.AuditLogger;   // ★ 追加
 
 
 @WebServlet("/admin/allergens-master")
@@ -32,7 +33,7 @@ public class AdminAllergenServlet extends HttpServlet {
       resp.sendRedirect(req.getContextPath() + "/admin/login");
       return;
     }
- // ★ここから追加：フラッシュメッセージの受け渡し
+    // ★ フラッシュメッセージの受け渡し
     if (ses != null) {
       String flash = (String) ses.getAttribute("flashMessage");
       if (flash != null) {
@@ -45,7 +46,7 @@ public class AdminAllergenServlet extends HttpServlet {
 
     List<Allergen> list = allergenDAO.searchForAdmin(q);
     req.setAttribute("allergens", list);
-    req.setAttribute("count", list.size());  // ★件数をセット
+    req.setAttribute("count", list.size());  // 件数をセット
 
     req.setAttribute("q", q);
 
@@ -63,8 +64,6 @@ public class AdminAllergenServlet extends HttpServlet {
       resp.sendRedirect(req.getContextPath() + "/admin/login");
       return;
     }
-
-
 
     req.setCharacterEncoding("UTF-8");
     String name = trim(req.getParameter("name"));
@@ -86,7 +85,16 @@ public class AdminAllergenServlet extends HttpServlet {
       return;
     }
 
- // ★ここから追加：登録成功時にフラッシュメッセージをセット
+    // ★ 操作ログ（アレルギー項目の追加）
+    // ID はここでは取れないので、ひとまず name を entityId に入れておく
+    AuditLogger.logAdminFromSession(
+        req,
+        "create_allergen",
+        "allergens",
+        name
+    );
+
+    // ★ 登録成功時にフラッシュメッセージをセット
     HttpSession ses2 = req.getSession();
     ses2.setAttribute("flashMessage", "アレルギー項目を登録しました。");
 

@@ -16,6 +16,7 @@ import bean.Individual;
 import bean.User;
 import dao.IndividualAllergyDAO;
 import dao.IndividualDAO;
+import infra.AuditLogger;   // ★ 追加
 
 @WebServlet("/user/allergy/register")
 public class FoodAllergyRegisterServlet extends HttpServlet {
@@ -113,6 +114,14 @@ public class FoodAllergyRegisterServlet extends HttpServlet {
       } else {
         session.setAttribute("flashMessage", "食物性アレルギーを登録しました");
       }
+
+      // ★ 操作ログ（食物アレルギー更新）
+      AuditLogger.logGuardianFromSession(
+          req,
+          "update_allergy",
+          "individual_allergies",
+          personId.toString()
+      );
 
       resp.sendRedirect(req.getContextPath() + "/user/home");
 

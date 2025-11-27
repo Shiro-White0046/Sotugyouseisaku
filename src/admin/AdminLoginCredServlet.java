@@ -14,6 +14,7 @@ import javax.servlet.http.HttpSession;
 import bean.Administrator;
 import bean.Organization;
 import dao.AdminDAO;
+import infra.AuditLogger;  // ★ 追加
 import infra.Password;
 
 @WebServlet("/admin/login/cred")
@@ -75,7 +76,16 @@ public class AdminLoginCredServlet extends HttpServlet {
     HttpSession session = req.getSession();
     session.setAttribute("admin", admin);
 
-    resp.sendRedirect(req.getContextPath() + "/admin/home");
+    // ★ 操作ログ（管理者ログイン）
+    AuditLogger.logAdmin(
+        req,
+        org,
+        admin,
+        "login",
+        "administrators",
+        admin.getId().toString()
+    );
 
+    resp.sendRedirect(req.getContextPath() + "/admin/home");
   }
 }

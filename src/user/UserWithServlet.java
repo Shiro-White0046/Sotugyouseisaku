@@ -10,10 +10,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.mindrot.jbcrypt.BCrypt;   // ← これを追加
+import org.mindrot.jbcrypt.BCrypt;
 
 import bean.User;
 import dao.UserDAO;
+import infra.AuditLogger;   // ★ 追加
 
 @WebServlet("/user/withdraw")
 public class UserWithServlet extends HttpServlet {
@@ -27,12 +28,10 @@ public class UserWithServlet extends HttpServlet {
     HttpSession ses = req.getSession(false);
     User user = (ses != null) ? (User) ses.getAttribute("user") : null;
     if (user == null) {
-      // ログインしていない
       resp.sendRedirect(req.getContextPath() + "/auth/login");
       return;
     }
 
-    // 退会確認画面へ
     req.getRequestDispatcher("/user/user_with.jsp")
        .forward(req, resp);
   }
@@ -58,12 +57,9 @@ public class UserWithServlet extends HttpServlet {
       return;
     }
 
-    // DB に保存されているハッシュを取得
-    String hash = user.getPasswordHash();  // User ビーンに getter がある前提
+    String hash = user.getPasswordHash();
 
-    // ★ ここで BCrypt で照合する（PasswordUtil は使わない）
     boolean ok = BCrypt.checkpw(password, hash);
-
     if (!ok) {
       req.setAttribute("error", "パスワードが違います。");
       req.getRequestDispatcher("/user/user_with.jsp")
@@ -71,16 +67,25 @@ public class UserWithServlet extends HttpServlet {
       return;
     }
 
-    // ▼ ここから退会処理
+    // ▼ 退会処理
     UUID userId = user.getId();
-    userDAO.withdrawUser(userId);   // 前に作ったトランザクション付きメソッド
+    userDAO.withdrawUser(userId);
+
+    // ★ 操作ログ：退会
+    AuditLogger.logGuardianFromSession(
+        req,
+        "withdraw_account",
+        "users",
+        userId.toString()
+    );
 
     // セッション破棄
     ses.invalidate();
 
-    // 完了メッセージをトップなどで出したい場合
+    // 完了メッセージ
     HttpSession newSes = req.getSession(true);
     newSes.setAttribute("flashMessage", "退会が完了しました。ご利用ありがとうございました。");
+
     resp.sendRedirect(req.getContextPath() + "/");
   }
 }
