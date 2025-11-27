@@ -358,7 +358,7 @@
         <div class="epipen-figure">
           <!-- ここに施設で作成した図解画像を設置するとわかりやすい -->
           <!-- 例：<img src="${pageContext.request.contextPath}/images/guide.png" alt="エピペン使用のイメージ図"> -->
-         <img src="${pageContext.request.contextPath}/image/A_set_of_six_instructional_black_and_white_line_ar.png" alt="エピペン使用の手順図">
+         <img src="${pageContext.request.contextPath}/image/guide.png" alt="エピペン使用の手順図">
           <div class="epipen-figure-caption">
             図：太ももの外側に垂直にあてて数秒間押し続けるイメージ。<br>
             実際の使い方は、必ず製品付属の説明書と医師の指示を優先してください。
