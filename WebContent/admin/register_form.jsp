@@ -19,7 +19,7 @@
     <label>氏名</label>
     <input type="text" name="name" required>
 
-    <label>メールアドレス（任意：パスコード送信用）</label>
+    <label>メールアドレス（必須：パスコード送信用）</label>
     <input type="email" name="email" placeholder="例）you@example.com">
 
 	<label>パスワード</label>
