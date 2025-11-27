@@ -37,6 +37,7 @@ public class AdminAllergenServlet extends HttpServlet {
 
     List<Allergen> list = allergenDAO.searchForAdmin(q);
     req.setAttribute("allergens", list);
+    req.setAttribute("count", list.size());  // ★件数をセット
 
     req.setAttribute("q", q);
 

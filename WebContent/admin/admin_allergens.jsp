@@ -76,6 +76,13 @@
     border-radius:8px;
     cursor:pointer;
   }
+
+  .table-scroll {
+  max-height: 400px;      /* ←高さここで調整 */
+  overflow-y: auto;
+  border: 2px solid #b1d3e0;
+  border-radius: 10px;
+}
 </style>
 </head>
 
@@ -92,8 +99,20 @@
       <button type="submit">検索</button>
     </form>
   </div>
+  <c:if test="${not empty allergens}">
+  <div style="text-align:center; margin-bottom:10px; font-weight:700;">
+    検索結果：${count} 件
+  </div>
+</c:if>
 
+
+<c:if test="${count == 0}">
+  <div style="text-align:center; padding:10px; color:#555; font-size:15px;">
+    該当するアレルギー項目はありません。
+  </div>
+</c:if>
   <!-- アレルギー一覧 -->
+  <div class="table-scroll">
   <table>
     <thead>
       <tr>
@@ -103,28 +122,95 @@
       </tr>
     </thead>
     <tbody>
-  <c:forEach var="a" items="${allergens}">
-    <tr>
-      <td>${a.nameJa}</td>
-      <td>${a.category}</td>
-      <td>${a.subcategory}</td>
-    </tr>
-  </c:forEach>
-  <c:if test="${empty allergens}">
-    <tr><td colspan="3" style="text-align:center;">データがありません</td></tr>
-  </c:if>
-</tbody>
+      <c:forEach var="a" items="${allergens}">
+        <tr>
+          <td>${a.nameJa}</td>
+          <td>${a.category}</td>
+          <td>${a.subcategory}</td>
+        </tr>
+      </c:forEach>
+    </tbody>
   </table>
+</div>
 
-  <!-- 追加フォーム -->
-  <form method="post" action="${pageContext.request.contextPath}/admin/allergens-master">
-    <div class="add-area">
-      <input type="text" name="name" placeholder="アレルギー名" required>
-      <input type="text" name="category" placeholder="カテゴリ" required>
-      <input type="text" name="subCategory" placeholder="サブカテゴリ" required>
-      <button class="btn-add">追加</button>
-    </div>
-  </form>
+ <!-- 追加フォーム -->
+<form method="post" action="${pageContext.request.contextPath}/admin/allergens-master">
+  <div class="add-area">
+
+    <!-- アレルギー名 -->
+    <input type="text" name="name" placeholder="アレルギー名" required>
+
+    <!-- カテゴリ選択 -->
+    <select id="category" name="category" required
+            style="padding:10px;border-radius:8px;border:1px solid #999;">
+      <option value="">カテゴリ選択</option>
+      <option value="FOOD">FOOD（食物アレルギー）</option>
+      <option value="CONTACT">CONTACT（接触アレルギー）</option>
+      <option value="AVOID">AVOID（食べられないもの）</option>
+    </select>
+
+    <!-- サブカテゴリ選択（動的に変更） -->
+    <select id="subCategory" name="subCategory" required
+            style="padding:10px;border-radius:8px;border:1px solid #999; display:none;">
+      <!-- JS で中身を入れ替える -->
+    </select>
+
+    <button class="btn-add">追加</button>
+  </div>
+</form>
+
+<script>
+  const category = document.getElementById('category');
+  const subCategory = document.getElementById('subCategory');
+
+  // サブカテゴリ一覧
+  const SUB_OPTIONS = {
+    "CONTACT": [
+      { value: "METAL", text: "METAL（金属）" },
+      { value: "CHEMICAL", text: "CHEMICAL（化学物質）" },
+      { value: "PLANT", text: "PLANT（植物）" },
+      { value: "ANIMAL", text: "ANIMAL（動物）" },
+      { value: "OTHER", text: "OTHER（その他）" },
+    ],
+    "AVOID": [
+      { value: "OTHER", text: "OTHER（その他）" },
+    ]
+  };
+
+  // カテゴリ変更時の動作
+  category.addEventListener('change', () => {
+    const cat = category.value;
+
+    // FOOD → サブカテゴリ非表示
+    if (cat === "FOOD" || cat === "") {
+      subCategory.style.display = "none";
+      subCategory.innerHTML = "";
+      subCategory.required = false;  // 必須解除
+      return;
+    }
+
+    // CONTACT / AVOID の場合 → サブカテゴリ生成
+    subCategory.style.display = "inline-block";
+    subCategory.required = true; // 必須化
+    subCategory.innerHTML = "";  // 初期化
+
+    const opts = SUB_OPTIONS[cat] || [];
+
+    // 初期の選択肢
+    const defaultOpt = document.createElement("option");
+    defaultOpt.value = "";
+    defaultOpt.textContent = "サブカテゴリ選択";
+    subCategory.appendChild(defaultOpt);
+
+    // サブカテゴリ追加
+    opts.forEach(o => {
+      const opt = document.createElement("option");
+      opt.value = o.value;
+      opt.textContent = o.text;
+      subCategory.appendChild(opt);
+    });
+  });
+</script>
 
 </div>
 </body>
