@@ -1,14 +1,40 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <jsp:include page="/header.jsp" />
 
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>アレルギー情報管理</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 🔔 Flash Message（成功→緑／失敗→赤） -->
+<c:set var="__flash"
+       value="${not empty requestScope.flashMessage ? requestScope.flashMessage : sessionScope.flashMessage}" />
+<c:if test="${not empty __flash}">
+  <c:set var="__isError"
+         value="${fn:contains(__flash, '失敗') or fn:contains(__flash, 'エラー') or fn:contains(__flash, 'できません')}" />
+
+  <div id="flash-message" class="flash-message no-js ${__isError ? 'error' : 'success'}">
+    <c:out value="${__flash}" />
+  </div>
+
+  <!-- セッションから flashMessage を削除（1回だけ表示） -->
+  <c:if test="${not empty sessionScope.flashMessage}">
+    <c:remove var="flashMessage" scope="session" />
+  </c:if>
+
+  <script>
+    (function(){
+      const el = document.getElementById('flash-message');
+      if (!el) return;
+      el.classList.remove('no-js');
+      setTimeout(() => {
+        el.style.transition = 'opacity 0.8s ease, top 0.8s ease';
+        el.style.opacity = '0';
+        el.style.top = '0px';
+        setTimeout(() => el.remove(), 850);
+      }, 3200);
+    })();
+  </script>
+</c:if>
+
 <style>
   body { background:#f7e1ca; margin:0; font-family:"Noto Sans JP", sans-serif; }
 
@@ -78,14 +104,46 @@
   }
 
   .table-scroll {
-  max-height: 400px;      /* ←高さここで調整 */
-  overflow-y: auto;
-  border: 2px solid #b1d3e0;
-  border-radius: 10px;
-}
-</style>
-</head>
+    max-height: 400px;      /* ←高さここで調整 */
+    overflow-y: auto;
+    border: 2px solid #b1d3e0;
+    border-radius: 10px;
+  }
 
+  /* 上中央に表示される FlashMessage */
+  .flash-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    padding: 14px 26px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 280px;
+    max-width: 90%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.35);
+    z-index: 99999;
+    opacity: 1;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+  }
+
+  .flash-message.success {
+    background: rgba(0,150,0,.9);   /* 成功：緑 */
+  }
+  .flash-message.error {
+    background: rgba(200,0,0,.9);   /* 失敗：赤 */
+  }
+
+  .flash-message.no-js {
+    display: none; /* JS 無効環境で非表示 */
+  }
+</style>
+
+</head>
 <body>
 
 <h2>アレルギー情報管理</h2>
@@ -99,118 +157,125 @@
       <button type="submit">検索</button>
     </form>
   </div>
+
   <c:if test="${not empty allergens}">
-  <div style="text-align:center; margin-bottom:10px; font-weight:700;">
-    検索結果：${count} 件
-  </div>
-</c:if>
+    <div style="text-align:center; margin-bottom:10px; font-weight:700;">
+      検索結果：${count} 件
+    </div>
+  </c:if>
 
+  <c:if test="${not empty error}">
+    <div style="text-align:center; color:#c00; margin-bottom:8px;">
+      ${error}
+    </div>
+  </c:if>
 
-<c:if test="${count == 0}">
-  <div style="text-align:center; padding:10px; color:#555; font-size:15px;">
-    該当するアレルギー項目はありません。
-  </div>
-</c:if>
+  <c:if test="${count == 0}">
+    <div style="text-align:center; padding:10px; color:#555; font-size:15px;">
+      該当するアレルギー項目はありません。
+    </div>
+  </c:if>
+
   <!-- アレルギー一覧 -->
   <div class="table-scroll">
-  <table>
-    <thead>
-      <tr>
-        <th>アレルギー名</th>
-        <th>カテゴリ</th>
-        <th>サブカテゴリ</th>
-      </tr>
-    </thead>
-    <tbody>
-      <c:forEach var="a" items="${allergens}">
+    <table>
+      <thead>
         <tr>
-          <td>${a.nameJa}</td>
-          <td>${a.category}</td>
-          <td>${a.subcategory}</td>
+          <th>アレルギー名</th>
+          <th>カテゴリ</th>
+          <th>サブカテゴリ</th>
         </tr>
-      </c:forEach>
-    </tbody>
-  </table>
-</div>
-
- <!-- 追加フォーム -->
-<form method="post" action="${pageContext.request.contextPath}/admin/allergens-master">
-  <div class="add-area">
-
-    <!-- アレルギー名 -->
-    <input type="text" name="name" placeholder="アレルギー名" required>
-
-    <!-- カテゴリ選択 -->
-    <select id="category" name="category" required
-            style="padding:10px;border-radius:8px;border:1px solid #999;">
-      <option value="">カテゴリ選択</option>
-      <option value="FOOD">FOOD（食物アレルギー）</option>
-      <option value="CONTACT">CONTACT（接触アレルギー）</option>
-      <option value="AVOID">AVOID（食べられないもの）</option>
-    </select>
-
-    <!-- サブカテゴリ選択（動的に変更） -->
-    <select id="subCategory" name="subCategory" required
-            style="padding:10px;border-radius:8px;border:1px solid #999; display:none;">
-      <!-- JS で中身を入れ替える -->
-    </select>
-
-    <button class="btn-add">追加</button>
+      </thead>
+      <tbody>
+        <c:forEach var="a" items="${allergens}">
+          <tr>
+            <td>${a.nameJa}</td>
+            <td>${a.category}</td>
+            <td>${a.subcategory}</td>
+          </tr>
+        </c:forEach>
+      </tbody>
+    </table>
   </div>
-</form>
 
-<script>
-  const category = document.getElementById('category');
-  const subCategory = document.getElementById('subCategory');
+  <!-- 追加フォーム -->
+  <form method="post" action="${pageContext.request.contextPath}/admin/allergens-master">
+    <div class="add-area">
 
-  // サブカテゴリ一覧
-  const SUB_OPTIONS = {
-    "CONTACT": [
-      { value: "METAL", text: "METAL（金属）" },
-      { value: "CHEMICAL", text: "CHEMICAL（化学物質）" },
-      { value: "PLANT", text: "PLANT（植物）" },
-      { value: "ANIMAL", text: "ANIMAL（動物）" },
-      { value: "OTHER", text: "OTHER（その他）" },
-    ],
-    "AVOID": [
-      { value: "OTHER", text: "OTHER（その他）" },
-    ]
-  };
+      <!-- アレルギー名 -->
+      <input type="text" name="name" placeholder="アレルギー名" required>
 
-  // カテゴリ変更時の動作
-  category.addEventListener('change', () => {
-    const cat = category.value;
+      <!-- カテゴリ選択 -->
+      <select id="category" name="category" required
+              style="padding:10px;border-radius:8px;border:1px solid #999;">
+        <option value="">カテゴリ選択</option>
+        <option value="FOOD">FOOD（食物アレルギー）</option>
+        <option value="CONTACT">CONTACT（接触アレルギー）</option>
+        <option value="AVOID">AVOID（食べられないもの）</option>
+      </select>
 
-    // FOOD → サブカテゴリ非表示
-    if (cat === "FOOD" || cat === "") {
-      subCategory.style.display = "none";
-      subCategory.innerHTML = "";
-      subCategory.required = false;  // 必須解除
-      return;
-    }
+      <!-- サブカテゴリ選択（動的に変更） -->
+      <select id="subCategory" name="subCategory" required
+              style="padding:10px;border-radius:8px;border:1px solid #999; display:none;">
+        <!-- JS で中身を入れ替える -->
+      </select>
 
-    // CONTACT / AVOID の場合 → サブカテゴリ生成
-    subCategory.style.display = "inline-block";
-    subCategory.required = true; // 必須化
-    subCategory.innerHTML = "";  // 初期化
+      <button class="btn-add">追加</button>
+    </div>
+  </form>
 
-    const opts = SUB_OPTIONS[cat] || [];
+  <script>
+    const category = document.getElementById('category');
+    const subCategory = document.getElementById('subCategory');
 
-    // 初期の選択肢
-    const defaultOpt = document.createElement("option");
-    defaultOpt.value = "";
-    defaultOpt.textContent = "サブカテゴリ選択";
-    subCategory.appendChild(defaultOpt);
+    // サブカテゴリ一覧
+    const SUB_OPTIONS = {
+      "CONTACT": [
+        { value: "METAL", text: "METAL（金属）" },
+        { value: "CHEMICAL", text: "CHEMICAL（化学物質）" },
+        { value: "PLANT", text: "PLANT（植物）" },
+        { value: "ANIMAL", text: "ANIMAL（動物）" },
+        { value: "OTHER", text: "OTHER（その他）" },
+      ],
+      "AVOID": [
+        { value: "OTHER", text: "OTHER（その他）" },
+      ]
+    };
 
-    // サブカテゴリ追加
-    opts.forEach(o => {
-      const opt = document.createElement("option");
-      opt.value = o.value;
-      opt.textContent = o.text;
-      subCategory.appendChild(opt);
+    // カテゴリ変更時の動作
+    category.addEventListener('change', () => {
+      const cat = category.value;
+
+      // FOOD → サブカテゴリ非表示
+      if (cat === "FOOD" || cat === "") {
+        subCategory.style.display = "none";
+        subCategory.innerHTML = "";
+        subCategory.required = false;  // 必須解除
+        return;
+      }
+
+      // CONTACT / AVOID の場合 → サブカテゴリ生成
+      subCategory.style.display = "inline-block";
+      subCategory.required = true; // 必須化
+      subCategory.innerHTML = "";  // 初期化
+
+      const opts = SUB_OPTIONS[cat] || [];
+
+      // 初期の選択肢
+      const defaultOpt = document.createElement("option");
+      defaultOpt.value = "";
+      defaultOpt.textContent = "サブカテゴリ選択";
+      subCategory.appendChild(defaultOpt);
+
+      // サブカテゴリ追加
+      opts.forEach(o => {
+        const opt = document.createElement("option");
+        opt.value = o.value;
+        opt.textContent = o.text;
+        subCategory.appendChild(opt);
+      });
     });
-  });
-</script>
+  </script>
 
 </div>
 </body>

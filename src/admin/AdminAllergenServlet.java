@@ -32,6 +32,14 @@ public class AdminAllergenServlet extends HttpServlet {
       resp.sendRedirect(req.getContextPath() + "/admin/login");
       return;
     }
+ // ★ここから追加：フラッシュメッセージの受け渡し
+    if (ses != null) {
+      String flash = (String) ses.getAttribute("flashMessage");
+      if (flash != null) {
+        req.setAttribute("flashMessage", flash);
+        ses.removeAttribute("flashMessage");
+      }
+    }
 
     String q = trim(req.getParameter("q"));
 
@@ -56,12 +64,33 @@ public class AdminAllergenServlet extends HttpServlet {
       return;
     }
 
+
+
+    req.setCharacterEncoding("UTF-8");
     String name = trim(req.getParameter("name"));
     String cat  = trim(req.getParameter("category"));
     String sub  = trim(req.getParameter("subCategory"));
 
-    allergenDAO.insertForAdmin(name, cat, sub);
+    // ① 追加試行（戻り値で重複判定）
+    boolean inserted = allergenDAO.insertForAdmin(name, cat, sub);
 
+    if (!inserted) {
+      // ② 同名があった場合 → エラーメッセージを出して再表示
+      req.setAttribute("error", "同じ名前のアレルギーが既に登録されています。");
+
+      // 再描画用に一覧も再取得
+      List<Allergen> list = allergenDAO.searchForAdmin("");
+      req.setAttribute("allergens", list);
+
+      req.getRequestDispatcher("/admin/admin_allergens.jsp").forward(req, resp);
+      return;
+    }
+
+ // ★ここから追加：登録成功時にフラッシュメッセージをセット
+    HttpSession ses2 = req.getSession();
+    ses2.setAttribute("flashMessage", "アレルギー項目を登録しました。");
+
+    // ③ 正常登録 → 一覧へリダイレクト
     resp.sendRedirect(req.getContextPath() + "/admin/allergens-master");
   }
 

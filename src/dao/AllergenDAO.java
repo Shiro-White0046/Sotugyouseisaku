@@ -265,8 +265,14 @@ public class AllergenDAO {
     return list;
   }
 
-  /** 管理画面用：アレルギーを追加 */
-  public void insertForAdmin(String nameJa, String category, String subcategory) {
+
+  /** 管理画面用：アレルギーを追加（同名があれば追加しない） */
+  public boolean insertForAdmin(String nameJa, String category, String subCategory) {
+
+    // ① 同名チェック
+    if (existsByNameJa(nameJa)) {
+      return false;   // 追加しない
+    }
 
     final String sql =
         "INSERT INTO allergens (code, name_ja, name_en, is_active, category, subcategory) " +
@@ -275,14 +281,26 @@ public class AllergenDAO {
     try (Connection con = ConnectionFactory.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
 
-      String code = generateCode(nameJa); // 簡易コード生成
+      String code = generateCode(nameJa); // 適当でOK
+
+      // FOOD のときは subcategory は基本使わない
+      // また、空文字は制約違反になるので null に変換する
+      String sub = (subCategory == null || subCategory.trim().isEmpty())
+                   ? null
+                   : subCategory.trim();
 
       ps.setString(1, code);
       ps.setString(2, nameJa);
       ps.setString(3, category);
-      ps.setString(4, subcategory);
+
+      if (sub == null) {
+        ps.setNull(4, java.sql.Types.VARCHAR);   // ★ ここがポイント
+      } else {
+        ps.setString(4, sub);
+      }
 
       ps.executeUpdate();
+      return true;
 
     } catch (SQLException e) {
       throw new RuntimeException("allergens 追加に失敗しました", e);
@@ -296,7 +314,26 @@ public class AllergenDAO {
     return nameJa.replaceAll("\\s+", "").toUpperCase();
   }
 
+  /** 同じ日本語名のアレルギーが既に存在するか？（有効なものだけ） */
+  public boolean existsByNameJa(String nameJa) {
+    final String sql =
+        "SELECT 1 FROM allergens " +
+        "WHERE is_active = TRUE AND name_ja = ? " +
+        "LIMIT 1";
 
+    try (Connection con = ConnectionFactory.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+      ps.setString(1, nameJa);
+
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next();  // 1行でもあれば true
+      }
+
+    } catch (SQLException e) {
+      throw new RuntimeException("existsByNameJa 失敗", e);
+    }
+  }
 
 
 }
