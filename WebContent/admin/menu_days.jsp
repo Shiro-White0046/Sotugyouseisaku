@@ -49,7 +49,7 @@
               <a class="button" href="<%=request.getContextPath()%>/admin/menus/edit?date=<%= date %>">編集</a>
               <a class="button ghost" href="<%=request.getContextPath()%>/admin/menus/image?date=<%= date %>">画像</a>
             <% } else { %>
-              <a class="button new-btn" href="<%=request.getContextPath()%>/admin/menus/new?date=<%= date %>">追加</a>
+              <a class="button new-btn" href="<%=request.getContextPath()%>/admin/menus/new?date=<%= date %>">作成</a>
             <% } %>
           </td>
         </tr>

@@ -40,7 +40,7 @@
               <% if (exists) { %>
                 <a class="button ghost" href="<%= ctx %>/admin/menus_new/select?date=<%= date %>">編集</a>
               <% } else { %>
-                <a class="button" href="<%= ctx %>/admin/menus_new/select?date=<%= date %>">追加</a>
+                <a class="button" href="<%= ctx %>/admin/menus_new/select?date=<%= date %>">作成</a>
               <% } %>
             </td>
           </tr>
