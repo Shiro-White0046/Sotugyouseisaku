@@ -80,6 +80,21 @@
     text-align: right;
     margin-top: 12px;
   }
+/* 行 hover → 削除セル以外だけ色を変える */
+.user-list-table tr.clickable-row:hover td:not(.delete-cell) {
+  background: #f3f4f6;
+}
+
+/* 削除セルは常に白 */
+.user-list-table td.delete-cell {
+  background: #fff;
+}
+
+/* 削除セル hover → 何も変えない（白のまま） */
+.user-list-table td.delete-cell:hover {
+  background: #fff !important;
+}
+
 </style>
 
 <div id="user-list-page">
@@ -140,7 +155,9 @@
           </c:when>
           <c:otherwise>
             <c:forEach var="r" items="${rows}">
-              <tr>
+             <tr class="clickable-row"
+    onclick="location.href='${pageContext.request.contextPath}/admin/accounts?userId=${r.userId}'">
+
                 <!-- 名前 -->
                 <td><c:out value="${r.displayName}"/></td>
 
@@ -169,12 +186,13 @@
                 </td>
 
                 <!-- 操作 -->
-                <td style="text-align:center;">
-                  <a class="button ghost"
-                     href="${pageContext.request.contextPath}/admin/users/delete?id=${r.id}">
-                    削除
-                  </a>
-                </td>
+                <td class="delete-cell" onclick="event.stopPropagation();" style="text-align:center;">
+  <a class="button ghost"
+     href="${pageContext.request.contextPath}/admin/users/delete?id=${r.id}"
+     onclick="event.stopPropagation();">
+    削除
+  </a>
+</td>
               </tr>
             </c:forEach>
           </c:otherwise>
