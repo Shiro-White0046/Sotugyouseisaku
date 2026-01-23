@@ -183,14 +183,13 @@
          class="meal-tab ${mealType eq 'dinner' ? 'is-active' : ''}">夜飯</a>
     </div>
 
-    <!-- 見出し -->
-    <div class="support-title-main">今日の対応食</div>
 
-    <div class="support-subtitle-row">
-      <div class="support-subtitle">
-        <c:out value="${mealLabel}" /> の対応食管理表
-      </div>
-    </div>
+<div class="support-subtitle-row">
+  <div class="support-subtitle" style="font-size: 32px; margin-top: 50px;  font-weight: 900; color: #000;">
+    <c:out value="${mealLabel}" /> の対応食管理表
+  </div>
+</div>
+
 
     <div class="support-body">
 
@@ -201,6 +200,15 @@
           <c:out value="${needCount}" />人
         </div>
       </div>
+
+
+<c:if test="${empty items}">
+  <div class="support-subtitle-row" style="margin-top: 50px; justify-content: flex-end;">
+    <div class="support-subtitle" style="font-size:36px; color: #b45309; margin-right: 20px;">
+      本日の献立は登録されていません。
+    </div>
+  </div>
+</c:if>
 
       <!-- 右：テーブル（items があるときだけ表示） -->
       <div class="support-right">
