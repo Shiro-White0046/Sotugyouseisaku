@@ -63,12 +63,13 @@
     margin-top:4px;
   }
 
-  .actions {
-    margin-top:20px;
-    display:flex;
-    justify-content:flex-end;
-    gap:12px;
-  }
+.actions {
+  margin-top:20px;
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
+
   .btn {
     border:2px solid #d8c68f;
     background:#faefcf;
@@ -170,7 +171,6 @@
 
 
       <div class="actions">
-        <button type="button" class="btn" onclick="history.back()">戻る</button>
         <button type="submit" class="btn btn-primary">
           <c:choose>
             <c:when test="${c != null}">更新する</c:when>
