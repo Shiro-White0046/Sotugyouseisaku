@@ -145,8 +145,7 @@
       </div>
 
       <div class="withdraw-buttons">
-        <a href="${pageContext.request.contextPath}/user/home"
-           class="withdraw-btn back">戻る</a>
+
 
         <button type="submit" class="withdraw-btn ok">
           はい
