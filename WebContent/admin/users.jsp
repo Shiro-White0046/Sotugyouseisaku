@@ -202,7 +202,7 @@
 
     <div class="actions">
       <a class="button" href="${pageContext.request.contextPath}/admin/allergens">
-        アレルギー管理
+        アレルギー一覧
       </a>
     </div>
   </div>

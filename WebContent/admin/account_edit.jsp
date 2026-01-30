@@ -26,7 +26,8 @@
     <label>アカウントタイプ</label>
     <div class="inline-options" style="margin-top:8px;">
       <label><input type="radio" name="accountType" value="single" <%= "single".equals(u.getAccountType())?"checked":"" %> > 個人</label>
-      <label style="margin-left:16px;"><input type="radio" name="accountType" value="multi" <%= "multi".equals(u.getAccountType())?"checked":"" %> > 複数</label>
+      <label style="margin-left:16px;"><input type="radio" name="accountType" value="multi"
+      	<%= "multi".equals(u.getAccountType())?"checked":"" %> > 複数</label>
     </div>
 
     <div class="actions" style="display:flex;justify-content:space-between;gap:12px;margin-top:16px;">
