@@ -16,7 +16,7 @@
     <p>完了情報が見つかりませんでした。</p>
   <% } %>
   <div class="actions">
-    <a class="button" href="<%= request.getContextPath() %>/admin/home">ホームへ</a>
+    <a class="button" href="<%= request.getContextPath() %>/admin/home">トップへ</a>
   </div>
 </div>
 </body></html>
