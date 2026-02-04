@@ -32,7 +32,7 @@
                    name="mealName_${selectedSlot}"
                    value="${meals[selectedSlot].name}"
                    style="flex:1;min-width:260px;"
-                   placeholder="例：シーフードカレー" />
+                   placeholder="例：シーフードカレーセット" />
           </div>
 
           <!-- ★追加：画像選択＆アップロードボタン（同じ画面で完結） -->
