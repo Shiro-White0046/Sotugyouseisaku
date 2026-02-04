@@ -66,18 +66,19 @@ public class AdminAllergenServlet extends HttpServlet {
     }
 
     req.setCharacterEncoding("UTF-8");
+
     String name = trim(req.getParameter("name"));
     String cat  = trim(req.getParameter("category"));
     String sub  = trim(req.getParameter("subCategory"));
 
-    // ① 追加試行（戻り値で重複判定）
-    boolean inserted = allergenDAO.insertForAdmin(name, cat, sub);
+    // ① アレルギー名の記号チェック
+    if (!isValidNameJa(name)) {
+      req.setAttribute(
+          "error",
+          "アレルギー名に使用できない文字（記号など）が含まれています。"
+      );
 
-    if (!inserted) {
-      // ② 同名があった場合 → エラーメッセージを出して再表示
-      req.setAttribute("error", "同じ名前のアレルギーが既に登録されています。");
-
-      // 再描画用に一覧も再取得
+      // 再描画用に一覧を再取得
       List<Allergen> list = allergenDAO.searchForAdmin("");
       req.setAttribute("allergens", list);
 
@@ -85,8 +86,24 @@ public class AdminAllergenServlet extends HttpServlet {
       return;
     }
 
-    // ★ 操作ログ（アレルギー項目の追加）
-    // ID はここでは取れないので、ひとまず name を entityId に入れておく
+    // ② 追加試行（戻り値で重複判定）
+    boolean inserted = allergenDAO.insertForAdmin(name, cat, sub);
+
+    if (!inserted) {
+      // ③ 同名があった場合
+      req.setAttribute(
+          "error",
+          "同じ名前のアレルギーが既に登録されています。"
+      );
+
+      List<Allergen> list = allergenDAO.searchForAdmin("");
+      req.setAttribute("allergens", list);
+
+      req.getRequestDispatcher("/admin/admin_allergens.jsp").forward(req, resp);
+      return;
+    }
+
+    // ④ 操作ログ（アレルギー項目の追加）
     AuditLogger.logAdminFromSession(
         req,
         "create_allergen",
@@ -94,15 +111,20 @@ public class AdminAllergenServlet extends HttpServlet {
         name
     );
 
-    // ★ 登録成功時にフラッシュメッセージをセット
+    // ⑤ フラッシュメッセージ
     HttpSession ses2 = req.getSession();
     ses2.setAttribute("flashMessage", "アレルギー項目を登録しました。");
 
-    // ③ 正常登録 → 一覧へリダイレクト
+    // ⑥ 一覧へリダイレクト
     resp.sendRedirect(req.getContextPath() + "/admin/allergens-master");
   }
 
   private static String trim(String s) {
     return (s == null) ? "" : s.trim();
   }
+
+  private static boolean isValidNameJa(String s) {
+	  // ひらがな・カタカナ・漢字・英数字（長音ーは許可）
+	  return s != null && s.matches("^[ぁ-んァ-ヶー一-龠a-zA-Z0-9]+$");
+	}
 }
