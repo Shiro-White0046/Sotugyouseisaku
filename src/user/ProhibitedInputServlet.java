@@ -110,6 +110,12 @@ public class ProhibitedInputServlet extends HttpServlet {
 
     UUID personId = UUID.fromString(req.getParameter("person_id"));
 
+    String otherText = req.getParameter("other_free_text");
+    System.out.println("otherText = " + otherText);
+
+
+
+
     // ★ POST 時にも currentPersonId を更新しておくと、保存後も対象児が維持される
     if (ses != null) {
       ses.setAttribute("currentPersonId", personId);

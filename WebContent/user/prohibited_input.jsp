@@ -219,6 +219,31 @@
     }
   });
 
+//その他が空欄のときは登録不可にする
+  function validateOther() {
+    var otherCheck = document.getElementById('otherCheck');
+    var otherText  = document.getElementById('otherText');
+    var submitBtn  = document.getElementById('submitBtn');
+
+    if (!otherCheck || !otherText || !submitBtn) return;
+
+    // 「その他」にチェックがあり、かつ空白
+    if (otherCheck.checked && otherText.value.trim() === "") {
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = "0.5";
+      submitBtn.style.cursor = "not-allowed";
+    } else {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = "1";
+      submitBtn.style.cursor = "pointer";
+    }
+  }
+  document.getElementById('otherCheck').addEventListener('change', validateOther);
+  document.getElementById('otherText').addEventListener('input', validateOther);
+
+  // 初期表示時にも判定
+  validateOther();
+
   // 送信前チェック：チェックも「その他」も無ければエラー表示して送信を止める
   document.getElementById("submitBtn").addEventListener("click", function(e){
     var boxes = document.querySelectorAll('input[name="avoid"]:checked');
